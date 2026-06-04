@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "chart_periods",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "chartId", "order": "ASCENDING" },
+        { "fieldPath": "year",    "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
