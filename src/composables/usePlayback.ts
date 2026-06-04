@@ -1,0 +1,199 @@
+import { ref, computed } from 'vue'
+import type { Track } from '@/types/track.types'
+import { usePlayerStore } from '@/stores/player.store'
+import { useRadioStore } from '@/stores/radio.store'
+import { useRecommendationsStore } from '@/stores/recommendations.store'
+import { useUiStore } from '@/stores/ui.store'
+import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
+import { useTrackEnrich } from '@/composables/useTrackEnrich'
+import { usePlayHistory } from '@/composables/usePlayHistory'
+import { usePlaylists } from '@/composables/usePlaylists'
+
+// ── Cola de playlist: estado singleton efímero (no persistido) ───────────────
+const playlistQueue = ref<Track[]>([])
+const playlistIndex = ref(0)
+let endedBound = false
+
+/**
+ * Orquestador central de reproducción. Unifica los tres modos (playlist, radio,
+ * recommendations) sobre el reproductor YouTube. Es el único sitio que sabe
+ * "qué suena ahora" y cómo avanzar/retroceder.
+ */
+export function usePlayback() {
+  const player = usePlayerStore()
+  const radio  = useRadioStore()
+  const rec    = useRecommendationsStore()
+  const ui     = useUiStore()
+  const yt     = useYouTubePlayer()
+  const { enrich } = useTrackEnrich()
+  const { recordPlay } = usePlayHistory()
+  const { updateTrack: persistPlaylistTrack, getTracks } = usePlaylists()
+
+  const currentTrack = computed<Track | null>(() => {
+    switch (player.queueMode) {
+      case 'radio':           return radio.currentTrack
+      case 'recommendations': return rec.currentTrack
+      case 'playlist':        return playlistQueue.value[playlistIndex.value] ?? null
+      default:                return null
+    }
+  })
+
+  const hasNext = computed(() => {
+    switch (player.queueMode) {
+      case 'radio':           return radio.hasNext
+      case 'recommendations': return rec.hasNext
+      case 'playlist':        return player.repeatMode === 'all' || playlistIndex.value < playlistQueue.value.length - 1
+      default:                return false
+    }
+  })
+
+  const hasPrev = computed(() => {
+    switch (player.queueMode) {
+      case 'radio':           return radio.hasPrev
+      case 'recommendations': return rec.hasPrev
+      case 'playlist':        return playlistIndex.value > 0
+      default:                return false
+    }
+  })
+
+  /** Garantiza que onEnded -> next quede enganchado una sola vez. */
+  function bindEnded(): void {
+    if (endedBound) return
+    yt.onEnded(() => { void next() })
+    endedBound = true
+  }
+
+  function applyEnrichment(track: Track, data: Partial<Track>): void {
+    const merged = { ...data, enriched: true }
+    switch (player.queueMode) {
+      case 'radio':           radio.updateTrack(track.id, merged); break
+      case 'recommendations': rec.updateTrack(track.id, merged); break
+      case 'playlist':
+        playlistQueue.value[playlistIndex.value] = { ...track, ...merged }
+        void persistPlaylistTrack(track.id, merged)
+        break
+    }
+  }
+
+  /** Integra los controles de medios del SO (pantalla de bloqueo, teclas). */
+  function updateMediaSession(track: Track): void {
+    if (!('mediaSession' in navigator)) return
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title:  track.title,
+      artist: track.artistDisplay ?? track.artist,
+      album:  track.album ?? '',
+      artwork: track.coverUrl ? [{ src: track.coverUrl, sizes: '512x512' }] : []
+    })
+    navigator.mediaSession.setActionHandler('play',  () => yt.play())
+    navigator.mediaSession.setActionHandler('pause', () => yt.pause())
+    navigator.mediaSession.setActionHandler('nexttrack',     () => { void next() })
+    navigator.mediaSession.setActionHandler('previoustrack', () => { void prev() })
+  }
+
+  /** Carga y reproduce la pista activa, enriqueciéndola lazy si hace falta. */
+  async function playCurrent(): Promise<void> {
+    bindEnded()
+    let track = currentTrack.value
+    if (!track) return
+
+    if (!track.youtubeVideoId || !track.enriched) {
+      const data = await enrich(track)
+      applyEnrichment(track, data)
+      track = currentTrack.value
+    }
+    if (!track) return
+
+    if (track.youtubeVideoId) {
+      yt.loadAndPlay(track.youtubeVideoId)
+      player.currentTrackId = track.id
+      updateMediaSession(track)
+      void recordPlay(track, player.queueMode)
+    } else {
+      player.state = 'error'
+      ui.showToast(`No se encontró vídeo para "${track.artist} - ${track.title}"`, 'error')
+      // Intentar saltar a la siguiente automáticamente
+      if (hasNext.value) await next()
+    }
+  }
+
+  // ── Arranque de cada modo ──────────────────────────────────────────────────
+  function startPlaylistQueue(tracks: Track[], startIndex: number, playlistId: string | null): void {
+    playlistQueue.value = tracks
+    playlistIndex.value = Math.max(0, Math.min(startIndex, tracks.length - 1))
+    player.queueMode = 'playlist'
+    player.currentPlaylistId = playlistId
+    void playCurrent()
+  }
+
+  /** Carga la playlist desde Dexie y la reproduce desde un índice dado. */
+  async function playPlaylistById(playlistId: string, startIndex = 0): Promise<void> {
+    const { getPlaylist } = usePlaylists()
+    const pl = await getPlaylist(playlistId)
+    if (!pl) return
+    const tracks = await getTracks(pl)
+    if (tracks.length === 0) { ui.showToast('La playlist está vacía', 'info'); return }
+    startPlaylistQueue(tracks, startIndex, playlistId)
+  }
+
+  function playRadioIndex(i: number): void   { radio.skipTo(i); player.queueMode = 'radio'; void playCurrent() }
+  function playRecIndex(i: number): void      { rec.skipTo(i);   player.queueMode = 'recommendations'; void playCurrent() }
+
+  // ── Navegación ──────────────────────────────────────────────────────────────
+  async function next(): Promise<void> {
+    switch (player.queueMode) {
+      case 'radio':
+        if (radio.hasNext) { radio.next(); await playCurrent() }
+        else player.state = 'ended'
+        return
+      case 'recommendations':
+        if (rec.hasNext) { rec.next(); await playCurrent() }
+        else player.state = 'ended'
+        return
+      case 'playlist':
+        await playlistNext()
+        return
+    }
+  }
+
+  async function playlistNext(): Promise<void> {
+    if (player.repeatMode === 'one') { yt.seekTo(0); yt.play(); return }
+
+    let idx: number
+    if (player.isShuffle && playlistQueue.value.length > 1) {
+      do { idx = Math.floor(Math.random() * playlistQueue.value.length) }
+      while (idx === playlistIndex.value)
+    } else {
+      idx = playlistIndex.value + 1
+    }
+
+    if (idx >= playlistQueue.value.length) {
+      if (player.repeatMode === 'all') idx = 0
+      else { player.state = 'ended'; return }
+    }
+    playlistIndex.value = idx
+    await playCurrent()
+  }
+
+  async function prev(): Promise<void> {
+    // Si llevamos >3s, reiniciar la pista en lugar de ir a la anterior
+    if (player.currentTime > 3) { yt.seekTo(0); return }
+    switch (player.queueMode) {
+      case 'radio':           if (radio.hasPrev) { radio.prev(); await playCurrent() } return
+      case 'recommendations': if (rec.hasPrev)   { rec.prev();   await playCurrent() } return
+      case 'playlist':
+        if (playlistIndex.value > 0) { playlistIndex.value--; await playCurrent() }
+        else yt.seekTo(0)
+        return
+    }
+  }
+
+  function togglePlay(): void { yt.toggle() }
+
+  return {
+    currentTrack, hasNext, hasPrev,
+    playCurrent, startPlaylistQueue, playPlaylistById,
+    playRadioIndex, playRecIndex,
+    next, prev, togglePlay,
+    playlistIndex
+  }
+}
