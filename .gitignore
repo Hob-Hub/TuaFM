@@ -12,7 +12,6 @@ dist-ssr/
 .env.local
 .env.*.local
 scripts/service-account.json
-docs/TOKENS.md
 
 # Editor
 .vscode/*

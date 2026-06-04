@@ -61,9 +61,9 @@ VITE_FIREBASE_APP_ID=
 La app **arranca y muestra la UI aunque falten claves**; los modos que dependen
 de cada servicio degradan con un mensaje en lugar de romperse.
 
-> En este repo, `.env.local` ya viene con claves reales de Last.fm y YouTube
-> (de `docs/TOKENS.md`), así que **Playlist, Recomendaciones y Artista funcionan
-> de inmediato**. Solo **Radio** necesita las 4 variables de Firebase.
+> En este repo, `.env.local` ya viene con claves reales de Last.fm y YouTube,
+> así que **Playlist, Recomendaciones y Artista funcionan de inmediato**.
+> Solo **Radio** necesita las 4 variables de Firebase.
 
 ---
 
