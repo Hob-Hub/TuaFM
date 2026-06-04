@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+scripts/node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+scripts/service-account.json
+docs/TOKENS.md
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Python (scraper)
+.venv/
+__pycache__/
+*.pyc
+scraper.log
+
+# SQLite (datos generados — pueden ser grandes)
+# los40.db está versionado aparte; los .db de muestra sí se ignoran si crecen
+*.db-wal
+*.db-shm
+*.db
+scripts/
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript build info
+*.tsbuildinfo
