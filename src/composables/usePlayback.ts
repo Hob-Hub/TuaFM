@@ -12,7 +12,11 @@ import { usePlaylists } from '@/composables/usePlaylists'
 // ── Cola de playlist: estado singleton efímero (no persistido) ───────────────
 const playlistQueue = ref<Track[]>([])
 const playlistIndex = ref(0)
-let endedBound = false
+let handlersBound = false
+
+// Candidatos de YouTube de la pista en curso, para reintentar en onError.
+let currentCandidates: string[] = []
+let candidateIdx = 0
 
 /**
  * Orquestador central de reproducción. Unifica los tres modos (playlist, radio,
@@ -56,11 +60,40 @@ export function usePlayback() {
     }
   })
 
-  /** Garantiza que onEnded -> next quede enganchado una sola vez. */
-  function bindEnded(): void {
-    if (endedBound) return
+  /** Engancha los callbacks del reproductor una sola vez. */
+  function bindHandlers(): void {
+    if (handlersBound) return
     yt.onEnded(() => { void next() })
-    endedBound = true
+    yt.onError(() => { void handlePlaybackError() })
+    handlersBound = true
+  }
+
+  /** Lista de videoIds a intentar: el mejor primero, luego los alternativos. */
+  function buildCandidates(track: Track): string[] {
+    const list: string[] = []
+    if (track.youtubeVideoId) list.push(track.youtubeVideoId)
+    for (const c of track.youtubeCandidates ?? []) {
+      if (!list.includes(c)) list.push(c)
+    }
+    return list
+  }
+
+  /**
+   * El iframe falló en el vídeo actual (privado, bloqueado, no embebible…).
+   * Reintenta con el siguiente candidato; si se agotan, salta de pista.
+   */
+  async function handlePlaybackError(): Promise<void> {
+    candidateIdx++
+    if (candidateIdx < currentCandidates.length) {
+      player.state = 'loading'
+      yt.loadAndPlay(currentCandidates[candidateIdx])
+      return
+    }
+    const t = currentTrack.value
+    const label = t ? `${t.artistDisplay ?? t.artist} - ${t.titleDisplay ?? t.title}` : 'la pista'
+    ui.showToast(`No se pudo reproducir "${label}"`, 'error')
+    if (hasNext.value) await next()
+    else player.state = 'error'
   }
 
   function applyEnrichment(track: Track, data: Partial<Track>): void {
@@ -79,7 +112,7 @@ export function usePlayback() {
   function updateMediaSession(track: Track): void {
     if (!('mediaSession' in navigator)) return
     navigator.mediaSession.metadata = new MediaMetadata({
-      title:  track.title,
+      title:  track.titleDisplay ?? track.title,
       artist: track.artistDisplay ?? track.artist,
       album:  track.album ?? '',
       artwork: track.coverUrl ? [{ src: track.coverUrl, sizes: '512x512' }] : []
@@ -92,7 +125,7 @@ export function usePlayback() {
 
   /** Carga y reproduce la pista activa, enriqueciéndola lazy si hace falta. */
   async function playCurrent(): Promise<void> {
-    bindEnded()
+    bindHandlers()
     let track = currentTrack.value
     if (!track) return
 
@@ -103,14 +136,17 @@ export function usePlayback() {
     }
     if (!track) return
 
-    if (track.youtubeVideoId) {
-      yt.loadAndPlay(track.youtubeVideoId)
+    currentCandidates = buildCandidates(track)
+    candidateIdx = 0
+
+    if (currentCandidates.length > 0) {
+      yt.loadAndPlay(currentCandidates[0])
       player.currentTrackId = track.id
       updateMediaSession(track)
       void recordPlay(track, player.queueMode)
     } else {
       player.state = 'error'
-      ui.showToast(`No se encontró vídeo para "${track.artist} - ${track.title}"`, 'error')
+      ui.showToast(`No se encontró vídeo para "${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}"`, 'error')
       // Intentar saltar a la siguiente automáticamente
       if (hasNext.value) await next()
     }

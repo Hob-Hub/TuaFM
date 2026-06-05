@@ -2,7 +2,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { getFirestoreDb, ensureAnonymousAuth, isFirebaseConfigured } from '@/firebase/index'
 import { db, makeCacheKey } from '@/db/local.db'
 import { getTrackInfo, pickImage } from '@/services/lastfm.service'
-import { searchVideoId } from '@/services/youtube.service'
+import { searchVideoCandidates } from '@/services/youtube.service'
 import { getCoverUrl } from '@/services/coverart.service'
 import type { Track } from '@/types/track.types'
 import type { FirestoreTrackCache, LastfmTrackResponse } from '@/types/api.types'
@@ -25,6 +25,7 @@ function fromFirestore(fs: FirestoreTrackCache): Partial<Track> {
     coverUrl:       fs.coverUrl        ?? undefined,
     tags:           fs.tags           ?? [],
     youtubeVideoId: fs.youtubeVideoId ?? undefined,
+    youtubeCandidates: fs.youtubeCandidates ?? undefined,
     listeners:      fs.listeners      ?? undefined,
     enriched:       true
   }
@@ -96,9 +97,11 @@ async function fetchExternal(
   const queryArtist = displayArtist ?? artist   // nombre real para APIs externas
 
   const lfmTask = getTrackInfo(queryArtist, title)
-  const ytTask  = existingVideoId ? null : searchVideoId(queryArtist, title)
+  const ytTask  = existingVideoId
+    ? Promise.resolve<string[]>([])
+    : searchVideoCandidates(queryArtist, title)
 
-  const [lfm, yt] = await Promise.allSettled([lfmTask, ytTask ?? Promise.resolve(null)])
+  const [lfm, yt] = await Promise.allSettled([lfmTask, ytTask])
 
   if (lfm.status === 'fulfilled') {
     const t = (lfm.value as LastfmTrackResponse).track
@@ -114,8 +117,12 @@ async function fetchExternal(
     result.enrichError = true
   }
 
-  result.youtubeVideoId = existingVideoId
-    ?? (yt.status === 'fulfilled' ? (yt.value ?? undefined) : undefined)
+  if (existingVideoId) {
+    result.youtubeVideoId = existingVideoId
+  } else if (yt.status === 'fulfilled' && yt.value.length > 0) {
+    result.youtubeVideoId    = yt.value[0]
+    if (yt.value.length > 1) result.youtubeCandidates = yt.value
+  }
 
   // Fallback de carátula vía MusicBrainz + Cover Art Archive
   if (!result.coverUrl && result.album) {
@@ -140,6 +147,7 @@ async function persistToFirestore(data: Partial<Track>, cacheKey: string): Promi
       coverUrl:       data.coverUrl       ?? null,
       tags:           data.tags           ?? [],
       youtubeVideoId: data.youtubeVideoId ?? null,
+      youtubeCandidates: data.youtubeCandidates ?? [],
       listeners:      data.listeners      ?? null,
       cachedAt:       Date.now(),
       ttlDays:        CACHE_TTL_DAYS

@@ -12,6 +12,7 @@ export interface FirestoreTrackCache {
   coverUrl?:       string | null
   tags?:           string[]
   youtubeVideoId?: string | null
+  youtubeCandidates?: string[]
   listeners?:      number | null
   cachedAt:        number
   ttlDays:         number

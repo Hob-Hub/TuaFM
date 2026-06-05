@@ -1,25 +1,28 @@
+import { rankVideoCandidates, type YouTubeSearchItem } from '@/services/youtube.scoring'
+
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
 const SEARCH  = 'https://www.googleapis.com/youtube/v3/search'
 
 interface YouTubeSearchResponse {
-  items?: Array<{ id?: { videoId?: string } }>
+  items?: YouTubeSearchItem[]
   error?: { code: number; message: string }
 }
 
 /**
- * Busca el videoId más relevante para "artist title" vía YouTube Data API v3.
- * Devuelve null si no hay resultado o si la cuota está agotada (no lanza:
- * el modo radio precarga videoId, así que esto solo se usa en playlist/recs).
+ * Resuelve "artist title" a una lista de videoIds rankeada (mejor primero) vía
+ * YouTube Data API v3. Devuelve [] si no hay resultados o si la cuota se agotó
+ * (no lanza). Pide 5 resultados para poder reintentar otro candidato si el
+ * primero no es reproducible en el iframe.
  *
- * Cada llamada cuesta 100 unidades de cuota → ~100 búsquedas/día en free tier.
- * Por eso el resultado se cachea agresivamente en trackCache.service.
+ * Coste: 100 unidades por llamada → ~100 búsquedas/día en free tier. Por eso el
+ * resultado (toda la lista) se cachea agresivamente en trackCache.service.
  */
-export async function searchVideoId(
+export async function searchVideoCandidates(
   artist: string, title: string, signal?: AbortSignal
-): Promise<string | null> {
+): Promise<string[]> {
   if (!API_KEY) {
     console.warn('[youtube] VITE_YOUTUBE_API_KEY no configurada')
-    return null
+    return []
   }
 
   const url = new URL(SEARCH)
@@ -27,7 +30,7 @@ export async function searchVideoId(
   url.searchParams.set('q', `${artist} ${title}`)
   url.searchParams.set('type', 'video')
   url.searchParams.set('videoEmbeddable', 'true')
-  url.searchParams.set('maxResults', '1')
+  url.searchParams.set('maxResults', '5')
   url.searchParams.set('key', API_KEY)
 
   try {
@@ -35,12 +38,23 @@ export async function searchVideoId(
     const data = await res.json() as YouTubeSearchResponse
     if (data.error) {
       console.warn(`[youtube] API error ${data.error.code}: ${data.error.message}`)
-      return null
+      return []
     }
-    return data.items?.[0]?.id?.videoId ?? null
+    return rankVideoCandidates(data.items ?? [], artist, title)
   } catch (err) {
     if ((err as Error).name === 'AbortError') throw err
     console.warn('[youtube] búsqueda fallida:', err)
-    return null
+    return []
   }
+}
+
+/**
+ * Atajo: devuelve solo el mejor videoId (o null). Mantiene compatibilidad con
+ * los llamadores que no necesitan la lista de candidatos.
+ */
+export async function searchVideoId(
+  artist: string, title: string, signal?: AbortSignal
+): Promise<string | null> {
+  const candidates = await searchVideoCandidates(artist, title, signal)
+  return candidates[0] ?? null
 }

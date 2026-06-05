@@ -1,6 +1,7 @@
 export interface Track {
   id:              string        // nanoid local (efímero por sesión/dispositivo)
   title:           string
+  titleDisplay?:   string        // título con mayúsculas (de charts), para UI
   artist:          string        // artista principal, normalizado (para cacheKey)
   artistDisplay?:  string        // con feat., para UI
   album?:          string
@@ -8,7 +9,8 @@ export interface Track {
   duration?:       number        // ms
   coverUrl?:       string
   tags?:           string[]
-  youtubeVideoId?: string        // resuelto lazy o precargado desde chart
+  youtubeVideoId?: string        // mejor candidato (resuelto lazy o precargado desde chart)
+  youtubeCandidates?: string[]   // videoIds alternativos rankeados, para fallback en onError
   lastfmUrl?:      string
   listeners?:      number
   enriched:        boolean

@@ -36,6 +36,7 @@ let player: YTPlayer | null = null
 let apiPromise: Promise<void> | null = null
 let ticker: ReturnType<typeof setInterval> | null = null
 let onEndedCb: (() => void) | null = null
+let onErrorCb: ((code: number) => void) | null = null
 
 function loadApi(): Promise<void> {
   if (apiPromise) return apiPromise
@@ -72,7 +73,12 @@ export function useYouTubePlayer() {
           startTicker()
         },
         onStateChange: (e: YTPlayerEvent) => handleState(e.data),
-        onError: () => { playerStore.state = 'error' }
+        onError: (e: YTPlayerEvent) => {
+          // Si hay handler de fallback (probar otro candidato / saltar), delegamos
+          // en él; si no, dejamos el estado de error como antes.
+          if (onErrorCb) onErrorCb(e.data)
+          else playerStore.state = 'error'
+        }
       }
     })
   }
@@ -125,9 +131,10 @@ export function useYouTubePlayer() {
   function toggleMute(): void { playerStore.isMuted ? unmute() : mute() }
 
   function onEnded(cb: () => void): void { onEndedCb = cb }
+  function onError(cb: (code: number) => void): void { onErrorCb = cb }
 
   return {
     ready, init, loadAndPlay, play, pause, toggle, seekTo,
-    setVolume, mute, unmute, toggleMute, onEnded
+    setVolume, mute, unmute, toggleMute, onEnded, onError
   }
 }
