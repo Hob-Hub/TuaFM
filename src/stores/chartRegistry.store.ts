@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, readonly } from 'vue'
-import { collection, getDocs } from 'firebase/firestore'
-import { firestore } from '@/firebase/index'
+import { chartData } from '@/services/chartData'
 import type { ChartRegistry } from '@/types/chart.types'
 
 export const useChartRegistryStore = defineStore('chartRegistry', () => {
@@ -15,8 +14,7 @@ export const useChartRegistryStore = defineStore('chartRegistry', () => {
     loading.value = true
     error.value   = null
     try {
-      const snap = await getDocs(collection(firestore, 'chart_registry'))
-      registries.value = snap.docs.map(d => d.data() as ChartRegistry)
+      registries.value = await chartData.listRegistries()
       loaded.value = true
     } catch (e) {
       error.value = (e as Error).message

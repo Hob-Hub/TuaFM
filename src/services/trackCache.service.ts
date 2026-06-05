@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { firestore, ensureAnonymousAuth } from '@/firebase/index'
+import { getFirestoreDb, ensureAnonymousAuth, isFirebaseConfigured } from '@/firebase/index'
 import { db, makeCacheKey } from '@/db/local.db'
 import { getTrackInfo, pickImage } from '@/services/lastfm.service'
 import { searchVideoId } from '@/services/youtube.service'
@@ -66,9 +66,9 @@ export async function resolveTrack(
     return stripId(local)
   }
 
-  // 2 — Firestore compartido
-  try {
-    const fsSnap = await getDoc(doc(firestore, 'track_cache', cacheKey))
+  // 2 — Firestore compartido (solo si está configurado)
+  if (isFirebaseConfigured) try {
+    const fsSnap = await getDoc(doc(getFirestoreDb(), 'track_cache', cacheKey))
     if (fsSnap.exists()) {
       const fsData = fsSnap.data() as FirestoreTrackCache
       if (!isExpired(fsData.cachedAt, fsData.ttlDays)) {
@@ -127,9 +127,10 @@ async function fetchExternal(
 }
 
 async function persistToFirestore(data: Partial<Track>, cacheKey: string): Promise<void> {
+  if (!isFirebaseConfigured) return
   try {
     await ensureAnonymousAuth()
-    await setDoc(doc(firestore, 'track_cache', cacheKey), {
+    await setDoc(doc(getFirestoreDb(), 'track_cache', cacheKey), {
       cacheKey,
       artist:         data.artist  ?? '',
       title:          data.title   ?? '',

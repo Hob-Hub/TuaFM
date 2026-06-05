@@ -1,29 +1,20 @@
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore'
-import { firestore } from '@/firebase/index'
-import type { ChartPeriod, ChartRegistry, RadioCandidate } from '@/types/chart.types'
+import type { ChartRegistry, RadioCandidate } from '@/types/chart.types'
 import type { Track } from '@/types/track.types'
 import { aggregateCandidates, weightedSample } from '@/services/radio.scoring'
+import { chartData } from '@/services/chartData'
 import { nanoid } from 'nanoid'
 
 export { weightedSample }
 
 export async function getChartRegistry(chartId: string): Promise<ChartRegistry | null> {
-  const snap = await getDoc(doc(firestore, 'chart_registry', chartId))
-  return snap.exists() ? (snap.data() as ChartRegistry) : null
+  return chartData.getRegistry(chartId)
 }
 
 export async function buildRadioCandidates(
   chartId: string, refYear: number, refWeek: number,
   windowYears: number, lambda: number
 ): Promise<RadioCandidate[]> {
-  const q = query(
-    collection(firestore, 'chart_periods'),
-    where('chartId', '==', chartId),
-    where('year', '>=', refYear - windowYears),
-    where('year', '<=', refYear)
-  )
-  const snap    = await getDocs(q)
-  const periods = snap.docs.map(d => d.data() as ChartPeriod)
+  const periods = await chartData.getPeriods(chartId, refYear - windowYears, refYear)
   return aggregateCandidates(periods, refYear, refWeek, lambda)
 }
 
