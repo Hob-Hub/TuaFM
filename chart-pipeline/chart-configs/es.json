@@ -1,0 +1,25 @@
+{
+  "chartId":        "es",
+  "name":           "España",
+  "shortName":      "España",
+  "subtitle":       null,
+  "country":        "ES",
+  "flag":           "🇪🇸",
+  "language":       "es",
+  "listSize":       100,
+  "defaultLambda":  0.35,
+  "description":    "Los éxitos más escuchados en España, consolidados por año",
+  "source": {
+    "type":            "sqlite",
+    "consolidate":     "annual-from-weekly",
+    "dbPath":          "../los40.db",
+    "query":           "SELECT chart_date, position, song AS title, artists AS artist_raw, cover_url, youtube_url FROM v_chart ORDER BY chart_date, position",
+    "artistSeparator": ";",
+    "dateField":       "chart_date",
+    "posField":        "position",
+    "titleField":      "title",
+    "artistField":     "artist_raw",
+    "ytUrlField":      "youtube_url",
+    "coverField":      "cover_url"
+  }
+}

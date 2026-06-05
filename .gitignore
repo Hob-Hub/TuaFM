@@ -12,6 +12,7 @@ dist-ssr/
 .env.local
 .env.*.local
 scripts/service-account.json
+chart-pipeline/service-account.json
 
 # Editor
 .vscode/*

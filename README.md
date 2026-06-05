@@ -98,27 +98,30 @@ por sus posiciones a lo largo del año (`score = Σ 1/√posición`):
 - **España** (`es`) ← `los40.db` (semanal: solo Nº1 hasta 2003, top 40 desde 2004).
 - **Estados Unidos / Billboard** (`us`) ← `billboard_year_end_hot100.db` (anual, top 100).
 
-El bundle local vive en `public/charts/` (`registry.json` + `<chartId>.json`) y se
-regenera con el exportador estático (sin Firebase, offline):
+El pipeline de datos **versionado** vive en [`chart-pipeline/`](chart-pipeline/)
+(el scraper en Python y las `.db` están en `scripts/`, ignorado por git). El bundle
+local vive en `public/charts/` (`registry.json` + `<chartId>.json`) y se regenera
+con el exportador estático (sin Firebase, offline):
 
 ```bash
-node scripts/export-charts-static.mjs chart-configs/es.json   # --from 2000 --to 2025
-node scripts/export-charts-static.mjs chart-configs/us.json
+cd chart-pipeline
+node export-charts-static.mjs chart-configs/es.json   # --from 2000 --to 2025
+node export-charts-static.mjs chart-configs/us.json
 ```
 
-La consolidación vive en [`scripts/lib/annualize.mjs`](scripts/lib/annualize.mjs),
+La consolidación vive en [`chart-pipeline/lib/annualize.mjs`](chart-pipeline/lib/annualize.mjs),
 compartida con el exportador a Firestore (para "más adelante"):
 
 ```bash
-cd scripts
-npm install                                  # firebase-admin, better-sqlite3
+cd chart-pipeline
+npm install                                  # better-sqlite3, firebase-admin
 # coloca tu service-account.json de Firebase aquí
 node migrate-to-firestore.mjs chart-configs/es.json
 node migrate-to-firestore.mjs chart-configs/us.json
 ```
 
-El scraper que genera/actualiza `los40.db` vive en `scripts/` (Python). Ver
-[`scripts/README.md`](scripts/README.md).
+El scraper que genera/actualiza `los40.db` vive en `scripts/` (Python, ignorado por
+git). Ver [`chart-pipeline/README.md`](chart-pipeline/README.md).
 
 ### Algoritmo de consolidación (semanal → Top del año)
 
@@ -141,7 +144,7 @@ Por canción/año se guarda: `score`, `rank` (anual), `peakPosition` (mejor posi
 semanal), `weeksOnChart`, y los enlaces (carátula/YouTube) de su **mejor semana**.
 
 **Afinar peak vs permanencia.** El equilibrio lo fija un único punto: `positionScore`
-en [`scripts/lib/annualize.mjs`](scripts/lib/annualize.mjs). Con `1/√p` (actual) la
+en [`chart-pipeline/lib/annualize.mjs`](chart-pipeline/lib/annualize.mjs). Con `1/√p` (actual) la
 permanencia pesa más (una canción de 30 semanas en el top puede superar a un Nº1 de
 pocas semanas). Para dar **más peso al pico**, hacerlo más pronunciado: `1/p` o `1/p²`.
 Tras cambiarlo hay que **regenerar el bundle** (comandos de arriba). La app usa este
@@ -167,7 +170,7 @@ de cada fuente viven en el `registry`.
 //   songs[] viene rankeado (songs[0] = Nº1 del año). Tipos en src/types/chart.types.ts.
 ```
 
-**Añadir una fuente** = crear `scripts/chart-configs/<chartId>.json` con su `query`
+**Añadir una fuente** = crear `chart-pipeline/chart-configs/<chartId>.json` con su `query`
 SQL y `consolidate` (`annual-from-weekly` | `annual`) y regenerar. Cero cambios en el
 código de la app: el selector de radio lee el `registry` en runtime.
 
