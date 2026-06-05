@@ -54,49 +54,37 @@ cabeceras de seguridad (ver §3).
 
 ---
 
-## 2. Endurecer el reproductor (riesgo nº1: YouTube)
+## 2. Endurecer el reproductor (riesgo nº1: YouTube) — ✓ HECHO
 
 Ambos documentos del predecesor coinciden en que **el mayor riesgo de una app
 así no es el framework, es YouTube**: cuota, matching incorrecto, vídeos no
-embebibles y errores del iframe. Aquí TuaFM es hoy más optimista de lo que
-debería. Estas tres mejoras se refuerzan entre sí y atacan ese riesgo:
+embebibles y errores del iframe. Resuelto en el commit `feat(player): candidatos
+de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
 
-### 2.1. Selección de vídeo con candidatos + scoring
-**Estado:** [`youtube.service.ts`](src/services/youtube.service.ts) pide
-`maxResults=1` y se queda con el primer resultado (ya usa `type=video` y
-`videoEmbeddable=true` ✓).
-**Mejora:** pedir 4-5 candidatos y puntuarlos antes de elegir. Scoring simple
-(de `docs/STACK_Y_DESPLIEGUE.md`):
-```
-+ artista aparece en título/canal
-+ título contiene el título de la canción
-+ título contiene "official audio"
-+ canal contiene "topic" u "official"
-− título contiene "cover" / "karaoke"
-− "remix" o "live" si la canción pedida no los contiene
-```
-Como el resultado ya se cachea (Dexie + Firestore), el coste extra de cuota es
-nulo: una sola búsqueda devuelve los 5 candidatos. Guardar los candidatos (no
-solo el ganador) habilita 2.2.
+- **2.1 Candidatos + scoring** ✓ — `searchVideoCandidates` pide 5 resultados y
+  los rankea en [`youtube.scoring.ts`](src/services/youtube.scoring.ts): premia
+  artista/título, "official audio" y canal Topic; penaliza cover/karaoke/remix/
+  live no pedidos (determinista y estable). Los candidatos se cachean (campo
+  `youtubeCandidates` en Dexie + Firestore) sin coste extra de cuota. Cubierto
+  por [`youtube.scoring.test.ts`](src/services/youtube.scoring.test.ts).
+- **2.2 Fallback en `onError`** ✓ — el iframe ya no muere: reintenta el
+  siguiente candidato y, si se agotan, salta de pista
+  ([`usePlayback.ts`](src/composables/usePlayback.ts) →
+  `handlePlaybackError`). Vale también para radio (cuyos videoId embebidos a
+  veces están muertos).
+- **2.3 Media Session API** ✓ — ya estaba: metadatos + controles del SO
+  (`updateMediaSession` en [`usePlayback.ts`](src/composables/usePlayback.ts)).
 
-### 2.2. Fallback en `onError` del iframe
-**Estado:** [`useYouTubePlayer.ts`](src/composables/useYouTubePlayer.ts) hace
-`onError → state = 'error'` y se queda ahí.
-**Mejora:** ante vídeo privado / no-embebible / bloqueado regional / error
-HTML5, no morir: probar el **siguiente candidato** (de 2.1) y, si se agotan,
-**saltar de pista** automáticamente. Es la diferencia entre "el reproductor se
-cuelga" y "la cola sigue sonando". Reutiliza los candidatos cacheados en 2.1.
-
-### 2.3. Media Session API
-**Estado:** no implementado.
-**Mejora:** integrar `navigator.mediaSession` para exponer metadatos (título,
-artista, carátula) y controles (play/pause/anterior/siguiente) en la pantalla
-de bloqueo, auriculares y notificación del SO. Alto valor para un reproductor,
-sobre todo en móvil. Encaja en [`usePlayback.ts`](src/composables/usePlayback.ts).
-*Nota:* en móvil YouTube pausa al ocultar la pestaña; Media Session mitiga la UX
-pero no elimina del todo esa limitación de plataforma. El predecesor usaba un
-hack (`stopImmediatePropagation`) que su propia doc marca como frágil — **no
-copiarlo**.
+**Remate de esta área:**
+- **Controles de medios del SO** ✓ — `playbackState` (play/pause), `positionState`
+  (barra de progreso) y handlers de *seek* (seekto/seekbackward/seekforward)
+  cableados en [`useYouTubePlayer.ts`](src/composables/useYouTubePlayer.ts) y
+  [`usePlayback.ts`](src/composables/usePlayback.ts).
+- **Auditoría de videoId muertos en los charts** (pendiente): hay un audit en
+  marcha (`chart-pipeline` / `youtube_audit_*`) que detecta los embebidos no
+  reproducibles. El fallback de 2.2 ya lo salva en runtime, pero re-resolver
+  esos IDs en el bundle estático mejora la experiencia (menos saltos). Tarea de
+  datos, no de app.
 
 ---
 
@@ -105,15 +93,21 @@ copiarlo**.
 | Prioridad | Mejora | Notas |
 |-----------|--------|-------|
 | Media | **PWA instalable** (`vite-plugin-pwa`) | App offline-first; encaja con un reproductor. Tus playlists de Dexie ya funcionan sin red → el shell offline cierra el círculo |
-| Media | **Más tests** | Hoy: núcleo puro (normalize, scoring, csv). Faltan componentes (Vitest + @vue/test-utils) y un e2e (Playwright) del flujo "crear playlist → importar → reproducir" |
-| Media | **ESLint + Prettier** | No configurados |
+| Media | **Más tests** | Hoy: núcleo puro (normalize, scoring, csv, youtube.scoring). Faltan componentes (Vitest + @vue/test-utils) y un e2e (Playwright) del flujo "crear playlist → importar → reproducir" |
+| ~~Media~~ ✓ | ~~**ESLint + Prettier**~~ | Hecho: flat config (`eslint.config.js`) + `.prettierrc.json` + scripts `lint`/`format`. **Falta el remate** (ver abajo): correr `lint:fix`/`format` sobre el código existente y limpiar la deuda de lint que aflora |
 | Baja | **Validación de respuestas de API** (zod) | Hoy se confía en los tipos TS y hay `as any` en [`trackCache.service.ts`](src/services/trackCache.service.ts). Last.fm devuelve objeto-o-array según nº de resultados y campos que faltan: zod convierte esos casts en parsers tipados |
-| Baja | **Cancelación de peticiones** (AbortController) | Los servicios ya aceptan `signal`; falta cablearlo en búsquedas que se reescriben rápido (p.ej. `AddTrackModal`) |
+| ~~Baja~~ ✓ | ~~**Cancelación de peticiones**~~ (AbortController) | Hecho en el buscador global ([`SearchView.vue`](src/views/SearchView.vue)) y en [`AddTrackModal.vue`](src/components/playlist/AddTrackModal.vue): cada búsqueda aborta la anterior con guard `signal.aborted` |
 | Baja | **TTLs de caché diferenciados** | Hoy `track_cache` usa un TTL plano de 30 días. Info de track casi no cambia (1 año), búsquedas sí (días). El predecesor ya tenía TTLs por tipo de dato |
 | Baja | **Cabeceras de seguridad** (`public/_headers`) | `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, y CSP si se publica. Portable a Vercel/Netlify con variantes |
 | Baja | **tsconfig más estricto** | `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`: muy útiles con APIs irregulares |
-| Baja | **CI** (GitHub Actions) | `build` + `test` en cada push |
+| Baja | **CI** (GitHub Actions) | `build` + `test` (+ `lint`) en cada push. Ahora que hay lint, blinda el refactor en curso |
 | Baja | **i18n / textos centralizados** | Hoy en español hardcodeado |
+
+> **Remate de ESLint/Prettier:** la config está puesta pero **no se ha aplicado
+> al código existente**. Pendiente: (a) `npm run lint:fix` para la deuda
+> auto-corregible; (b) decidir si pasar `npm run format` (Prettier **colapsará la
+> alineación manual de columnas** del código actual, así que conviene hacerlo en
+> un commit aislado y de una vez, no mezclado con cambios funcionales).
 
 ---
 
@@ -146,7 +140,7 @@ Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 |---------|--------|
 | §1 (carátulas, claves, Vite) | Decisiones propias previas de TuaFM |
 | §1 (host, cuota YouTube) | `docs/STACK_Y_DESPLIEGUE.md` |
-| §2 (candidatos, onError, Media Session) | `docs/DOCUMENTACION.md` (problemas 4-5, reproductor propuesto) + `docs/STACK_Y_DESPLIEGUE.md` (YouTube Search/Player) |
+| §2 (candidatos, onError, Media Session) — ✓ hecho | `docs/DOCUMENTACION.md` (problemas 4-5, reproductor propuesto) + `docs/STACK_Y_DESPLIEGUE.md` (YouTube Search/Player) |
 | §3 (PWA, tests, ESLint, zod, AbortController, i18n) | Ya estaban en `dudas.md` |
 | §3 (TTLs, cabeceras, tsconfig) | `docs/STACK_Y_DESPLIEGUE.md` + `docs/DOCUMENTACION.md` |
 | §4 | Comparativa código actual vs `docs/` |
