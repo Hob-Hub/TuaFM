@@ -14,6 +14,9 @@ dist-ssr/
 scripts/service-account.json
 chart-pipeline/service-account.json
 
+# Caché de reanudación del build (Last.fm)
+chart-pipeline/.lastfm-cache.db*
+
 # Editor
 .vscode/*
 !.vscode/extensions.json

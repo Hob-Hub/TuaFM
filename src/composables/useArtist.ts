@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 import { getArtistInfo, pickImage, getTrackCover } from '@/services/lastfm.service'
 import { getArtistTopTracks } from '@/services/lastfm.similarity.service'
+import { getArtistByKey, getTrackByKey } from '@/services/catalog/static.source'
+import { normalizeStr, makeCacheKey } from '@/utils/normalize'
 
 const TOP_TRACKS_LIMIT = 50
 
@@ -29,6 +31,21 @@ export function useArtist() {
     error.value   = null
     info.value    = null
     try {
+      // 0 — Catálogo estático (build): ficha ya pre-cacheada → sin pegar a Last.fm.
+      const cat = await getArtistByKey(normalizeStr(artist))
+      if (cat) {
+        info.value = {
+          name:      cat.name,
+          bio:       cat.bio ?? '',
+          listeners: cat.listeners ?? 0,
+          imageUrl:  cat.imageUrl,
+          tags:      cat.tags ?? [],
+          topTracks: (cat.topTracks ?? []).map(t => ({ title: t.title, listeners: t.listeners ?? 0 }))
+        }
+        void resolveCovers(cat.name, info.value.topTracks)
+        return
+      }
+
       const [infoRes, topRes] = await Promise.allSettled([
         getArtistInfo(artist),
         getArtistTopTracks(artist, TOP_TRACKS_LIMIT)
@@ -68,7 +85,9 @@ export function useArtist() {
     async function worker(): Promise<void> {
       while (i < tracks.length) {
         const track = tracks[i++]
-        const cover = await getTrackCover(artistName, track.title).catch(() => undefined)
+        // Catálogo primero (offline, sin cuota); Last.fm solo si no está.
+        const fromCat = await getTrackByKey(makeCacheKey(artistName, track.title))
+        const cover = fromCat?.coverUrl ?? await getTrackCover(artistName, track.title).catch(() => undefined)
         if (cover) track.coverUrl = cover
       }
     }

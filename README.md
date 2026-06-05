@@ -99,18 +99,25 @@ por sus posiciones a lo largo del año (`score = Σ 1/√posición`):
 - **Estados Unidos / Billboard** (`us`) ← `billboard_year_end_hot100.db` (anual, top 100).
 
 El pipeline de datos **versionado** vive en [`chart-pipeline/`](chart-pipeline/)
-(el scraper en Python y las `.db` están en `scripts/`, ignorado por git). El bundle
-local vive en `public/charts/` (`registry.json` + `<chartId>.json`) y se regenera
-con el exportador estático (sin Firebase, offline):
+(el scraper en Python y las `.db` están en `scripts/`, ignorado por git). Genera dos
+cosas en `public/` (sin Firebase, offline):
+
+- **`public/charts/`** — listas **compactas**: `registry.json` + `<chartId>.json`,
+  donde cada canción es `{t,r,s,p,w}` (referencia al catálogo por `t`=trackId).
+- **`public/catalog/`** — catálogo **normalizado y deduplicado**: `tracks.json`
+  (1 por canción, con YouTube/carátula de la DB + álbum/tags/duración/oyentes de
+  Last.fm) y `artists.json` (bio, imagen, oyentes, tags y **top 50** por artista).
+  Es la **primera capa de caché** en runtime → muchas menos llamadas a APIs.
 
 ```bash
 cd chart-pipeline
-node export-charts-static.mjs chart-configs/es.json   # --from 2000 --to 2025
-node export-charts-static.mjs chart-configs/us.json
+node build-charts.mjs              # charts + catálogo enriquecido (Last.fm, resumible)
+node build-charts.mjs --no-lastfm  # rápido: solo siembra de la DB, sin tocar la API
 ```
 
-La consolidación vive en [`chart-pipeline/lib/annualize.mjs`](chart-pipeline/lib/annualize.mjs),
-compartida con el exportador a Firestore (para "más adelante"):
+La consolidación vive en [`chart-pipeline/lib/annualize.mjs`](chart-pipeline/lib/annualize.mjs)
+y la normalización del catálogo en [`lib/catalog.mjs`](chart-pipeline/lib/catalog.mjs).
+Para subir a Firestore "más adelante" (mismo Top anual, 1 doc/año/chart):
 
 ```bash
 cd chart-pipeline
@@ -162,13 +169,23 @@ Elegido un año de referencia y una fuente, la radio agrega candidatos de los a�
 alto ≈ casi solo ese año; bajo ≈ mezcla de épocas. `defaultLambda` y el rango de años
 de cada fuente viven en el `registry`.
 
-### Formato del bundle (`public/charts/`)
+### Formato del bundle (`public/`)
 
 ```jsonc
-// registry.json  → ChartRegistry[]  (índice de listas: id, nombre, bandera, años, λ…)
-// <chartId>.json → { chartId, periods: [ { chartId, year, songs: ChartSong[] } ] }
-//   songs[] viene rankeado (songs[0] = Nº1 del año). Tipos en src/types/chart.types.ts.
+// charts/registry.json  → ChartRegistry[]  (índice: id, nombre, bandera, años, λ…)
+// charts/<chartId>.json → { chartId, periods:[ { year, songs:[ {t,r,s,p,w} ] } ] }  (compacto)
+//   t=trackId  r=rank  s=score  p=peakPosition  w=weeksOnChart   (songs[0] = Nº1 del año)
+// catalog/tracks.json   → { tracks:  CatalogTrack[]  }   (1 por canción, deduplicado)
+// catalog/artists.json  → { artists: CatalogArtist[] }   (bio/imagen/tags/top50)
 ```
+
+La capa [`src/services/catalog/static.source.ts`](src/services/catalog/static.source.ts)
+carga el catálogo y **hidrata** los charts (join por `t`) para reconstruir
+`ChartSong`, y es la **caché previa** de [`trackCache.service.ts`](src/services/trackCache.service.ts)
+(enriquecimiento de pistas) y [`useArtist.ts`](src/composables/useArtist.ts) (ficha de
+artista). Tipos en [`src/types/chart.types.ts`](src/types/chart.types.ts). Lo que no se
+encuentra en build se deja vacío y se resuelve lazy al reproducir (p. ej. YouTube de
+Billboard).
 
 **Añadir una fuente** = crear `chart-pipeline/chart-configs/<chartId>.json` con su `query`
 SQL y `consolidate` (`annual-from-weekly` | `annual`) y regenerar. Cero cambios en el

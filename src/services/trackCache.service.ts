@@ -4,8 +4,10 @@ import { db, makeCacheKey } from '@/db/local.db'
 import { getTrackInfo, pickImage } from '@/services/lastfm.service'
 import { searchVideoCandidates } from '@/services/youtube.service'
 import { getCoverUrl } from '@/services/coverart.service'
+import { getTrackByKey } from '@/services/catalog/static.source'
 import type { Track } from '@/types/track.types'
 import type { FirestoreTrackCache, LastfmTrackResponse } from '@/types/api.types'
+import type { CatalogTrack } from '@/types/chart.types'
 import type { LocalTrack } from '@/db/local.db'
 
 const CACHE_TTL_DAYS = 30
@@ -67,7 +69,17 @@ export async function resolveTrack(
     return stripId(local)
   }
 
-  // 2 — Firestore compartido (solo si está configurado)
+  // 2 — Catálogo estático (build): Last.fm ya pre-cacheado en bundle. Evita la
+  //      llamada a Last.fm; solo busca YouTube si la pista no trae vídeo (Billboard).
+  const catTrack = await getTrackByKey(cacheKey)
+  if (catTrack) {
+    const enriched = await fromCatalog(catTrack, existingVideoId, displayArtist)
+    await persistToFirestore(enriched, cacheKey)
+    await persistToLocal(enriched, cacheKey)
+    return enriched
+  }
+
+  // 3 — Firestore compartido (solo si está configurado)
   if (isFirebaseConfigured) try {
     const fsSnap = await getDoc(doc(getFirestoreDb(), 'track_cache', cacheKey))
     if (fsSnap.exists()) {
@@ -83,11 +95,42 @@ export async function resolveTrack(
     console.warn('[trackCache] Firestore read failed:', err)
   }
 
-  // 3 — Miss total: APIs externas
+  // 4 — Miss total: APIs externas
   const enriched = await fetchExternal(artist, title, existingVideoId, displayArtist)
   await persistToFirestore(enriched, cacheKey)
   await persistToLocal(enriched, cacheKey)
   return enriched
+}
+
+// Enriquecimiento desde el catálogo estático: copia los metadatos ya cacheados
+// (álbum, tags, duración, oyentes, carátula…) y resuelve YouTube SOLO si falta.
+async function fromCatalog(
+  cat: CatalogTrack, existingVideoId?: string, displayArtist?: string
+): Promise<EnrichResult> {
+  const result: EnrichResult = {
+    artist:    cat.artist,
+    title:     cat.title,
+    album:     cat.album,
+    year:      cat.year,
+    duration:  cat.durationMs,
+    coverUrl:  cat.coverUrl,
+    tags:      cat.tags ?? [],
+    listeners: cat.listeners,
+    lastfmUrl: cat.lastfmUrl,
+    enriched:  true
+  }
+
+  const videoId = existingVideoId ?? cat.youtubeVideoId
+  if (videoId) {
+    result.youtubeVideoId = videoId
+  } else {
+    const yt = await searchVideoCandidates(displayArtist ?? cat.artist, cat.title).catch(() => [])
+    if (yt.length > 0) {
+      result.youtubeVideoId = yt[0]
+      if (yt.length > 1) result.youtubeCandidates = yt
+    }
+  }
+  return result
 }
 
 async function fetchExternal(

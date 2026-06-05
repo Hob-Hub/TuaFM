@@ -13,13 +13,15 @@
     "type":            "sqlite",
     "consolidate":     "annual-from-weekly",
     "dbPath":          "../los40.db",
-    "query":           "SELECT chart_date, position, song AS title, artists AS artist_raw, cover_url, youtube_url FROM v_chart ORDER BY chart_date, position",
+    "query":           "SELECT chart_date, position, song AS title, artists AS artist_raw, cover_url, youtube_url, album, album_year FROM v_chart ORDER BY chart_date, position",
     "artistSeparator": ";",
     "dateField":       "chart_date",
     "posField":        "position",
     "titleField":      "title",
     "artistField":     "artist_raw",
     "ytUrlField":      "youtube_url",
-    "coverField":      "cover_url"
+    "coverField":      "cover_url",
+    "albumField":      "album",
+    "yearField":       "album_year"
   }
 }

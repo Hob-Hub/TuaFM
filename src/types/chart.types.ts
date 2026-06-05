@@ -38,6 +38,43 @@ export interface ChartPeriod {
   songs:   ChartSong[]           // rankeadas (songs[0] = Nº1 del año)
 }
 
+// ── Catálogo normalizado (public/catalog/*.json) ─────────────────────────────
+// Los charts en disco son compactos y referencian estas entradas por id; la capa
+// static.source las "hidrata" para reconstruir ChartSong y alimenta la caché de
+// enriquecimiento (trackCache) y la vista de artista (useArtist) sin pegar a APIs.
+
+export interface CatalogTrack {
+  id:              number
+  key:             string        // = makeCacheKey(artist, title)
+  title:           string        // display
+  artist:          string        // display (con feat.)
+  artistId:        number        // → CatalogArtist.id
+  album?:          string
+  year?:           number
+  durationMs?:     number
+  tags?:           string[]
+  youtubeVideoId?: string
+  coverUrl?:       string
+  listeners?:      number
+  lastfmUrl?:      string
+}
+
+export interface CatalogArtistTopTrack {
+  title:      string
+  listeners?: number
+}
+
+export interface CatalogArtist {
+  id:         number
+  key:        string             // = normalizeStr(name)
+  name:       string             // display
+  bio?:       string
+  listeners?: number
+  imageUrl?:  string
+  tags?:      string[]
+  topTracks?: CatalogArtistTopTrack[]
+}
+
 export interface RadioCandidate {
   artist:          string
   artistDisplay:   string

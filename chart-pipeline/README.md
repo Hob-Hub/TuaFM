@@ -1,6 +1,7 @@
 # chart-pipeline
 
-Tooling **versionado** que consolida los charts a un **Top por año** y genera el
+Tooling **versionado** que consolida los charts a un **Top por año**, construye un
+**catálogo normalizado** (tracks + artistas, pre-cacheado con Last.fm) y genera el
 bundle estático que consume la app. (El scraper en Python y las bases `.db` viven
 en `scripts/`, que está en `.gitignore`.)
 
@@ -8,24 +9,41 @@ en `scripts/`, que está en `.gitignore`.)
 
 | Archivo | Para qué |
 |---|---|
-| [`lib/annualize.mjs`](lib/annualize.mjs) | Lógica pura de consolidación (semanal/anual → Top del año). **Único sitio** para afinar la fórmula de puntuación. |
-| [`export-charts-static.mjs`](export-charts-static.mjs) | SQLite → JSON estático en `../public/charts/`. Sin dependencias (usa `node:sqlite`, Node ≥ 22). |
+| [`lib/annualize.mjs`](lib/annualize.mjs) | Consolidación pura (semanal/anual → Top del año). **Único sitio** para afinar la fórmula de puntuación. |
+| [`lib/catalog.mjs`](lib/catalog.mjs) | Dedupe de tracks/artistas, asignación de ids, siembra desde la DB y compactación de los charts. |
+| [`lib/lastfm.mjs`](lib/lastfm.mjs) | Cliente Last.fm para el build (throttle ~5 req/s + caché de reanudación en `.lastfm-cache.db`). |
+| [`build-charts.mjs`](build-charts.mjs) | Orquestador: charts compactos en `../public/charts/` + catálogo en `../public/catalog/`. |
 | [`migrate-to-firestore.mjs`](migrate-to-firestore.mjs) | SQLite → Firestore (1 doc/año/chart). Para "más adelante"; necesita `npm install`. |
 | [`chart-configs/*.json`](chart-configs/) | Definición de cada fuente (consulta SQL, `consolidate`, metadatos del registry). |
+
+## Salida
+
+- `../public/charts/registry.json` — índice de listas.
+- `../public/charts/<chartId>.json` — **compacto**: cada canción es `{t,r,s,p,w}`
+  (t=trackId, r=rank, s=score, p=pico, w=semanas) y referencia el catálogo.
+- `../public/catalog/tracks.json` — 1 entrada por track distinto (deduplicado entre
+  años y charts), con YouTube/carátula de la DB + álbum/tags/duración/oyentes de Last.fm.
+- `../public/catalog/artists.json` — 1 entrada por artista: bio, imagen, oyentes,
+  tags y **top 50** de Last.fm. Lo que no se encuentra se deja vacío.
 
 ## Requisitos
 
 Las bases SQLite de origen deben estar en la **raíz del repo** (un nivel por
 encima de esta carpeta): `../los40.db`, `../billboard_year_end_hot100.db`. No se
-versionan (son grandes y se regeneran con el scraper de `scripts/`).
+versionan. El enriquecimiento Last.fm necesita `VITE_LASTFM_API_KEY` (del entorno
+o de `../.env.local`).
 
 ## Uso
 
 ```bash
-# Bundle estático local (offline, sin Firebase) — lo que usa la app:
-node export-charts-static.mjs chart-configs/es.json   # --from 2000 --to 2025
-node export-charts-static.mjs chart-configs/us.json
-# o, con deps instaladas: npm run export:all
+# Build completo (charts + catálogo enriquecido con Last.fm). Resumible: la caché
+# .lastfm-cache.db evita repetir llamadas en pasadas sucesivas (~25 min la 1ª vez).
+node build-charts.mjs                 # = npm run build
+
+# Build rápido sin tocar la API (solo siembra de la DB: YouTube/carátula/álbum):
+node build-charts.mjs --no-lastfm     # = npm run build:fast
+
+# Acotar años:  node build-charts.mjs --from 2000 --to 2025
 
 # Subir a Firestore (opcional, "más adelante"):
 npm install                                  # better-sqlite3, firebase-admin

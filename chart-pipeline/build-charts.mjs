@@ -1,0 +1,142 @@
+#!/usr/bin/env node
+// Build del bundle de charts NORMALIZADO + catálogo (tracks/artistas) pre-cacheado.
+//
+// Salida:
+//   public/charts/registry.json        → ChartRegistry[]
+//   public/charts/<chartId>.json       → { chartId, periods:[{year,songs:[{t,r,s,p,w}]}] }  (compacto)
+//   public/catalog/tracks.json         → { tracks:  CatalogTrack[]  }  (1 por track distinto)
+//   public/catalog/artists.json        → { artists: CatalogArtist[] }  (top 50 inline)
+//
+// Uso:  node build-charts.mjs                       # ES + US, con enriquecimiento Last.fm
+//       node build-charts.mjs --no-lastfm           # rápido: solo siembra de la DB
+//       node build-charts.mjs --from 2000 --to 2025 chart-configs/es.json chart-configs/us.json
+//
+// Deps: ninguna para --no-lastfm (node:sqlite, Node ≥22). El enriquecimiento usa
+// fetch global y VITE_LASTFM_API_KEY (env o ../.env.local).
+
+import { DatabaseSync } from 'node:sqlite'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { annualizeRows, normalizeStr, splitArtist } from './lib/annualize.mjs'
+import { buildCatalog, compactPeriods, seedMapFromRows } from './lib/catalog.mjs'
+import * as lfm from './lib/lastfm.mjs'
+
+const __dir = dirname(fileURLToPath(import.meta.url))
+const args  = process.argv.slice(2)
+const flag  = (name, def) => { const i = args.indexOf(`--${name}`); return i >= 0 && args[i + 1] && !args[i + 1].startsWith('--') ? Number(args[i + 1]) : def }
+const noLastfm = args.includes('--no-lastfm')
+const fromYear = flag('from', 2000)
+const toYear   = flag('to', 2025)
+const configArgs = args.filter(a => !a.startsWith('--') && !/^\d+$/.test(a))
+const configs = configArgs.length ? configArgs : ['chart-configs/es.json', 'chart-configs/us.json']
+
+const stripLinks = html => String(html || '').replace(/<a\b[^>]*>.*?<\/a>/gi, '').replace(/\s+/g, ' ').trim()
+
+// ── 1. Consolidar cada chart + sembrar álbum/año desde la DB ─────────────────
+const charts = []
+const registry = []
+for (const configPath of configs) {
+  const config = JSON.parse(readFileSync(resolve(__dir, configPath), 'utf8'))
+  const dbPath = resolve(__dir, config.source.dbPath)
+  if (!existsSync(dbPath)) { console.error(`No existe la DB: ${dbPath}`); process.exit(1) }
+
+  const db = new DatabaseSync(dbPath, { readOnly: true })
+  const rows = db.prepare(config.source.query).all()
+  db.close()
+
+  const periods   = annualizeRows(rows, config, fromYear, toYear)
+  const seedByKey = seedMapFromRows(rows, { chartId: config.chartId, ...config.source }, normalizeStr, splitArtist)
+  charts.push({ config, chartId: config.chartId, periods, seedByKey })
+
+  const minYear = Math.min(...periods.map(p => p.year))
+  const maxYear = Math.max(...periods.map(p => p.year))
+  registry.push({
+    chartId: config.chartId, name: config.name, shortName: config.shortName,
+    subtitle: config.subtitle ?? null, country: config.country, flag: config.flag,
+    language: config.language, listSize: config.listSize,
+    startYear: minYear, endYear: maxYear, totalPeriods: periods.length,
+    defaultLambda: config.defaultLambda, description: config.description
+  })
+  console.log(`· ${config.chartId}: ${periods.length} años (${minYear}–${maxYear})`)
+}
+
+// ── 2. Catálogo normalizado (dedupe + ids + siembra) ─────────────────────────
+const { tracks, artists, trackIdByKey } = buildCatalog(charts)
+console.log(`· catálogo: ${tracks.length} tracks, ${artists.length} artistas`)
+
+// ── 3. Enriquecimiento Last.fm (opcional) ────────────────────────────────────
+const primaryName = a => String(a || '').split(', ')[0].trim()
+if (!noLastfm) {
+  if (!lfm.hasApiKey()) { console.error('Falta VITE_LASTFM_API_KEY (env o ../.env.local). Usa --no-lastfm para saltar.'); process.exit(1) }
+
+  console.log(`\nEnriqueciendo ${tracks.length} tracks vía Last.fm (track.getInfo)…`)
+  let n = 0
+  for (const t of tracks) {
+    try {
+      const data = await lfm.trackGetInfo(primaryName(t.artist), t.title)
+      const tr = data?.track
+      if (tr) {
+        if (!t.album && tr.album?.title) t.album = tr.album.title
+        if (!t.coverUrl) { const c = lfm.pickImage(tr.album?.image); if (c) t.coverUrl = c }
+        const dur = tr.duration ? parseInt(tr.duration, 10) : 0
+        if (dur) t.durationMs = dur
+        const tags = (tr.toptags?.tag ?? []).slice(0, 5).map(x => x.name).filter(Boolean)
+        if (tags.length) t.tags = tags
+        const list = tr.listeners ? parseInt(tr.listeners, 10) : 0
+        if (list) t.listeners = list
+        if (tr.url) t.lastfmUrl = tr.url
+      }
+    } catch (e) { console.warn(`  ! track ${t.key}: ${e.message}`) }
+    if (++n % 250 === 0) console.log(`  tracks ${n}/${tracks.length} (api=${lfm.stats.apiCalls} cache=${lfm.stats.cacheHits})`)
+  }
+
+  console.log(`\nEnriqueciendo ${artists.length} artistas (artist.getInfo + getTopTracks 50)…`)
+  n = 0
+  for (const a of artists) {
+    try {
+      const info = await lfm.artistGetInfo(a.name)
+      const ar = info?.artist
+      if (ar) {
+        const bio = stripLinks(ar.bio?.summary)
+        if (bio) a.bio = bio
+        const img = lfm.pickImage(ar.image); if (img) a.imageUrl = img
+        const list = ar.stats?.listeners ? parseInt(ar.stats.listeners, 10) : 0
+        if (list) a.listeners = list
+        const tags = (ar.tags?.tag ?? []).map(x => x.name).filter(Boolean).slice(0, 6)
+        if (tags.length) a.tags = tags
+      }
+      const top = await lfm.artistGetTopTracks(a.name, 50)
+      const tt = (top?.toptracks?.track ?? []).map(x => ({
+        title: x.name,
+        ...(x.listeners ? { listeners: parseInt(x.listeners, 10) || undefined } : {})
+      })).filter(x => x.title)
+      if (tt.length) a.topTracks = tt
+    } catch (e) { console.warn(`  ! artista ${a.key}: ${e.message}`) }
+    if (++n % 100 === 0) console.log(`  artistas ${n}/${artists.length} (api=${lfm.stats.apiCalls} cache=${lfm.stats.cacheHits})`)
+  }
+  lfm.closeCache()
+  console.log(`\n✓ Last.fm: ${lfm.stats.apiCalls} llamadas, ${lfm.stats.cacheHits} de caché, ${lfm.stats.errors} sin resultado`)
+}
+
+// ── 4. Escritura ─────────────────────────────────────────────────────────────
+const chartsDir  = resolve(__dir, '..', 'public', 'charts')
+const catalogDir = resolve(__dir, '..', 'public', 'catalog')
+mkdirSync(chartsDir,  { recursive: true })
+mkdirSync(catalogDir, { recursive: true })
+
+registry.sort((a, b) => a.chartId.localeCompare(b.chartId))
+writeFileSync(resolve(chartsDir, 'registry.json'), JSON.stringify(registry))
+
+for (const { chartId, periods } of charts) {
+  const compact = compactPeriods(periods, trackIdByKey)
+  writeFileSync(resolve(chartsDir, `${chartId}.json`), JSON.stringify({ chartId, periods: compact }))
+}
+writeFileSync(resolve(catalogDir, 'tracks.json'),  JSON.stringify({ tracks }))
+writeFileSync(resolve(catalogDir, 'artists.json'), JSON.stringify({ artists }))
+
+const kb = p => (readFileSync(p).length / 1024).toFixed(0)
+console.log('\n✓ Escrito:')
+for (const { chartId } of charts) console.log(`  public/charts/${chartId}.json (${kb(resolve(chartsDir, `${chartId}.json`))} KB)`)
+console.log(`  public/catalog/tracks.json  (${kb(resolve(catalogDir, 'tracks.json'))} KB)`)
+console.log(`  public/catalog/artists.json (${kb(resolve(catalogDir, 'artists.json'))} KB)`)

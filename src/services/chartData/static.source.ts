@@ -1,15 +1,22 @@
-import type { ChartPeriod, ChartRegistry } from '@/types/chart.types'
+import type { ChartPeriod, ChartRegistry, ChartSong, CatalogTrack } from '@/types/chart.types'
+import { getTracksById } from '@/services/catalog/static.source'
 
 /**
  * Fuente de charts servida como JSON estático desde /public/charts.
- * Generada por scripts/export-charts-static.mjs a partir del SQLite de origen.
+ * Generada por chart-pipeline/build-charts.mjs.
+ *
+ * Los ficheros de chart son COMPACTOS: cada canción referencia el catálogo de
+ * tracks por id (`{ t, r, s, p, w }`). Aquí se hidratan con public/catalog/tracks.json
+ * para reconstruir la forma rica `ChartSong` que consumen scoring y UI.
  *
  * Es la fuente primaria: no depende de Firebase, funciona offline y no consume
- * cuota de Firestore. Cada fichero de chart se carga perezosamente la primera
- * vez que se pide una radio de ese chart, y se cachea en memoria.
+ * cuota de Firestore. Cada fichero se carga perezosamente y se cachea en memoria.
  */
 
 const BASE = `${import.meta.env.BASE_URL}charts/`
+
+interface RawChartSong { t: number; r: number; s: number; p: number; w: number }
+interface RawChartPeriod { year: number; songs: RawChartSong[] }
 
 let registryPromise: Promise<ChartRegistry[]> | null = null
 const chartPromises = new Map<string, Promise<ChartPeriod[]>>()
@@ -45,11 +52,36 @@ export async function getRegistry(chartId: string): Promise<ChartRegistry | null
   return regs.find(r => r.chartId === chartId) ?? null
 }
 
+// Reconstruye una ChartSong rica a partir de la entrada compacta + el catálogo.
+function hydrate(raw: RawChartSong, tracks: Map<number, CatalogTrack>): ChartSong | null {
+  const t = tracks.get(raw.t)
+  if (!t) return null
+  const sep = t.key.indexOf('::')
+  const artist = sep >= 0 ? t.key.slice(0, sep) : t.key
+  const title  = sep >= 0 ? t.key.slice(sep + 2) : t.key
+  return {
+    rank: raw.r, position: raw.r, score: raw.s, peakPosition: raw.p, weeksOnChart: raw.w,
+    artist, title,
+    artistDisplay: t.artist, titleDisplay: t.title,
+    youtubeVideoId: t.youtubeVideoId,
+    coverUrl: t.coverUrl
+  }
+}
+
 function loadChart(chartId: string): Promise<ChartPeriod[]> {
   let p = chartPromises.get(chartId)
   if (!p) {
-    p = fetchJson<{ chartId: string; periods: ChartPeriod[] }>(`${chartId}.json`)
-      .then(data => data.periods)
+    p = Promise.all([
+      fetchJson<{ chartId: string; periods: RawChartPeriod[] }>(`${chartId}.json`),
+      getTracksById()
+    ])
+      .then(([data, tracks]) => data.periods.map(period => ({
+        chartId,
+        year: period.year,
+        songs: period.songs
+          .map(raw => hydrate(raw, tracks))
+          .filter((s): s is ChartSong => s !== null)
+      })))
       .catch(err => { chartPromises.delete(chartId); throw err })
     chartPromises.set(chartId, p)
   }
