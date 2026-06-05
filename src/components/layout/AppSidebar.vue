@@ -1,11 +1,25 @@
 <script setup lang="ts">
-import { RouterLink, useRoute } from 'vue-router'
+import { ref } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useUiStore } from '@/stores/ui.store'
+import { isFirebaseConfigured } from '@/firebase/index'
 
 const route = useRoute()
+const router = useRouter()
 const ui = useUiStore()
 const { playlists } = usePlaylists()
+
+const searchTerm = ref('')
+function submitSearch(): void {
+  const q = searchTerm.value.trim()
+  router.push({ name: 'search', query: q ? { q } : {} })
+  ui.closeSidebar()
+}
+
+// En modo local (sin Firebase) la app funciona con charts estáticos + datos del
+// dispositivo. Se muestra un indicador discreto para que el usuario lo sepa.
+const localMode = !isFirebaseConfigured
 
 const nav = [
   { name: 'home',    label: 'Inicio',          icon: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10' },
@@ -24,6 +38,21 @@ const nav = [
       </span>
       <span class="font-display text-xl font-extrabold tracking-tight">Tua<span class="text-brand">FM</span></span>
     </RouterLink>
+
+    <!-- Buscador -->
+    <form class="relative" @submit.prevent="submitSearch">
+      <svg viewBox="0 0 24 24" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+      </svg>
+      <input
+        v-model="searchTerm"
+        type="search"
+        placeholder="Buscar…"
+        aria-label="Buscar artistas o canciones"
+        class="w-full h-9 pl-9 pr-3 rounded-xl bg-surface-2 border border-line text-sm text-white/90
+               placeholder:text-muted/60 focus:outline-none focus:border-brand/70 focus:ring-2 focus:ring-brand/30 transition-colors"
+      />
+    </form>
 
     <!-- Navegación principal -->
     <nav class="flex flex-col gap-1">
@@ -64,6 +93,16 @@ const nav = [
           Aún no tienes playlists. Crea una con el botón <span class="text-brand">+</span> de arriba.
         </li>
       </ul>
+    </div>
+
+    <!-- Indicador de modo local (sin Firebase) -->
+    <div
+      v-if="localMode"
+      class="flex items-center gap-2 px-3 py-2 text-[11px] text-muted/80"
+      title="Funcionando sin Firebase: los datos de charts son locales y tus playlists, favoritos e historial se guardan solo en este dispositivo."
+    >
+      <span class="w-2 h-2 rounded-full bg-emerald-400/80 shrink-0"></span>
+      <span class="truncate">Modo local · sin conexión a la nube</span>
     </div>
   </aside>
 </template>

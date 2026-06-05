@@ -28,6 +28,7 @@ const isFav = computed(() => {
 })
 
 const artistLabel = computed(() => props.track.artistDisplay ?? props.track.artist)
+const titleLabel  = computed(() => props.track.titleDisplay  ?? props.track.title)
 
 function fmtDuration(ms?: number): string {
   if (!ms) return ''
@@ -67,7 +68,7 @@ function fmtDuration(ms?: number): string {
     <!-- Título + artista -->
     <div class="min-w-0 flex-1" @click="emit('play')">
       <div class="flex items-center gap-2">
-        <p class="text-sm font-medium text-white truncate">{{ track.title }}</p>
+        <p class="text-sm font-medium text-white truncate">{{ titleLabel }}</p>
         <span v-if="track.enrichError" title="No se pudo enriquecer" class="text-amber-400 text-xs">⚠</span>
       </div>
       <template v-if="track.enriched || track.artist">

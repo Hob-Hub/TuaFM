@@ -10,7 +10,7 @@ defineProps<{ track: Track | null }>()
   <div class="flex items-center gap-3 min-w-0">
     <TrackCover :src="track?.coverUrl" :alt="track?.album" :size="52" rounded="rounded-lg" />
     <div v-if="track" class="min-w-0">
-      <p class="font-medium text-sm text-white truncate">{{ track.title }}</p>
+      <p class="font-medium text-sm text-white truncate">{{ track.titleDisplay ?? track.title }}</p>
       <RouterLink
         :to="{ name: 'artist', params: { name: track.artistDisplay ?? track.artist } }"
         class="text-xs text-muted truncate hover:text-white/80 hover:underline block"

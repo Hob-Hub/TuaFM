@@ -1,6 +1,9 @@
 import type {
-  LastfmTrackResponse, LastfmArtistResponse, LastfmSearchResponse
+  LastfmTrackResponse, LastfmArtistResponse, LastfmSearchResponse,
+  LastfmArtistSearchResponse
 } from '@/types/api.types'
+import { getCoverUrl } from '@/services/coverart.service'
+import { makeCacheKey } from '@/utils/normalize'
 
 const API_KEY = import.meta.env.VITE_LASTFM_API_KEY
 const BASE    = 'https://ws.audioscrobbler.com/2.0/'
@@ -58,7 +61,7 @@ export interface TrackSearchResult {
   coverUrl?: string
 }
 
-/** Búsqueda libre de tracks (para AddTrackModal). */
+/** Búsqueda libre de tracks (para AddTrackModal y el buscador global). */
 export async function searchTrack(
   query: string, limit = 20, signal?: AbortSignal
 ): Promise<TrackSearchResult[]> {
@@ -72,6 +75,58 @@ export async function searchTrack(
     listeners: m.listeners ? parseInt(m.listeners, 10) : 0,
     coverUrl:  pickImage(m.image)
   }))
+}
+
+export interface ArtistSearchResult {
+  name:      string
+  listeners: number
+  imageUrl?: string
+}
+
+/** Búsqueda libre de artistas (para el buscador global). */
+export async function searchArtists(
+  query: string, limit = 12, signal?: AbortSignal
+): Promise<ArtistSearchResult[]> {
+  const data = await lastfmCall<LastfmArtistSearchResponse>('artist.search', {
+    artist: query, limit
+  }, signal)
+  const matches = data.results?.artistmatches?.artist ?? []
+  return matches.map(m => ({
+    name:      m.name,
+    listeners: m.listeners ? parseInt(m.listeners, 10) : 0,
+    imageUrl:  pickImage(m.image)
+  }))
+}
+
+// Carátula real por canción, SIN tocar YouTube (no gasta cuota): álbum de
+// Last.fm y, si falta, MusicBrainz + Cover Art Archive. Cacheada en memoria
+// por sesión con deduplicación de peticiones en vuelo.
+const coverCache = new Map<string, Promise<string | undefined>>()
+
+export function getTrackCover(
+  artist: string, title: string, signal?: AbortSignal
+): Promise<string | undefined> {
+  const key = makeCacheKey(artist, title)
+  let p = coverCache.get(key)
+  if (!p) {
+    p = resolveTrackCover(artist, title, signal).catch(() => undefined)
+    coverCache.set(key, p)
+  }
+  return p
+}
+
+async function resolveTrackCover(
+  artist: string, title: string, signal?: AbortSignal
+): Promise<string | undefined> {
+  const info  = await getTrackInfo(artist, title, signal)
+  const album = info.track.album
+  const fromLastfm = pickImage(album?.image)
+  if (fromLastfm) return fromLastfm
+  if (album?.title) {
+    const fallback = await getCoverUrl(artist, album.title, signal)
+    if (fallback) return fallback
+  }
+  return undefined
 }
 
 // Last.fm restringió las imágenes de artista y devuelve un placeholder "estrella"

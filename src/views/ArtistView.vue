@@ -21,10 +21,10 @@ function fmtListeners(n: number): string {
 }
 
 // Reproduce un top track creando una mini-cola de playlist efímera
-function playTrack(title: string): void {
+function playTrack(track: { title: string; coverUrl?: string }): void {
   if (!info.value) return
   playback.startPlaylistQueue(
-    [{ id: nanoid(), artist: info.value.name, title, enriched: false }],
+    [{ id: nanoid(), artist: info.value.name, title: track.title, coverUrl: track.coverUrl, enriched: false }],
     0, null
   )
 }
@@ -51,7 +51,7 @@ function playTrack(title: string): void {
 
     <template v-else-if="info">
       <header class="flex items-end gap-5 mb-6">
-        <TrackCover :src="info.imageUrl" :size="160" rounded="rounded-2xl" />
+        <TrackCover :src="info.imageUrl" :fallback-text="info.name" :size="160" rounded="rounded-2xl" />
         <div class="min-w-0 pb-1">
           <p class="text-xs uppercase tracking-wider text-muted">Artista</p>
           <h1 class="font-display text-3xl sm:text-4xl font-extrabold truncate">{{ info.name }}</h1>
@@ -69,11 +69,12 @@ function playTrack(title: string): void {
         <ul class="flex flex-col">
           <li v-for="(t, i) in info.topTracks" :key="t.title"
               class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
-              @click="playTrack(t.title)">
-            <span class="w-5 text-sm text-muted tabular-nums">{{ i + 1 }}</span>
+              @click="playTrack(t)">
+            <span class="w-5 text-sm text-muted tabular-nums shrink-0">{{ i + 1 }}</span>
+            <TrackCover :src="t.coverUrl" :alt="t.title" :size="40" />
             <span class="flex-1 text-sm text-white truncate">{{ t.title }}</span>
-            <span class="text-xs text-muted tabular-nums">{{ fmtListeners(t.listeners) }}</span>
-            <BaseButton size="sm" variant="ghost" class="opacity-0 group-hover:opacity-100" @click.stop="playTrack(t.title)">
+            <span class="text-xs text-muted tabular-nums hidden sm:block">{{ fmtListeners(t.listeners) }}</span>
+            <BaseButton size="sm" variant="ghost" class="opacity-0 group-hover:opacity-100" @click.stop="playTrack(t)">
               <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             </BaseButton>
           </li>

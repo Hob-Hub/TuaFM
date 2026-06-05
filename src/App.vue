@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue'
-import { RouterView } from 'vue-router'
+import { RouterView, RouterLink } from 'vue-router'
 import { useOnline } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayback } from '@/composables/usePlayback'
@@ -55,6 +55,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
             <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <span class="font-display font-extrabold">Tua<span class="text-brand">FM</span></span>
+          <RouterLink :to="{ name: 'search' }" class="ml-auto p-2 -mr-2 rounded-lg text-white" aria-label="Buscar">
+            <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          </RouterLink>
         </div>
 
         <!-- Banner offline -->

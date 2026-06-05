@@ -61,6 +61,19 @@ export interface LastfmSearchResponse {
   }
 }
 
+export interface LastfmArtistSearchResponse {
+  results: {
+    artistmatches: {
+      artist: Array<{
+        name:      string
+        listeners: string
+        url?:      string
+        image:     LastfmImage[]
+      }>
+    }
+  }
+}
+
 // ── Last.fm similarity / top responses ───────────────────────────────────────
 
 export interface LastfmSimilarTrack {
