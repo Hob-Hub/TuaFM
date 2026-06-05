@@ -1,0 +1,9 @@
+dist
+node_modules
+public
+scripts
+chart-pipeline
+docs
+.venv
+*.md
+*.json
