@@ -15,21 +15,26 @@ const results = ref<TrackSearchResult[]>([])
 const loading = ref(false)
 const added = ref<Set<string>>(new Set())
 let timer: ReturnType<typeof setTimeout> | null = null
+let activeController: AbortController | null = null
 
 watch(query, (q) => {
   if (timer) clearTimeout(timer)
-  if (!q.trim()) { results.value = []; return }
+  if (!q.trim()) { activeController?.abort(); results.value = []; return }
   timer = setTimeout(runSearch, 350)
 })
 
 async function runSearch(): Promise<void> {
+  activeController?.abort()
+  const controller = new AbortController()
+  activeController = controller
   loading.value = true
   try {
-    results.value = await searchTrack(query.value, 20)
+    const found = await searchTrack(query.value, 20, controller.signal)
+    if (!controller.signal.aborted) results.value = found
   } catch {
-    results.value = []
+    if (!controller.signal.aborted) results.value = []
   } finally {
-    loading.value = false
+    if (!controller.signal.aborted) loading.value = false
   }
 }
 

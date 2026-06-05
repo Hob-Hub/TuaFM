@@ -24,33 +24,44 @@ function fmtListeners(n: number): string {
   return n > 0 ? `${new Intl.NumberFormat('es-ES').format(n)} oyentes` : ''
 }
 
+// Cancela la búsqueda en vuelo cuando el usuario sigue tecleando, para que una
+// respuesta vieja no pise a otra más nueva ni gaste red de más.
+let activeController: AbortController | null = null
+
 async function runSearch(query: string): Promise<void> {
   const term = query.trim()
+  activeController?.abort()
   if (term.length < 2) {
-    artists.value = []; songs.value = []; searched.value = false
+    activeController = null
+    artists.value = []; songs.value = []; searched.value = false; loading.value = false
     return
   }
+  const controller = new AbortController()
+  activeController = controller
   loading.value  = true
   searched.value = true
   const [aRes, sRes] = await Promise.allSettled([
-    searchArtists(term, 12),
-    searchTrack(term, 24)
+    searchArtists(term, 12, controller.signal),
+    searchTrack(term, 24, controller.signal)
   ])
+  if (controller.signal.aborted) return   // otra búsqueda más nueva tomó el relevo
   artists.value = aRes.status === 'fulfilled' ? aRes.value : []
   songs.value   = sRes.status === 'fulfilled' ? sRes.value : []
   loading.value = false
-  void resolveSongCovers(songs.value)
+  void resolveSongCovers(songs.value, controller.signal)
 }
 
 // Carátulas reales en segundo plano para las canciones sin imagen (sin YouTube).
-async function resolveSongCovers(list: TrackSearchResult[]): Promise<void> {
+async function resolveSongCovers(list: TrackSearchResult[], signal: AbortSignal): Promise<void> {
   const CONCURRENCY = 5
   let i = 0
   async function worker(): Promise<void> {
     while (i < list.length) {
+      if (signal.aborted) return
       const s = list[i++]
       if (s.coverUrl) continue
       const cover = await getTrackCover(s.artist, s.title).catch(() => undefined)
+      if (signal.aborted) return
       if (cover) s.coverUrl = cover
     }
   }
