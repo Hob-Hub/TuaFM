@@ -160,4 +160,4 @@ Firestore usa **persistencia offline** (`persistentLocalCache`): los datos de
 charts leídos se cachean en IndexedDB y no se vuelven a leer de red en sesiones
 repetidas — clave para no agotar el límite de lecturas del plan Spark.
 
-Estado del proyecto, decisiones y mejoras pendientes: ver [`dudas.md`](dudas.md).
+Estado del proyecto, decisiones y mejoras pendientes: ver [`ROADMAP.md`](ROADMAP.md).
