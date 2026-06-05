@@ -1,76 +1,70 @@
 import { describe, it, expect } from 'vitest'
-import {
-  toAbsWeek, positionScore, timeDecay, persistenceScore,
-  aggregateCandidates, weightedSample
-} from '@/services/radio.scoring'
-import type { ChartPeriod, RadioCandidate } from '@/types/chart.types'
+import { timeDecay, aggregateCandidates, weightedSample } from '@/services/radio.scoring'
+import type { ChartPeriod, ChartSong, RadioCandidate } from '@/types/chart.types'
 
-describe('funciones de scoring', () => {
-  it('toAbsWeek no colisiona entre años con semana 53', () => {
-    expect(toAbsWeek(2020, 53)).toBeLessThan(toAbsWeek(2021, 1))
+function song(partial: Partial<ChartSong> & Pick<ChartSong, 'artist' | 'title' | 'score'>): ChartSong {
+  return {
+    rank: 1, position: 1, peakPosition: 1, weeksOnChart: 1,
+    artistDisplay: partial.artist.toUpperCase(), titleDisplay: partial.title.toUpperCase(),
+    ...partial
+  }
+}
+function period(year: number, songs: ChartSong[]): ChartPeriod {
+  return { chartId: 'x', year, songs }
+}
+
+describe('timeDecay', () => {
+  it('vale 1 en el propio año y decae con la distancia', () => {
+    expect(timeDecay(0, 0.35)).toBe(1)
+    expect(timeDecay(5, 0.35)).toBeLessThan(timeDecay(1, 0.35))
   })
-  it('positionScore: el nº1 pesa más que el nº40', () => {
-    expect(positionScore(1)).toBeGreaterThan(positionScore(40))
-    expect(positionScore(1)).toBeCloseTo(1)
-  })
-  it('timeDecay decae con las semanas y es 1 en la semana 0', () => {
-    expect(timeDecay(0, 0.008)).toBe(1)
-    expect(timeDecay(100, 0.008)).toBeLessThan(timeDecay(10, 0.008))
-  })
-  it('persistenceScore crece con las semanas en lista', () => {
-    expect(persistenceScore(20)).toBeGreaterThan(persistenceScore(2))
+  it('λ alto concentra en el año de referencia más que λ bajo', () => {
+    expect(timeDecay(3, 1.0)).toBeLessThan(timeDecay(3, 0.1))
   })
 })
 
-function period(year: number, week: number, songs: ChartPeriod['songs']): ChartPeriod {
-  return { chartId: 'x', periodType: 'weekly', year, week, effectiveWeek: week, isoDate: '', songs }
-}
-
 describe('aggregateCandidates', () => {
-  it('excluye periodos posteriores a la referencia', () => {
+  it('excluye años posteriores al de referencia', () => {
     const periods = [
-      period(2010, 30, [{ position: 1, artist: 'a', artistDisplay: 'A', title: 't1' }]),
-      period(2010, 35, [{ position: 1, artist: 'b', artistDisplay: 'B', title: 't2' }]) // futuro
+      period(2010, [song({ artist: 'a', title: 't1', score: 5 })]),
+      period(2011, [song({ artist: 'b', title: 't2', score: 5 })]) // futuro
     ]
-    const res = aggregateCandidates(periods, 2010, 30, 0.008)
+    const res = aggregateCandidates(periods, 2010, 0.35)
     expect(res.map(c => c.artist)).toEqual(['a'])
   })
 
-  it('acumula apariciones y guarda el máximo de semanas en lista', () => {
+  it('acumula score y apariciones de una canción que reaparece en varios años', () => {
     const periods = [
-      period(2010, 28, [{ position: 5, artist: 'a', artistDisplay: 'A', title: 't', weeksInList: 3 }]),
-      period(2010, 29, [{ position: 3, artist: 'a', artistDisplay: 'A', title: 't', weeksInList: 8 }]),
-      period(2010, 30, [{ position: 1, artist: 'a', artistDisplay: 'A', title: 't', weeksInList: 9 }])
+      period(2008, [song({ artist: 'a', title: 't', score: 4 })]),
+      period(2009, [song({ artist: 'a', title: 't', score: 6 })]),
+      period(2010, [song({ artist: 'a', title: 't', score: 8 })])
     ]
-    const res = aggregateCandidates(periods, 2010, 30, 0.008)
+    const res = aggregateCandidates(periods, 2010, 0.35)
     expect(res).toHaveLength(1)
     expect(res[0].appearances).toBe(3)
-    expect(res[0].maxWeeksInList).toBe(9)
+    expect(res[0].score).toBe(18)
     expect(res[0].weight).toBeGreaterThan(0)
+  })
+
+  it('el año de referencia pesa más que un año lejano con el mismo score', () => {
+    const recent = aggregateCandidates([period(2010, [song({ artist: 'a', title: 't', score: 5 })])], 2010, 0.35)
+    const old    = aggregateCandidates([period(2000, [song({ artist: 'a', title: 't', score: 5 })])], 2010, 0.35)
+    expect(recent[0].weight).toBeGreaterThan(old[0].weight)
   })
 })
 
 describe('weightedSample', () => {
+  const c = (artist: string, weight: number): RadioCandidate =>
+    ({ artist, artistDisplay: artist, title: artist, titleDisplay: artist, weight, score: weight, appearances: 1 })
+
   it('nunca devuelve más que el tamaño del pool', () => {
-    const pool: RadioCandidate[] = [
-      { artist: 'a', artistDisplay: 'A', title: '1', weight: 5, appearances: 1, maxWeeksInList: 1 },
-      { artist: 'b', artistDisplay: 'B', title: '2', weight: 3, appearances: 1, maxWeeksInList: 1 }
-    ]
-    expect(weightedSample(pool, 10)).toHaveLength(2)
+    expect(weightedSample([c('a', 5), c('b', 3)], 10)).toHaveLength(2)
   })
-
   it('no repite candidatos (muestreo sin reemplazo)', () => {
-    const pool: RadioCandidate[] = Array.from({ length: 5 }, (_, i) => ({
-      artist: `a${i}`, artistDisplay: `A${i}`, title: `${i}`, weight: 1, appearances: 1, maxWeeksInList: 1
-    }))
-    const sample = weightedSample(pool, 5)
-    expect(new Set(sample.map(c => c.artist)).size).toBe(5)
+    const pool = Array.from({ length: 5 }, (_, i) => c(`a${i}`, 1))
+    expect(new Set(weightedSample(pool, 5).map(x => x.artist)).size).toBe(5)
   })
-
   it('devuelve vacío si todos los pesos son 0', () => {
-    const pool: RadioCandidate[] = [
-      { artist: 'a', artistDisplay: 'A', title: '1', weight: 0, appearances: 1, maxWeeksInList: 1 }
-    ]
-    expect(weightedSample(pool, 3)).toHaveLength(0)
+    expect(weightedSample([c('a', 0)], 3)).toHaveLength(0)
   })
 })

@@ -12,7 +12,7 @@ export function useRadioQueue() {
   const error         = ref<string | null>(null)
 
   async function generate(params: {
-    chartId: string; refYear: number; refWeek: number
+    chartId: string; refYear: number
     queueSize?: number; windowYears?: number; lambda?: number
   }): Promise<boolean> {
     generating.value = true
@@ -20,17 +20,16 @@ export function useRadioQueue() {
     try {
       const { tracks, resolvedLambda } = await generateRadioQueue(params)
       if (tracks.length === 0) {
-        error.value = 'No hay datos de chart para ese periodo. Prueba otro año o semana.'
+        error.value = 'No hay datos para ese año. Prueba con otro año.'
         return false
       }
       const registry = registryStore.getById(params.chartId)
-      const label    = `${registry?.shortName ?? params.chartId} · ${params.refYear} sem. ${params.refWeek}`
+      const label    = `${registry?.name ?? params.chartId} · ${params.refYear}`
       radioStore.setQueue(tracks, label, {
         chartId: params.chartId,
         year:    params.refYear,
-        week:    params.refWeek,
         lambda:  resolvedLambda,
-        window:  params.windowYears ?? 5
+        window:  params.windowYears ?? 6
       })
       playerStore.queueMode = 'radio'
       return true

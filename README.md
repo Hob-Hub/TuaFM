@@ -6,13 +6,15 @@ Reproductor de música web (Vue 3 + TypeScript) con **memoria histórica**. Tres
 modos de escucha sobre una interfaz unificada:
 
 - **Playlist** — tu colección personal. Crea listas o importa CSV (artista, título).
-- **Radio** — la máquina del tiempo sonora. Elige fuente, año y semana; un algoritmo
-  reconstruye cómo habría sonado la radio esa semana (hits + clásicos que seguían pinchándose).
+- **Radio** — la máquina del tiempo sonora. Elige una lista (España o Estados Unidos)
+  y un año; un algoritmo reconstruye cómo habría sonado la radio ese año, mezclando
+  los éxitos del año con clásicos de años cercanos (control de nostalgia).
 - **Recomendaciones** — el oráculo de Last.fm a partir de tus favoritos.
 
 Funciona **100% en el navegador**, sin backend propio: audio vía YouTube IFrame,
 metadatos de Last.fm, carátulas fallback de MusicBrainz + Cover Art Archive, y
-caché compartida + datos de charts en Firebase Firestore.
+datos de charts servidos como JSON estático local (Firestore opcional como caché
+compartida y respaldo).
 
 ---
 
@@ -89,27 +91,85 @@ Colecciones:
 
 ## Datos de charts (modo Radio)
 
-Los datos de Los 40 ya están en `los40.db` (SQLite, 2004–2026, ~1.165 listas de 40).
-También se puede generar `billboard_year_end_hot100.db` con el histórico anual
-Billboard Year-End Hot 100 (1958–último año cerrado).
+La app consume **listas anuales** (un "Top del año" por fuente y año). Cada fuente
+nace de una SQLite rica y se **consolida a un Top por año**, puntuando cada canción
+por sus posiciones a lo largo del año (`score = Σ 1/√posición`):
 
-Para subir una fuente a Firestore:
+- **España** (`es`) ← `los40.db` (semanal: solo Nº1 hasta 2003, top 40 desde 2004).
+- **Estados Unidos / Billboard** (`us`) ← `billboard_year_end_hot100.db` (anual, top 100).
+
+El bundle local vive en `public/charts/` (`registry.json` + `<chartId>.json`) y se
+regenera con el exportador estático (sin Firebase, offline):
+
+```bash
+node scripts/export-charts-static.mjs chart-configs/es.json   # --from 2000 --to 2025
+node scripts/export-charts-static.mjs chart-configs/us.json
+```
+
+La consolidación vive en [`scripts/lib/annualize.mjs`](scripts/lib/annualize.mjs),
+compartida con el exportador a Firestore (para "más adelante"):
 
 ```bash
 cd scripts
-npm install                                  # firebase-admin, better-sqlite3, luxon
+npm install                                  # firebase-admin, better-sqlite3
 # coloca tu service-account.json de Firebase aquí
-node migrate-to-firestore.mjs chart-configs/los40_es.json
-node migrate-to-firestore.mjs chart-configs/billboard_year_end_hot100.json
+node migrate-to-firestore.mjs chart-configs/es.json
+node migrate-to-firestore.mjs chart-configs/us.json
 ```
 
 El scraper que genera/actualiza `los40.db` vive en `scripts/` (Python). Ver
 [`scripts/README.md`](scripts/README.md).
 
-**Añadir una nueva fuente de charts** = crear `scripts/chart-configs/<chartId>.json`
-y ejecutar el script. Cero cambios en el código de la app (el selector de radio
-lee `chart_registry` en tiempo de ejecución). Hay una plantilla en
-`chart-configs/billboard_hot100.json`.
+### Algoritmo de consolidación (semanal → Top del año)
+
+La SQLite es la fuente rica (semanal en España, anual en Billboard). Para la app se
+**aplana a un único Top por año natural**, conservando la información valiosa de las
+semanas en una sola puntuación. Para cada canción y año:
+
+```
+score(canción, año) = Σ_semanas-del-año  positionScore(posición)
+positionScore(p)    = 1 / √p      # Nº1→1.0  Nº2→0.71  Nº3→0.58  Nº10→0.32  Nº40→0.16
+```
+
+Se suma sobre todas las semanas en que la canción apareció ese año y se rankea por
+`score` descendente. Así el Top del año premia **a la vez** las posiciones de cabeza
+(peso fuerte al Nº1/2/3) y la **permanencia** (más semanas = más suma), igual que los
+*year-end* reales. Billboard ya es anual: su `score` se deriva del rank con la misma
+`positionScore(rank)` para quedar en la misma escala.
+
+Por canción/año se guarda: `score`, `rank` (anual), `peakPosition` (mejor posición
+semanal), `weeksOnChart`, y los enlaces (carátula/YouTube) de su **mejor semana**.
+
+**Afinar peak vs permanencia.** El equilibrio lo fija un único punto: `positionScore`
+en [`scripts/lib/annualize.mjs`](scripts/lib/annualize.mjs). Con `1/√p` (actual) la
+permanencia pesa más (una canción de 30 semanas en el top puede superar a un Nº1 de
+pocas semanas). Para dar **más peso al pico**, hacerlo más pronunciado: `1/p` o `1/p²`.
+Tras cambiarlo hay que **regenerar el bundle** (comandos de arriba). La app usa este
+`score` directamente; `positionScore` está duplicado a propósito en
+[`src/services/radio.scoring.ts`](src/services/radio.scoring.ts) solo como referencia
+del modelo (la app ya no recalcula posiciones).
+
+### Radio: mezcla por años (nostalgia)
+
+Elegido un año de referencia y una fuente, la radio agrega candidatos de los años
+≤ referencia dentro de una ventana, ponderando cada canción por
+`score × e^(−λ · añosDeDistancia)` y muestreando sin reemplazo (ver
+[`radio.scoring.ts`](src/services/radio.scoring.ts) y
+[`radio.service.ts`](src/services/radio.service.ts)). El slider de **nostalgia** es λ:
+alto ≈ casi solo ese año; bajo ≈ mezcla de épocas. `defaultLambda` y el rango de años
+de cada fuente viven en el `registry`.
+
+### Formato del bundle (`public/charts/`)
+
+```jsonc
+// registry.json  → ChartRegistry[]  (índice de listas: id, nombre, bandera, años, λ…)
+// <chartId>.json → { chartId, periods: [ { chartId, year, songs: ChartSong[] } ] }
+//   songs[] viene rankeado (songs[0] = Nº1 del año). Tipos en src/types/chart.types.ts.
+```
+
+**Añadir una fuente** = crear `scripts/chart-configs/<chartId>.json` con su `query`
+SQL y `consolidate` (`annual-from-weekly` | `annual`) y regenerar. Cero cambios en el
+código de la app: el selector de radio lee el `registry` en runtime.
 
 ---
 

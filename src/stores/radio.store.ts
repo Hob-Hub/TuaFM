@@ -8,9 +8,8 @@ export const useRadioStore = defineStore('radio', () => {
   const sourceLabel  = ref('')
   const activeChartId = ref('')
   const activeYear    = ref(new Date().getFullYear())
-  const activeWeek    = ref(1)
-  const activeLambda  = ref(0.008)
-  const activeWindow  = ref(5)
+  const activeLambda  = ref(0.35)
+  const activeWindow  = ref(6)
 
   const isActive     = computed(() => queue.value.length > 0)
   const currentTrack = computed(() => queue.value[currentIndex.value] ?? null)
@@ -19,14 +18,13 @@ export const useRadioStore = defineStore('radio', () => {
   const hasPrev      = computed(() => currentIndex.value > 0)
 
   function setQueue(tracks: Track[], label: string, params: {
-    chartId: string; year: number; week: number; lambda: number; window: number
+    chartId: string; year: number; lambda: number; window: number
   }): void {
     queue.value         = tracks
     currentIndex.value  = 0
     sourceLabel.value   = label
     activeChartId.value = params.chartId
     activeYear.value    = params.year
-    activeWeek.value    = params.week
     activeLambda.value  = params.lambda
     activeWindow.value  = params.window
   }
@@ -43,7 +41,7 @@ export const useRadioStore = defineStore('radio', () => {
 
   return {
     queue, currentIndex, isActive, sourceLabel,
-    activeChartId, activeYear, activeWeek, activeLambda, activeWindow,
+    activeChartId, activeYear, activeLambda, activeWindow,
     currentTrack, nextTrack, hasNext, hasPrev,
     setQueue, next, prev, skipTo, clear, updateTrack
   }

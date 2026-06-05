@@ -1,14 +1,16 @@
-export type ChartPeriodicity = 'weekly' | 'annual'
+// Modelo de charts ANUAL: cada chart se sirve como una lista de "Top del año"
+// (un ChartPeriod por año natural), generada desde la SQLite por
+// scripts/export-charts-static.mjs (y, opcionalmente, Firestore).
 
 export interface ChartRegistry {
   chartId:       string
-  name:          string
-  shortName:     string
+  name:          string          // "España", "Estados Unidos"
+  shortName:     string          // chip corto: "España", "Billboard"
+  subtitle?:     string | null   // p. ej. "Billboard" bajo Estados Unidos
   country:       string          // ISO 3166-1 alpha-2
   flag:          string          // emoji
   language:      string
-  periodicities: ChartPeriodicity[]
-  listSize:      number
+  listSize:      number          // tamaño "mostrado" del Top (p. ej. 100)
   startYear:     number
   endYear:       number
   totalPeriods:  number
@@ -17,33 +19,33 @@ export interface ChartRegistry {
 }
 
 export interface ChartSong {
-  position:        number
+  rank:            number        // posición en el Top consolidado del año
+  position:        number        // alias de rank (UI genérica)
+  score:           number        // puntuación anual (Σ 1/√posición de las semanas)
+  peakPosition:    number        // mejor posición semanal alcanzada en el año
+  weeksOnChart:    number        // semanas en lista ese año (1 en fuentes anuales)
   artist:          string        // artista principal normalizado (para cacheKey)
   artistDisplay:   string        // con feat., para UI
-  title:           string
+  title:           string        // normalizado (para cacheKey / agregación)
+  titleDisplay:    string        // título original, para UI
   youtubeVideoId?: string
   coverUrl?:       string
-  weeksInList?:    number
-  bestPosition?:   number
 }
 
 export interface ChartPeriod {
-  chartId:       string
-  periodType:    ChartPeriodicity
-  year:          number          // ISO week year
-  week:          number          // 1-52/53 para weekly; 26 para annual (canonical)
-  effectiveWeek: number          // = week para weekly; = 26 para annual
-  isoDate:       string          // sábado de publicación o "YYYY-07-01" para annual
-  songs:         ChartSong[]
+  chartId: string
+  year:    number
+  songs:   ChartSong[]           // rankeadas (songs[0] = Nº1 del año)
 }
 
 export interface RadioCandidate {
   artist:          string
   artistDisplay:   string
   title:           string
+  titleDisplay:    string
   youtubeVideoId?: string
   coverUrl?:       string
-  weight:          number
-  maxWeeksInList:  number        // máximo semanas para persistenceScore
-  appearances:     number
+  weight:          number        // score anual × decaimiento temporal, acumulado
+  score:           number        // score anual acumulado (sin decaimiento)
+  appearances:     number        // en cuántos años del rango apareció
 }

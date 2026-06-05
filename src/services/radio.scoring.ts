@@ -2,58 +2,56 @@ import type { ChartPeriod, RadioCandidate } from '@/types/chart.types'
 
 // Lógica pura del algoritmo de radio (sin I/O). Aislada para poder testarla sin
 // las cadenas de import de Firebase.
+//
+// Modelo ANUAL: cada canción trae ya su `score` del año (Σ 1/√posición de sus
+// semanas, calculado en la consolidación). La radio mezcla varios años con un
+// decaimiento por DISTANCIA EN AÑOS respecto al año de referencia — el control de
+// "nostalgia": λ alto ≈ solo ese año; λ bajo ≈ mezcla de épocas.
 
-// year * 53 + week evita colisiones en años con semana 53 (máximo ISO week = 53).
-export function toAbsWeek(year: number, week: number): number {
-  return year * 53 + week
+/** Decaimiento temporal por años de distancia. 1 en el propio año. */
+export function timeDecay(yearsAgo: number, lambda: number): number {
+  return Math.exp(-lambda * Math.max(0, yearsAgo))
 }
 
-export function positionScore(p: number): number { return 1 / Math.sqrt(p) }
-export function timeDecay(weeks: number, lambda: number): number { return Math.exp(-lambda * Math.max(0, weeks)) }
-export function persistenceScore(weeks: number): number { return Math.log2(weeks + 1) }
-
 /**
- * Agrega candidatos a partir de los periodos de chart ya descargados. Pondera
- * cada canción por posición × decaimiento temporal, acumulando apariciones, y
- * aplica persistenceScore UNA vez sobre el máximo de semanas en lista.
+ * Agrega candidatos a partir de los Top anuales descargados. Pondera cada
+ * canción por su `score` anual × decaimiento según los años que la separan del
+ * año de referencia, acumulando entre años (una canción que reaparece varios
+ * años suma peso).
  */
 export function aggregateCandidates(
-  periods: ChartPeriod[], refYear: number, refWeek: number, lambda: number
+  periods: ChartPeriod[], refYear: number, lambda: number
 ): RadioCandidate[] {
-  const refAbs = toAbsWeek(refYear, refWeek)
-  const weightMap = new Map<string, RadioCandidate>()
+  const map = new Map<string, RadioCandidate>()
 
   for (const period of periods) {
-    const docAbs = toAbsWeek(period.year, period.effectiveWeek)
-    if (docAbs > refAbs) continue
-    const weeksAgo = refAbs - docAbs
+    if (period.year > refYear) continue          // nunca usar el futuro
+    const decay = timeDecay(refYear - period.year, lambda)
 
     for (const song of period.songs) {
-      const key    = `${song.artist}::${song.title}`   // artist ya normalizado en migración
-      const wScore = positionScore(song.position) * timeDecay(weeksAgo, lambda)
+      const key    = `${song.artist}::${song.title}`   // artist ya normalizado
+      const wScore = song.score * decay
 
-      const existing = weightMap.get(key)
+      const existing = map.get(key)
       if (existing) {
-        existing.weight        += wScore
-        existing.appearances   += 1
-        existing.maxWeeksInList = Math.max(existing.maxWeeksInList, song.weeksInList ?? 1)
+        existing.weight      += wScore
+        existing.score       += song.score
+        existing.appearances += 1
+        if (!existing.youtubeVideoId && song.youtubeVideoId) existing.youtubeVideoId = song.youtubeVideoId
+        if (!existing.coverUrl && song.coverUrl)             existing.coverUrl       = song.coverUrl
       } else {
-        weightMap.set(key, {
+        map.set(key, {
           artist: song.artist, artistDisplay: song.artistDisplay,
-          title: song.title, youtubeVideoId: song.youtubeVideoId,
+          title: song.title, titleDisplay: song.titleDisplay ?? song.title,
+          youtubeVideoId: song.youtubeVideoId,
           coverUrl: song.coverUrl,
-          weight: wScore, appearances: 1,
-          maxWeeksInList: song.weeksInList ?? 1
+          weight: wScore, score: song.score, appearances: 1
         })
       }
     }
   }
 
-  for (const c of weightMap.values()) {
-    c.weight *= persistenceScore(c.maxWeeksInList)
-  }
-
-  return Array.from(weightMap.values())
+  return Array.from(map.values())
 }
 
 /** Muestreo ponderado sin reemplazo: top-N proporcional al peso. */

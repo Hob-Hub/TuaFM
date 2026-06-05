@@ -35,6 +35,6 @@ function isActive(i: number): boolean {
   </div>
 
   <div v-else class="rounded-2xl border border-dashed border-line p-10 text-center text-muted text-sm">
-    Genera una radio para empezar. Elige fuente, año y semana, y ajusta la nostalgia.
+    Genera una radio para empezar. Elige la lista y el año, y ajusta la nostalgia.
   </div>
 </template>
