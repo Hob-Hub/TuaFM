@@ -86,14 +86,20 @@ export function useYouTubePlayer() {
   function handleState(state: number): void {
     const S = window.YT!.PlayerState
     switch (state) {
-      case S.PLAYING:   playerStore.state = 'playing'; break
-      case S.PAUSED:    playerStore.state = 'paused'; break
-      case S.BUFFERING: playerStore.state = 'loading'; break
+      case S.PLAYING:   playerStore.state = 'playing'; setPlaybackState('playing'); break
+      case S.PAUSED:    playerStore.state = 'paused';  setPlaybackState('paused');  break
+      case S.BUFFERING: playerStore.state = 'loading'; setPlaybackState('playing'); break
       case S.ENDED:
         playerStore.state = 'ended'
+        setPlaybackState('none')
         onEndedCb?.()
         break
     }
+  }
+
+  /** Refleja en el SO si está sonando o en pausa (pantalla de bloqueo, etc.). */
+  function setPlaybackState(s: MediaSessionPlaybackState): void {
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s
   }
 
   function startTicker(): void {
@@ -103,7 +109,19 @@ export function useYouTubePlayer() {
       try {
         playerStore.currentTime = player.getCurrentTime() || 0
         const d = player.getDuration() || 0
-        if (d > 0) playerStore.duration = d
+        if (d > 0) {
+          playerStore.duration = d
+          // Posición para la barra de progreso del SO.
+          if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+            try {
+              navigator.mediaSession.setPositionState({
+                duration: d,
+                position: Math.min(playerStore.currentTime, d),
+                playbackRate: 1
+              })
+            } catch { /* valores transitorios fuera de rango */ }
+          }
+        }
       } catch { /* player no listo */ }
     }, 500)
   }
@@ -128,7 +146,7 @@ export function useYouTubePlayer() {
   }
   function mute():   void { playerStore.isMuted = true;  player?.mute() }
   function unmute(): void { playerStore.isMuted = false; player?.unMute() }
-  function toggleMute(): void { playerStore.isMuted ? unmute() : mute() }
+  function toggleMute(): void { if (playerStore.isMuted) unmute(); else mute() }
 
   function onEnded(cb: () => void): void { onEndedCb = cb }
   function onError(cb: (code: number) => void): void { onErrorCb = cb }

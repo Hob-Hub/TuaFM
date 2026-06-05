@@ -121,6 +121,15 @@ export function usePlayback() {
     navigator.mediaSession.setActionHandler('pause', () => yt.pause())
     navigator.mediaSession.setActionHandler('nexttrack',     () => { void next() })
     navigator.mediaSession.setActionHandler('previoustrack', () => { void prev() })
+    navigator.mediaSession.setActionHandler('seekbackward', d => {
+      yt.seekTo(Math.max(0, player.currentTime - (d.seekOffset ?? 10)))
+    })
+    navigator.mediaSession.setActionHandler('seekforward', d => {
+      yt.seekTo(player.currentTime + (d.seekOffset ?? 10))
+    })
+    navigator.mediaSession.setActionHandler('seekto', d => {
+      if (d.seekTime != null) yt.seekTo(d.seekTime)
+    })
   }
 
   /** Carga y reproduce la pista activa, enriqueciéndola lazy si hace falta. */
