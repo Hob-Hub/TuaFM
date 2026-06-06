@@ -63,9 +63,10 @@ VITE_FIREBASE_APP_ID=
 La app **arranca y muestra la UI aunque falten claves**; los modos que dependen
 de cada servicio degradan con un mensaje en lugar de romperse.
 
-> En este repo, `.env.local` ya viene con claves reales de Last.fm y YouTube,
-> así que **Playlist, Recomendaciones y Artista funcionan de inmediato**.
-> Solo **Radio** necesita las 4 variables de Firebase.
+> En este repo, `.env.local` ya viene con claves reales de Last.fm y YouTube, y los
+> charts viajan como JSON estático en `public/`, así que **los tres modos funcionan
+> de inmediato sin Firebase**. Firebase es **opcional**: solo añade la caché de
+> enriquecimiento compartida entre usuarios (`track_cache`) y un respaldo de charts.
 
 ---
 
@@ -193,18 +194,24 @@ código de la app: el selector de radio lee el `registry` en runtime.
 
 ---
 
-## Arquitectura (tres capas de datos)
+## Arquitectura de datos
 
 ```
+Bundle estático  public/charts (listas) + public/catalog (tracks/artistas) — fuente primaria, offline
 Pinia            estado volátil del player + colas efímeras (radio, recs)
 Dexie/IndexedDB  playlists, tracks enriquecidos, favoritos, historial (local, permanente)
-Firestore        track_cache (compartida) + chart_registry/chart_periods (charts)
+Firestore        track_cache compartida + charts — OPCIONAL (respaldo/caché entre usuarios)
 ```
 
-**Lookup al reproducir:** Dexie → Firestore `track_cache` → APIs externas
-(Last.fm + YouTube + cover fallback), persistiendo el resultado en ambas cachés.
-La clave estable de una canción es `cacheKey = normalize(artist)::normalize(title)`
-(NFD + sin diacríticos), idéntica en la app y en el script de migración.
+**Lookup al enriquecer una pista:** Dexie → catálogo estático (`public/catalog`)
+→ Firestore `track_cache` (si está configurado) → APIs externas (Last.fm + YouTube +
+cover fallback), persistiendo el resultado en las cachés locales. La clave estable es
+`cacheKey = normalize(artist)::normalize(title)` (NFD + sin diacríticos), idéntica en
+la app y en el pipeline.
+
+**Charts:** se sirven *static-first* desde `public/charts` (ver «Datos de charts»);
+Firestore es solo respaldo opcional para fuentes que no estén en el bundle. La app
+funciona 100% sin Firebase.
 
 ```
 src/
