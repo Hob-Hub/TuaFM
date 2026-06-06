@@ -101,6 +101,7 @@ de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
 | Baja | **Cabeceras de seguridad** (`public/_headers`) | `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, y CSP si se publica. Portable a Vercel/Netlify con variantes |
 | Baja | **tsconfig más estricto** | `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`: muy útiles con APIs irregulares |
 | Baja | **CI** (GitHub Actions) | `build` + `test` (+ `lint`) en cada push. Ahora que hay lint, blinda el refactor en curso |
+| Media | **Completar el catálogo** (tags/duración/oyentes) | Muchos `CatalogTrack` no traen `tags`/`durationMs`/`listeners`. Como el catálogo es **caché terminal** (acierto → `enriched:true` y no vuelve a Last.fm), esas pistas no los obtienen nunca: se ven sin duración ni tags. Enriquecer en [`chart-pipeline/lib/catalog.mjs`](chart-pipeline/lib/catalog.mjs) o no marcarlas como totalmente enriquecidas. Fuente: revisión del estado actual |
 | Baja | **i18n / textos centralizados** | Hoy en español hardcodeado |
 
 > **Remate de ESLint/Prettier:** la config está puesta pero **no se ha aplicado
@@ -111,7 +112,21 @@ de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
 
 ---
 
-## 4. Lecciones del predecesor — ya aplicadas (no rehacer)
+## 4. Funcionalidades nuevas (del predecesor y oportunidades)
+
+Ideas de *Bruga Music* y propias que TuaFM aún no tiene. No son deuda técnica:
+son **producto**. Priorizadas por relación valor/esfuerzo.
+
+| Prioridad | Funcionalidad | Notas |
+|-----------|---------------|-------|
+| Media | **Ficha de artista más rica** | Hoy: bio + top tracks. Añadir **artistas similares** (ya existe `getSimilarArtists` en [`lastfm.similarity.service.ts`](src/services/lastfm.similarity.service.ts) → coste casi nulo) y **álbumes** del artista (`artist.getTopAlbums`). Los similares enlazan la exploración con el modo Recomendaciones |
+| Media | **Ficha de álbum** (`/artist/:name/:album`) | `album.getInfo` → tracklist reproducible reutilizando el `TrackItem` universal. Enlazar desde el buscador y desde la ficha de artista. Bruga la tenía; encaja sin fricción con la arquitectura actual |
+| Baja | **Descubrimiento en Home** | Sección de artistas/canciones destacadas. Oportunidad propia: servirlo **offline desde el catálogo** (top artistas/canciones de los charts, por país o década) en lugar de `geo.gettopartists` → cero coste de API y coherente con el alma "memoria histórica" de TuaFM |
+| Baja | **`document.title` dinámico** | "Título — Artista · TuaFM" mientras suena (Bruga lo hacía). Complementa la Media Session API ya integrada |
+
+---
+
+## 5. Lecciones del predecesor — ya aplicadas (no rehacer)
 
 Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 *Bruga Music* hacía mal:
@@ -121,8 +136,11 @@ Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 - **`URL`/`URLSearchParams`** en lugar de concatenar strings.
 - **Loader oficial** `youtube.com/iframe_api`, no una URL versionada de
   `www-widgetapi` (que en Bruga podía romperse sin aviso).
-- **Carátulas:** MusicBrainz + Cover Art Archive como fallback, no el hack de
-  thumbnails de Bing.
+- **Carátulas de álbum:** MusicBrainz + Cover Art Archive como fallback, no el
+  hack de thumbnails de Bing.
+- **Imágenes de artista:** Deezer en el build
+  ([`chart-pipeline/lib/deezer.mjs`](chart-pipeline/lib/deezer.mjs)), porque Last.fm
+  dejó de servir fotos de artista. Mejor que el hack de Bing del predecesor.
 - **Caché con TTL**, `try/catch` y estados de error en las llamadas.
 - **TypeScript strict** y tests de la lógica pura (adaptadores/scoring/CSV).
 
@@ -134,7 +152,7 @@ Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 
 ---
 
-## 5. Origen de cada idea
+## 6. Origen de cada idea
 
 | Sección | Fuente |
 |---------|--------|
@@ -143,4 +161,6 @@ Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 | §2 (candidatos, onError, Media Session) — ✓ hecho | `docs/DOCUMENTACION.md` (problemas 4-5, reproductor propuesto) + `docs/STACK_Y_DESPLIEGUE.md` (YouTube Search/Player) |
 | §3 (PWA, tests, ESLint, zod, AbortController, i18n) | Ya estaban en `dudas.md` |
 | §3 (TTLs, cabeceras, tsconfig) | `docs/STACK_Y_DESPLIEGUE.md` + `docs/DOCUMENTACION.md` |
-| §4 | Comparativa código actual vs `docs/` |
+| §3 (completar catálogo) | Revisión del estado actual |
+| §4 (ficha artista/álbum, Home, title) | `docs/DOCUMENTACION.md` (features de Bruga) + oportunidades propias |
+| §5 | Comparativa código actual vs `docs/` |
