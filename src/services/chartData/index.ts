@@ -13,7 +13,7 @@ import * as firestoreSrc from './firestore.source'
  *    siguen funcionando online a través de la fuente Firestore.
  *
  * Así Firebase pasa de dependencia crítica a mejora opcional. Para regenerar el
- * bundle local: `node scripts/export-charts-static.mjs chart-configs/<chart>.json`.
+ * bundle local: `cd chart-pipeline && node build-charts.mjs`.
  */
 
 export interface ChartDataSource {

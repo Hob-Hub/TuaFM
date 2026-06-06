@@ -63,7 +63,7 @@ async function onGenerate(): Promise<void> {
   <section class="rounded-2xl bg-card border border-line p-5 space-y-5">
     <div v-if="registry.loading" class="text-sm text-muted">Cargando fuentes…</div>
     <div v-else-if="registry.registries.length === 0" class="text-sm text-amber-300">
-      No hay listas disponibles. Regenera el bundle de charts (scripts/export-charts-static.mjs).
+      No hay listas disponibles. Regenera el bundle de charts (chart-pipeline/build-charts.mjs).
     </div>
 
     <template v-else>

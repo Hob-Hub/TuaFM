@@ -1,6 +1,6 @@
 // Modelo de charts ANUAL: cada chart se sirve como una lista de "Top del año"
 // (un ChartPeriod por año natural), generada desde la SQLite por
-// scripts/export-charts-static.mjs (y, opcionalmente, Firestore).
+// chart-pipeline/build-charts.mjs (y, opcionalmente, Firestore).
 
 export interface ChartRegistry {
   chartId:       string
