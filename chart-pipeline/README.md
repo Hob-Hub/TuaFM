@@ -56,5 +56,22 @@ node migrate-to-firestore.mjs chart-configs/es.json
 node migrate-to-firestore.mjs chart-configs/us.json
 ```
 
+## Correcciones manuales (`overrides.json`)
+
+El build **sobrescribe** el catálogo, así que **no edites `public/catalog/*.json` a
+mano** (se perderían al regenerar). En su lugar, pon tus correcciones en
+[`overrides.json`](overrides.json): se aplican **al final** del build y **ganan**
+sobre lo generado (Last.fm/Deezer/DB). Está versionado.
+
+```jsonc
+{
+  "tracks":  { "<key>": { "coverUrl": "…", "youtubeVideoId": "…", "title": "…" } },
+  "artists": { "<key>": { "imageUrl": "…", "bio": "…" } }
+}
+// key de track  = "<artista normalizado>::<título normalizado>"  (= makeCacheKey)
+// key de artista = "<nombre normalizado>"
+// Solo los campos presentes se sobrescriben; el resto se mantiene generado.
+```
+
 El algoritmo (fórmula `score = Σ 1/√posición`, equilibrio pico/permanencia y cómo
 afinarlo) está documentado en el [README raíz](../README.md#algoritmo-de-consolidación-semanal--top-del-año).

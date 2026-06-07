@@ -87,3 +87,19 @@ export function seedMapFromRows(rows, cfg, normalizeStr, splitArtist) {
   }
   return map
 }
+
+/**
+ * Aplica correcciones manuales sobre el catálogo ya generado. Las overrides GANAN
+ * sobre lo generado (Last.fm/Deezer/DB), así regenerar nunca pierde tus arreglos.
+ * @param overrides { tracks?: { [key]: Partial<CatalogTrack> }, artists?: { [key]: Partial<CatalogArtist> } }
+ * @returns nº de entradas con override aplicado
+ */
+export function applyOverrides(tracks, artists, overrides) {
+  if (!overrides) return 0
+  const tOv = overrides.tracks ?? {}
+  const aOv = overrides.artists ?? {}
+  let n = 0
+  for (const t of tracks)  { const ov = tOv[t.key]; if (ov) { Object.assign(t, ov); n++ } }
+  for (const a of artists) { const ov = aOv[a.key]; if (ov) { Object.assign(a, ov); n++ } }
+  return n
+}

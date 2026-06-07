@@ -19,7 +19,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { annualizeRows, normalizeStr, splitArtist } from './lib/annualize.mjs'
-import { buildCatalog, compactPeriods, seedMapFromRows } from './lib/catalog.mjs'
+import { buildCatalog, compactPeriods, seedMapFromRows, applyOverrides } from './lib/catalog.mjs'
 import * as lfm from './lib/lastfm.mjs'
 import * as deezer from './lib/deezer.mjs'
 
@@ -124,6 +124,17 @@ if (!noLastfm) {
   const withPhoto = artists.filter(a => a.imageUrl).length
   console.log(`\n✓ Last.fm: ${lfm.stats.apiCalls} llamadas, ${lfm.stats.cacheHits} de caché`)
   console.log(`✓ Deezer: ${deezer.stats.apiCalls} llamadas (${deezer.stats.misses} sin foto) → ${withPhoto}/${artists.length} artistas con foto`)
+}
+
+// ── 3.5. Overrides manuales (chart-pipeline/overrides.json) ──────────────────
+// Tus correcciones a mano: se aplican AL FINAL y ganan sobre lo generado, así
+// regenerar el catálogo nunca las pierde. Edita ese fichero, no public/catalog/*.
+const ovPath = resolve(__dir, 'overrides.json')
+if (existsSync(ovPath)) {
+  try {
+    const n = applyOverrides(tracks, artists, JSON.parse(readFileSync(ovPath, 'utf8')))
+    console.log(`· overrides aplicados: ${n}`)
+  } catch (e) { console.warn(`! overrides.json inválido, se ignora: ${e.message}`) }
 }
 
 // ── 4. Escritura ─────────────────────────────────────────────────────────────
