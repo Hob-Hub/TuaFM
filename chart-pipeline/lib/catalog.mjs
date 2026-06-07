@@ -98,8 +98,16 @@ export function applyOverrides(tracks, artists, overrides) {
   if (!overrides) return 0
   const tOv = overrides.tracks ?? {}
   const aOv = overrides.artists ?? {}
+  // Un campo con valor null BORRA ese campo del generado (p. ej. limpiar un
+  // youtubeVideoId erróneo de origen para que se re-resuelva en runtime).
+  const merge = (entry, ov) => {
+    for (const [k, v] of Object.entries(ov)) {
+      if (v === null) delete entry[k]
+      else entry[k] = v
+    }
+  }
   let n = 0
-  for (const t of tracks)  { const ov = tOv[t.key]; if (ov) { Object.assign(t, ov); n++ } }
-  for (const a of artists) { const ov = aOv[a.key]; if (ov) { Object.assign(a, ov); n++ } }
+  for (const t of tracks)  { const ov = tOv[t.key]; if (ov) { merge(t, ov); n++ } }
+  for (const a of artists) { const ov = aOv[a.key]; if (ov) { merge(a, ov); n++ } }
   return n
 }

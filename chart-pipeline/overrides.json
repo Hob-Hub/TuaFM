@@ -1203,6 +1203,9 @@
     "justin timberlake::say something": {
       "youtubeVideoId": "8MPbR6Cbwi4"
     },
+    "justin timberlake::senorita": {
+      "youtubeVideoId": null
+    },
     "k-ci & jojo::crazy": {
       "youtubeVideoId": "qi-KCd0guJI"
     },
@@ -1334,6 +1337,12 @@
     },
     "la sexta duda::algo personal": {
       "youtubeVideoId": "k-LZuy54-xY"
+    },
+    "la sonrisa de julia::libres": {
+      "youtubeVideoId": null
+    },
+    "la sonrisa de julia::llevo tu voz": {
+      "youtubeVideoId": null
     },
     "la sonrisa de julia::sonrisas de papel": {
       "youtubeVideoId": "_2Ztz0Azd7g"
@@ -2241,6 +2250,9 @@
     "sidonie::on the sofa": {
       "youtubeVideoId": "S0wdt1p6vlk"
     },
+    "simple plan::when i'm gone": {
+      "youtubeVideoId": null
+    },
     "snoop dogg::beautiful": {
       "youtubeVideoId": "_FE194VN6c4"
     },
@@ -2346,8 +2358,14 @@
     "taylor swift::down bad": {
       "youtubeVideoId": "IGjXBhnj_H0"
     },
+    "taylor swift::love story": {
+      "youtubeVideoId": null
+    },
     "taylor swift::today was a fairytale": {
       "youtubeVideoId": "rLiXLzd2Ol8"
+    },
+    "taylor swift::you belong with me": {
+      "youtubeVideoId": null
     },
     "teddy geiger::for you i will (confidence)": {
       "youtubeVideoId": "Vro8pMf_PCA"
@@ -2375,6 +2393,9 @@
     },
     "the black eyed peas::pump it": {
       "youtubeVideoId": "ZaI2IlHwmgQ"
+    },
+    "the chicks::not ready to make nice": {
+      "youtubeVideoId": null
     },
     "the click five::just the girl": {
       "youtubeVideoId": "sexLNa1KStM"
@@ -2480,6 +2501,9 @@
     },
     "tim mcgraw::my best friend": {
       "youtubeVideoId": "s0kbNcMdSbI"
+    },
+    "timbaland::carry out": {
+      "youtubeVideoId": null
     },
     "timbaland::say something": {
       "youtubeVideoId": "NJ9pYU-fa18"
