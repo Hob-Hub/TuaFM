@@ -5,6 +5,7 @@ import { useRadioQueue } from '@/composables/useRadioQueue'
 import { getYearTop } from '@/services/radio.service'
 import type { ChartPeriod } from '@/types/chart.types'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import BaseSlider from '@/components/ui/BaseSlider.vue'
 
 const registry = useChartRegistryStore()
 const { generate, generating, error } = useRadioQueue()
@@ -92,11 +93,10 @@ async function onGenerate(): Promise<void> {
           <span class="text-xs font-medium text-muted">Año</span>
           <span v-if="selected" class="text-[10px] text-muted/60 tabular-nums">{{ selected.startYear }}–{{ selected.endYear }}</span>
         </div>
-        <input
-          v-model.number="year" type="range"
-          :min="selected?.startYear" :max="selected?.endYear" step="1"
+        <BaseSlider
+          v-model="year"
+          :min="selected?.startYear" :max="selected?.endYear" :step="1"
           aria-label="Año"
-          class="w-full accent-brand cursor-pointer"
         />
         <div class="mt-1 text-center font-display text-3xl font-extrabold tabular-nums">{{ year }}</div>
       </div>
@@ -107,10 +107,10 @@ async function onGenerate(): Promise<void> {
           <span class="text-xs font-medium text-muted">Nostalgia</span>
           <span class="text-[10px] text-muted/60 tabular-nums">λ = {{ lambda.toFixed(2) }}</span>
         </div>
-        <input
-          v-model.number="lambda" type="range" min="0.1" max="1" step="0.05"
+        <BaseSlider
+          v-model="lambda"
+          :min="0.1" :max="1" :step="0.05"
           aria-label="Nivel de nostalgia"
-          class="w-full accent-brand cursor-pointer"
         />
         <div class="flex justify-between text-[10px] text-muted/60 mt-1">
           <span>Mezcla épocas</span><span>Solo ese año</span>
