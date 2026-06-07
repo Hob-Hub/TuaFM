@@ -100,7 +100,7 @@ function fmtDuration(ms?: number): string {
         :aria-label="isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'"
         @click.stop="toggleFavorite(track)"
       >
-        <svg viewBox="0 0 24 24" class="w-4 h-4" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+        <svg viewBox="-2 -2 28 28" class="w-4 h-4" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
           <path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 2.5 5 6 5c2 0 3.2 1.2 4 2.5C10.8 6.2 12 5 14 5c3.5 0 5.5 3.5 3.5 7.5C19 16.65 12 21 12 21z"/>
         </svg>
       </button>

@@ -7,7 +7,7 @@
   --color-surface-2:    oklch(0.13 0.01 290);
   --color-card:         oklch(0.15 0.01 290);
   --color-card-hover:   oklch(0.19 0.012 290);
-  --color-muted:        oklch(0.55 0.015 290);
+  --color-muted:        oklch(0.66 0.02 290);
   --color-line:         oklch(0.24 0.012 290);
 
   --font-sans: 'Syne', sans-serif;
@@ -52,3 +52,20 @@ h1, h2, h3, .font-display {
 
 /* Range inputs (sliders) base */
 input[type="range"] { accent-color: var(--color-brand); }
+
+/* Tailwind v4 resetea el cursor de los botones a `default`; lo devolvemos a
+   `pointer` para que la interfaz se sienta clicable como se espera. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+summary {
+  cursor: pointer;
+}
+
+/* Foco visible por teclado uniforme en todos los controles interactivos.
+   Usamos :where() (especificidad 0) para que cualquier estilo de componente
+   pueda sobrescribirlo sin pelear con la especificidad. */
+:where(button, a[href], [role="button"], summary):focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
