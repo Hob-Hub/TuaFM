@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { usePlayback } from '@/composables/usePlayback'
 import { usePlayerStore } from '@/stores/player.store'
@@ -14,6 +15,7 @@ const { observePlaylistDetail, removeTrackAt, reorderTracks, deletePlaylist } = 
 const playback = usePlayback()
 const player = usePlayerStore()
 const ui = useUiStore()
+const router = useRouter()
 
 const data = observePlaylistDetail(props.playlistId)
 const playlist = computed(() => data.value.playlist)
@@ -33,6 +35,14 @@ function play(index: number): void {
 }
 function playAll(): void {
   if (tracks.value.length) play(0)
+}
+
+async function confirmDelete(): Promise<void> {
+  const name = playlist.value?.name ?? 'esta playlist'
+  if (!window.confirm(`¿Eliminar «${name}»? Esta acción no se puede deshacer.`)) return
+  await deletePlaylist(props.playlistId)
+  ui.showToast('Playlist eliminada', 'success')
+  router.push({ name: 'home' })
 }
 
 function onDrop(index: number): void {
@@ -71,7 +81,7 @@ function onDrop(index: number): void {
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
         Importar CSV
       </BaseButton>
-      <BaseButton variant="danger" class="ml-auto" @click="deletePlaylist(playlistId)">Eliminar</BaseButton>
+      <BaseButton variant="danger" class="ml-auto" @click="confirmDelete">Eliminar</BaseButton>
     </div>
 
     <!-- Lista -->
