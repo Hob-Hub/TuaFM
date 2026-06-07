@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { nanoid } from 'nanoid'
 import { usePlayHistory } from '@/composables/usePlayHistory'
+import { usePlayback } from '@/composables/usePlayback'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import type { PlayHistoryEntry } from '@/types/playlist.types'
 
 const { history, clearHistory } = usePlayHistory()
+const playback = usePlayback()
+
+function playEntry(e: PlayHistoryEntry): void {
+  playback.startPlaylistQueue(
+    [{ id: nanoid(), artist: e.artist, title: e.title, coverUrl: e.coverUrl, enriched: false }],
+    0, null
+  )
+}
 
 const modeLabel: Record<string, string> = {
   playlist: 'Playlist', radio: 'Radio', recommendations: 'Recs'
@@ -57,8 +67,14 @@ const grouped = computed(() => {
       <h2 class="text-xs font-semibold uppercase tracking-wider text-muted mb-2 capitalize">{{ group.key }}</h2>
       <ul class="flex flex-col">
         <li v-for="entry in group.entries" :key="entry.id"
-            class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover">
-          <TrackCover :src="entry.coverUrl" :size="40" />
+            class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
+            @click="playEntry(entry)">
+          <div class="relative shrink-0">
+            <TrackCover :src="entry.coverUrl" :fallback-text="entry.title" :size="40" />
+            <span class="absolute inset-0 grid place-items-center bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition">
+              <svg viewBox="0 0 24 24" class="w-4 h-4 ml-0.5 text-white" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </div>
           <div class="min-w-0 flex-1">
             <p class="text-sm text-white truncate">{{ entry.title }}</p>
             <p class="text-xs text-muted truncate">{{ entry.artist }}</p>
