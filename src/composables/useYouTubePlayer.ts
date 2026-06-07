@@ -47,9 +47,12 @@ let onErrorCb: ((code: number) => void) | null = null
 // botones de anterior/siguiente lleguen a nuestros handlers.
 let anchor: HTMLAudioElement | null = null
 
-function createSilentAudio(): HTMLAudioElement {
+// Tono de baja frecuencia y amplitud ínfima (~-62 dB): técnicamente "audio"
+// para que el navegador dé la sesión multimedia a nuestra página, pero inaudible
+// — y, además, solo suena cuando suena la música, quedando siempre enmascarado.
+function createAnchorAudio(): HTMLAudioElement {
   const sampleRate = 8000
-  const numSamples = sampleRate // 1 segundo
+  const numSamples = sampleRate // 1 s, en bucle
   const dataSize = numSamples * 2
   const buffer = new ArrayBuffer(44 + dataSize)
   const view = new DataView(buffer)
@@ -60,15 +63,21 @@ function createSilentAudio(): HTMLAudioElement {
   wStr('RIFF'); w32(36 + dataSize); wStr('WAVE')
   wStr('fmt '); w32(16); w16(1); w16(1); w32(sampleRate); w32(sampleRate * 2); w16(2); w16(16)
   wStr('data'); w32(dataSize)
-  // Las muestras quedan a cero → silencio absoluto.
+  const amp = 24, freq = 50 // 50 Hz, 24/32767 ≈ -62 dB
+  for (let i = 0; i < numSamples; i++) {
+    view.setInt16(44 + i * 2, Math.round(amp * Math.sin((2 * Math.PI * freq * i) / sampleRate)), true)
+  }
   const audio = new Audio(URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' })))
   audio.loop = true
+  audio.setAttribute('aria-hidden', 'true')
+  audio.style.display = 'none'
+  document.body.appendChild(audio)
   return audio
 }
 
 function anchorPlay(): void {
   try {
-    if (!anchor) anchor = createSilentAudio()
+    if (!anchor) anchor = createAnchorAudio()
     void anchor.play().catch(() => { /* sin gesto de usuario aún */ })
   } catch { /* Audio no disponible */ }
 }

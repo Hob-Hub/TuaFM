@@ -33,14 +33,15 @@ function toggle(e: Event): void {
     :aria-pressed="isFav"
     @click="toggle"
   >
-    <!-- viewBox holgado + overflow-visible: el trazo del corazón nunca se recorta. -->
+    <!-- Corazón estándar (Material): punta inferior limpia, sin tocar bordes.
+         overflow-visible como seguro adicional contra recortes. -->
     <svg
-      viewBox="-3 -3 30 30" class="overflow-visible block"
+      viewBox="0 0 24 24" class="overflow-visible block"
       :style="{ width: size + 'px', height: size + 'px' }"
       :fill="isFav ? 'currentColor' : 'none'"
       stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"
     >
-      <path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 2.5 5 6 5c2 0 3.2 1.2 4 2.5C10.8 6.2 12 5 14 5c3.5 0 5.5 3.5 3.5 7.5C19 16.65 12 21 12 21z"/>
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
     </svg>
   </button>
 </template>
