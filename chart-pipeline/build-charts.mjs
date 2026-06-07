@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url'
 import { annualizeRows, normalizeStr, splitArtist } from './lib/annualize.mjs'
 import { buildCatalog, compactPeriods, seedMapFromRows } from './lib/catalog.mjs'
 import * as lfm from './lib/lastfm.mjs'
+import * as deezer from './lib/deezer.mjs'
 
 const __dir = dirname(fileURLToPath(import.meta.url))
 const args  = process.argv.slice(2)
@@ -78,7 +79,8 @@ if (!noLastfm) {
       const tr = data?.track
       if (tr) {
         if (!t.album && tr.album?.title) t.album = tr.album.title
-        if (!t.coverUrl) { const c = lfm.pickImage(tr.album?.image); if (c) t.coverUrl = c }
+        // Carátula: Last.fm manda (la siembra de la DB queda solo de fallback).
+        const c = lfm.pickImage(tr.album?.image); if (c) t.coverUrl = c
         const dur = tr.duration ? parseInt(tr.duration, 10) : 0
         if (dur) t.durationMs = dur
         const tags = (tr.toptags?.tag ?? []).slice(0, 5).map(x => x.name).filter(Boolean)
@@ -112,11 +114,16 @@ if (!noLastfm) {
         ...(x.listeners ? { listeners: parseInt(x.listeners, 10) || undefined } : {})
       })).filter(x => x.title)
       if (tt.length) a.topTracks = tt
+      // Foto de artista: Last.fm no la sirve → Deezer.
+      if (!a.imageUrl) { const img = await deezer.artistImage(a.name); if (img) a.imageUrl = img }
     } catch (e) { console.warn(`  ! artista ${a.key}: ${e.message}`) }
-    if (++n % 100 === 0) console.log(`  artistas ${n}/${artists.length} (api=${lfm.stats.apiCalls} cache=${lfm.stats.cacheHits})`)
+    if (++n % 100 === 0) console.log(`  artistas ${n}/${artists.length} (lfm=${lfm.stats.apiCalls} dz=${deezer.stats.apiCalls})`)
   }
   lfm.closeCache()
-  console.log(`\n✓ Last.fm: ${lfm.stats.apiCalls} llamadas, ${lfm.stats.cacheHits} de caché, ${lfm.stats.errors} sin resultado`)
+  deezer.closeCache()
+  const withPhoto = artists.filter(a => a.imageUrl).length
+  console.log(`\n✓ Last.fm: ${lfm.stats.apiCalls} llamadas, ${lfm.stats.cacheHits} de caché`)
+  console.log(`✓ Deezer: ${deezer.stats.apiCalls} llamadas (${deezer.stats.misses} sin foto) → ${withPhoto}/${artists.length} artistas con foto`)
 }
 
 // ── 4. Escritura ─────────────────────────────────────────────────────────────

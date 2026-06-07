@@ -12,6 +12,7 @@ en `scripts/`, que está en `.gitignore`.)
 | [`lib/annualize.mjs`](lib/annualize.mjs) | Consolidación pura (semanal/anual → Top del año). **Único sitio** para afinar la fórmula de puntuación. |
 | [`lib/catalog.mjs`](lib/catalog.mjs) | Dedupe de tracks/artistas, asignación de ids, siembra desde la DB y compactación de los charts. |
 | [`lib/lastfm.mjs`](lib/lastfm.mjs) | Cliente Last.fm para el build (throttle ~5 req/s + caché de reanudación en `.lastfm-cache.db`). |
+| [`lib/deezer.mjs`](lib/deezer.mjs) | Imágenes de artista desde Deezer (Last.fm ya no las sirve). Caché en `.deezer-cache.db`. |
 | [`build-charts.mjs`](build-charts.mjs) | Orquestador: charts compactos en `../public/charts/` + catálogo en `../public/catalog/`. |
 | [`migrate-to-firestore.mjs`](migrate-to-firestore.mjs) | SQLite → Firestore (1 doc/año/chart). Para "más adelante"; necesita `npm install`. |
 | [`chart-configs/*.json`](chart-configs/) | Definición de cada fuente (consulta SQL, `consolidate`, metadatos del registry). |
@@ -23,8 +24,11 @@ en `scripts/`, que está en `.gitignore`.)
   (t=trackId, r=rank, s=score, p=pico, w=semanas) y referencia el catálogo.
 - `../public/catalog/tracks.json` — 1 entrada por track distinto (deduplicado entre
   años y charts), con YouTube/carátula de la DB + álbum/tags/duración/oyentes de Last.fm.
-- `../public/catalog/artists.json` — 1 entrada por artista: bio, imagen, oyentes,
-  tags y **top 50** de Last.fm. Lo que no se encuentra se deja vacío.
+- `../public/catalog/artists.json` — 1 entrada por artista: bio, oyentes, tags y
+  **top 50** de Last.fm, e **imagen de Deezer** (Last.fm no sirve fotos de artista).
+  Lo que no se encuentra se deja vacío.
+
+Carátulas: se prefiere la de **Last.fm** (álbum); la de `los40.db` queda de fallback.
 
 ## Requisitos
 
