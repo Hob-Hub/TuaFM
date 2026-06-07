@@ -130,6 +130,11 @@ const modeLabel = computed(() => {
         <svg v-if="player.isMuted || player.volume === 0" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm13.5 3 2.5 2.5-1.5 1.5-2.5-2.5L17 13l-2.5-2.5L16 9l2.5 2.5L21 9l1.5 1.5L20 13z"/></svg>
         <svg v-else viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 16 12z"/></svg>
       </button>
+      <button class="flex items-center gap-2 text-sm text-muted hover:text-white" aria-label="Ver cola"
+              @click="ui.openQueue()">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h11M4 12h11M4 18h7M17 14v6M17 20l3-2-3-2"/></svg>
+        Cola
+      </button>
       <button class="flex items-center gap-2 text-sm text-muted hover:text-white"
               :disabled="!current" @click="current && ui.openSaveToPlaylist(current)">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>

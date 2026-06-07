@@ -8,6 +8,7 @@ import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
 import { useTrackEnrich } from '@/composables/useTrackEnrich'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlaylists } from '@/composables/usePlaylists'
+import { useRadioQueue } from '@/composables/useRadioQueue'
 
 // ── Cola de playlist: estado singleton efímero (no persistido) ───────────────
 const playlistQueue = ref<Track[]>([])
@@ -32,6 +33,7 @@ export function usePlayback() {
   const { enrich } = useTrackEnrich()
   const { recordPlay } = usePlayHistory()
   const { updateTrack: persistPlaylistTrack, getTracks } = usePlaylists()
+  const { extend: extendRadio } = useRadioQueue()
 
   const currentTrack = computed<Track | null>(() => {
     switch (player.queueMode) {
@@ -65,7 +67,29 @@ export function usePlayback() {
     if (handlersBound) return
     yt.onEnded(() => { void next() })
     yt.onError(() => { void handlePlaybackError() })
+    setupMediaSessionHandlers()
     handlersBound = true
+  }
+
+  /**
+   * Registra los controles del SO (pantalla de bloqueo, teclas multimedia) una
+   * sola vez con callbacks estables. Antes se re-registraban en cada pista; al
+   * fijarlos pronto y de forma estable, los botones de anterior/siguiente del SO
+   * funcionan de manera fiable, no solo play/pausa.
+   */
+  function setupMediaSessionHandlers(): void {
+    if (!('mediaSession' in navigator)) return
+    const ms = navigator.mediaSession
+    const safe = (action: MediaSessionAction, handler: MediaSessionActionHandler): void => {
+      try { ms.setActionHandler(action, handler) } catch { /* acción no soportada */ }
+    }
+    safe('play',  () => yt.play())
+    safe('pause', () => yt.pause())
+    safe('previoustrack', () => { void prev() })
+    safe('nexttrack',     () => { void next() })
+    safe('seekbackward', d => yt.seekTo(Math.max(0, player.currentTime - (d.seekOffset ?? 10))))
+    safe('seekforward',  d => yt.seekTo(player.currentTime + (d.seekOffset ?? 10)))
+    safe('seekto', d => { if (d.seekTime != null) yt.seekTo(d.seekTime) })
   }
 
   /** Lista de videoIds a intentar: el mejor primero, luego los alternativos. */
@@ -108,7 +132,7 @@ export function usePlayback() {
     }
   }
 
-  /** Integra los controles de medios del SO (pantalla de bloqueo, teclas). */
+  /** Actualiza los metadatos del SO (título, artista, carátula) de la pista. */
   function updateMediaSession(track: Track): void {
     if (!('mediaSession' in navigator)) return
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -116,19 +140,6 @@ export function usePlayback() {
       artist: track.artistDisplay ?? track.artist,
       album:  track.album ?? '',
       artwork: track.coverUrl ? [{ src: track.coverUrl, sizes: '512x512' }] : []
-    })
-    navigator.mediaSession.setActionHandler('play',  () => yt.play())
-    navigator.mediaSession.setActionHandler('pause', () => yt.pause())
-    navigator.mediaSession.setActionHandler('nexttrack',     () => { void next() })
-    navigator.mediaSession.setActionHandler('previoustrack', () => { void prev() })
-    navigator.mediaSession.setActionHandler('seekbackward', d => {
-      yt.seekTo(Math.max(0, player.currentTime - (d.seekOffset ?? 10)))
-    })
-    navigator.mediaSession.setActionHandler('seekforward', d => {
-      yt.seekTo(player.currentTime + (d.seekOffset ?? 10))
-    })
-    navigator.mediaSession.setActionHandler('seekto', d => {
-      if (d.seekTime != null) yt.seekTo(d.seekTime)
     })
   }
 
@@ -153,6 +164,7 @@ export function usePlayback() {
       player.currentTrackId = track.id
       updateMediaSession(track)
       void recordPlay(track, player.queueMode)
+      maybePrefetchRadio()
     } else {
       player.state = 'error'
       ui.showToast(`No se encontró vídeo para "${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}"`, 'error')
@@ -183,12 +195,32 @@ export function usePlayback() {
   function playRadioIndex(i: number): void   { radio.skipTo(i); player.queueMode = 'radio'; void playCurrent() }
   function playRecIndex(i: number): void      { rec.skipTo(i);   player.queueMode = 'recommendations'; void playCurrent() }
 
+  /** Salta a un índice de la cola de playlist efímera ya en curso. */
+  function playPlaylistIndex(i: number): void {
+    if (i < 0 || i >= playlistQueue.value.length) return
+    playlistIndex.value = i
+    player.queueMode = 'playlist'
+    void playCurrent()
+  }
+
+  /** Radio infinita: si quedan pocas pistas por delante, precarga más en 2º plano. */
+  function maybePrefetchRadio(): void {
+    if (player.queueMode !== 'radio') return
+    const remaining = radio.queue.length - radio.currentIndex - 1
+    if (remaining <= 5) void extendRadio()
+  }
+
   // ── Navegación ──────────────────────────────────────────────────────────────
   async function next(): Promise<void> {
     switch (player.queueMode) {
       case 'radio':
         if (radio.hasNext) { radio.next(); await playCurrent() }
-        else player.state = 'ended'
+        else {
+          // Fin de la cola: intenta extender la radio antes de darla por acabada.
+          const added = await extendRadio()
+          if (added && radio.hasNext) { radio.next(); await playCurrent() }
+          else player.state = 'ended'
+        }
         return
       case 'recommendations':
         if (rec.hasNext) { rec.next(); await playCurrent() }
@@ -237,8 +269,8 @@ export function usePlayback() {
   return {
     currentTrack, hasNext, hasPrev,
     playCurrent, startPlaylistQueue, playPlaylistById,
-    playRadioIndex, playRecIndex,
+    playRadioIndex, playRecIndex, playPlaylistIndex,
     next, prev, togglePlay,
-    playlistIndex
+    playlistIndex, playlistQueue
   }
 }

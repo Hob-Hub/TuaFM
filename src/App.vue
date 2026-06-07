@@ -3,11 +3,14 @@ import { onMounted, onBeforeUnmount, watch } from 'vue'
 import { RouterView, RouterLink } from 'vue-router'
 import { useOnline, useMediaQuery } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui.store'
+import { usePlayerStore } from '@/stores/player.store'
+import { useRadioStore } from '@/stores/radio.store'
 import { usePlayback } from '@/composables/usePlayback'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import PlayerBar from '@/components/layout/PlayerBar.vue'
 import YouTubeFrame from '@/components/player/YouTubeFrame.vue'
 import NowPlayingScreen from '@/components/player/NowPlayingScreen.vue'
+import QueuePanel from '@/components/player/QueuePanel.vue'
 import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal.vue'
 import AddTrackModal from '@/components/playlist/AddTrackModal.vue'
 import CsvImportModal from '@/components/playlist/CsvImportModal.vue'
@@ -15,6 +18,8 @@ import SaveToPlaylistModal from '@/components/playlist/SaveToPlaylistModal.vue'
 
 const ui = useUiStore()
 const online = useOnline()
+const player = usePlayerStore()
+const radio = useRadioStore()
 const playback = usePlayback()
 
 // Atajos de teclado globales: espacio = play/pausa, ←/→ = seek ±5s
@@ -25,7 +30,14 @@ function onKey(e: KeyboardEvent): void {
   else if (e.code === 'ArrowRight' && e.shiftKey) { e.preventDefault(); playback.next() }
   else if (e.code === 'ArrowLeft'  && e.shiftKey) { e.preventDefault(); playback.prev() }
 }
-onMounted(() => document.addEventListener('keydown', onKey))
+onMounted(() => {
+  document.addEventListener('keydown', onKey)
+  // Reanuda la radio persistida: el reproductor muestra la pista lista para play.
+  if (radio.isActive && player.queueMode === 'idle') {
+    player.queueMode = 'radio'
+    player.currentTrackId = radio.currentTrack?.id ?? null
+  }
+})
 onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 
 // La vista a pantalla completa es solo móvil: si se ensancha a escritorio, ciérrala.
@@ -87,6 +99,11 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
       <NowPlayingScreen v-if="ui.nowPlayingOpen" />
     </Transition>
 
+    <!-- Panel de la cola de reproducción -->
+    <Transition name="queue">
+      <QueuePanel v-if="ui.queueOpen" />
+    </Transition>
+
     <!-- Modales globales -->
     <CreatePlaylistModal v-if="ui.createPlaylistOpen" />
     <AddTrackModal v-if="ui.addTrackPlaylistId" />
@@ -115,4 +132,8 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 8px); }
 .np-enter-active, .np-leave-active { transition: transform .28s ease, opacity .28s ease; }
 .np-enter-from, .np-leave-to { opacity: 0; transform: translateY(100%); }
+.queue-enter-active, .queue-leave-active { transition: opacity .2s ease; }
+.queue-enter-active .relative, .queue-leave-active .relative { transition: transform .25s ease; }
+.queue-enter-from, .queue-leave-to { opacity: 0; }
+.queue-enter-from .relative, .queue-leave-to .relative { transform: translateX(100%); }
 </style>
