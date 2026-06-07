@@ -113,7 +113,7 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
     <!-- Toast -->
     <Transition name="toast">
       <div v-if="ui.toast"
-           class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm shadow-xl border"
+           class="fixed bottom-28 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl text-sm shadow-xl border"
            :class="{
              'bg-card border-line text-white': ui.toast.kind === 'info',
              'bg-emerald-500/15 border-emerald-500/30 text-emerald-300': ui.toast.kind === 'success',
@@ -133,7 +133,7 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
 .np-enter-active, .np-leave-active { transition: transform .28s ease, opacity .28s ease; }
 .np-enter-from, .np-leave-to { opacity: 0; transform: translateY(100%); }
 .queue-enter-active, .queue-leave-active { transition: opacity .2s ease; }
-.queue-enter-active .relative, .queue-leave-active .relative { transition: transform .25s ease; }
+.queue-enter-active .queue-panel, .queue-leave-active .queue-panel { transition: transform .25s ease; }
 .queue-enter-from, .queue-leave-to { opacity: 0; }
-.queue-enter-from .relative, .queue-leave-to .relative { transform: translateX(100%); }
+.queue-enter-from .queue-panel, .queue-leave-to .queue-panel { transform: translateX(100%); }
 </style>

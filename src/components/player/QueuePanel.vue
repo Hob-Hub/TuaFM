@@ -54,7 +54,7 @@ function jump(i: number): void {
   <div class="fixed inset-0 z-50 flex justify-end">
     <div class="absolute inset-0 bg-black/50" @click="ui.closeQueue()" />
 
-    <aside class="relative w-full sm:w-96 max-w-full h-full bg-surface border-l border-line flex flex-col shadow-2xl">
+    <aside class="queue-panel relative w-full sm:w-96 max-w-full h-full bg-surface border-l border-line flex flex-col shadow-2xl">
       <header class="flex items-center justify-between px-4 h-14 border-b border-line shrink-0">
         <div class="min-w-0">
           <h2 class="font-display font-bold leading-tight">En cola</h2>

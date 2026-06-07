@@ -5,27 +5,19 @@ import { usePlayerStore } from '@/stores/player.store'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayback } from '@/composables/usePlayback'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
-import { useFavorites } from '@/composables/useFavorites'
-import { makeCacheKey } from '@/db/local.db'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import ProgressBar from '@/components/player/ProgressBar.vue'
+import FavoriteButton from '@/components/ui/FavoriteButton.vue'
 
 const player = usePlayerStore()
 const ui = useUiStore()
 const playback = usePlayback()
 const yt = useYouTubePlayer()
-const { favorites, toggleFavorite } = useFavorites()
 
 const current = playback.currentTrack
 
 const title  = computed(() => current.value?.titleDisplay  ?? current.value?.title  ?? '')
 const artist = computed(() => current.value?.artistDisplay ?? current.value?.artist ?? '')
-
-const isFav = computed(() => {
-  if (!current.value) return false
-  const key = makeCacheKey(current.value.artist, current.value.title)
-  return favorites.value.some(f => f.cacheKey === key)
-})
 
 const repeatTitle = computed(() =>
   player.repeatMode === 'one' ? 'Repetir una' : player.repeatMode === 'all' ? 'Repetir todo' : 'Sin repetición')
@@ -53,16 +45,7 @@ const modeLabel = computed(() => {
         <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <span class="flex-1 text-center text-xs uppercase tracking-wider text-muted truncate">{{ modeLabel }}</span>
-      <button
-        v-if="current"
-        class="p-2 -mr-2 rounded-lg" :class="isFav ? 'text-brand' : 'text-muted'"
-        :aria-label="isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'"
-        @click="toggleFavorite(current)"
-      >
-        <svg viewBox="-2 -2 28 28" class="w-6 h-6" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-          <path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 2.5 5 6 5c2 0 3.2 1.2 4 2.5C10.8 6.2 12 5 14 5c3.5 0 5.5 3.5 3.5 7.5C19 16.65 12 21 12 21z"/>
-        </svg>
-      </button>
+      <FavoriteButton v-if="current" :track="current" :size="24" />
     </div>
 
     <!-- Carátula -->

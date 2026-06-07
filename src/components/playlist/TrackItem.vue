@@ -3,10 +3,9 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Track } from '@/types/track.types'
 import type { QueueMode } from '@/types/queue.types'
-import { makeCacheKey } from '@/db/local.db'
-import { useFavorites } from '@/composables/useFavorites'
 import { useUiStore } from '@/stores/ui.store'
 import TrackCover from '@/components/ui/TrackCover.vue'
+import FavoriteButton from '@/components/ui/FavoriteButton.vue'
 
 const props = withDefaults(defineProps<{
   track:     Track
@@ -20,12 +19,6 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ play: []; remove: [] }>()
 
 const ui = useUiStore()
-const { favorites, toggleFavorite } = useFavorites()
-
-const isFav = computed(() => {
-  const key = makeCacheKey(props.track.artist, props.track.title)
-  return favorites.value.some(f => f.cacheKey === key)
-})
 
 const artistLabel = computed(() => props.track.artistDisplay ?? props.track.artist)
 const titleLabel  = computed(() => props.track.titleDisplay  ?? props.track.title)
@@ -94,16 +87,7 @@ function fmtDuration(ms?: number): string {
 
     <!-- Acciones -->
     <div class="flex items-center gap-1 shrink-0">
-      <button
-        class="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-        :class="isFav ? 'text-brand' : 'text-muted opacity-0 group-hover:opacity-100'"
-        :aria-label="isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'"
-        @click.stop="toggleFavorite(track)"
-      >
-        <svg viewBox="-2 -2 28 28" class="w-4 h-4" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
-          <path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 2.5 5 6 5c2 0 3.2 1.2 4 2.5C10.8 6.2 12 5 14 5c3.5 0 5.5 3.5 3.5 7.5C19 16.65 12 21 12 21z"/>
-        </svg>
-      </button>
+      <FavoriteButton :track="track" reveal-on-hover />
 
       <button
         v-if="mode !== 'playlist'"
