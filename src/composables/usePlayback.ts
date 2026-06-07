@@ -264,7 +264,15 @@ export function usePlayback() {
     }
   }
 
-  function togglePlay(): void { yt.toggle() }
+  function togglePlay(): void {
+    // Si no hay vídeo cargado todavía (radio reanudada al abrir, o cola lista sin
+    // arrancar), el play debe cargar la pista actual, no solo "reanudar" la nada.
+    if ((player.state === 'idle' || player.state === 'ended') && currentTrack.value) {
+      void playCurrent()
+      return
+    }
+    yt.toggle()
+  }
 
   return {
     currentTrack, hasNext, hasPrev,

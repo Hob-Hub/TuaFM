@@ -38,6 +38,42 @@ let ticker: ReturnType<typeof setInterval> | null = null
 let onEndedCb: (() => void) | null = null
 let onErrorCb: ((code: number) => void) | null = null
 
+// ── Ancla de sesión multimedia ───────────────────────────────────────────────
+// El vídeo se reproduce dentro de un <iframe> cross-origin de YouTube, y el SO
+// tiende a asociar los controles multimedia (teclas, pantalla de bloqueo) a ESE
+// iframe, ignorando los handlers de anterior/siguiente que registramos en la
+// página padre. Reproducimos un audio *silencioso* en la página padre, en sync
+// con el estado real, para que la sesión multimedia del SO sea la nuestra y los
+// botones de anterior/siguiente lleguen a nuestros handlers.
+let anchor: HTMLAudioElement | null = null
+
+function createSilentAudio(): HTMLAudioElement {
+  const sampleRate = 8000
+  const numSamples = sampleRate // 1 segundo
+  const dataSize = numSamples * 2
+  const buffer = new ArrayBuffer(44 + dataSize)
+  const view = new DataView(buffer)
+  let off = 0
+  const wStr = (s: string): void => { for (let i = 0; i < s.length; i++) view.setUint8(off++, s.charCodeAt(i)) }
+  const w32 = (v: number): void => { view.setUint32(off, v, true); off += 4 }
+  const w16 = (v: number): void => { view.setUint16(off, v, true); off += 2 }
+  wStr('RIFF'); w32(36 + dataSize); wStr('WAVE')
+  wStr('fmt '); w32(16); w16(1); w16(1); w32(sampleRate); w32(sampleRate * 2); w16(2); w16(16)
+  wStr('data'); w32(dataSize)
+  // Las muestras quedan a cero → silencio absoluto.
+  const audio = new Audio(URL.createObjectURL(new Blob([buffer], { type: 'audio/wav' })))
+  audio.loop = true
+  return audio
+}
+
+function anchorPlay(): void {
+  try {
+    if (!anchor) anchor = createSilentAudio()
+    void anchor.play().catch(() => { /* sin gesto de usuario aún */ })
+  } catch { /* Audio no disponible */ }
+}
+function anchorPause(): void { try { anchor?.pause() } catch { /* noop */ } }
+
 function loadApi(): Promise<void> {
   if (apiPromise) return apiPromise
   apiPromise = new Promise<void>(resolve => {
@@ -86,12 +122,13 @@ export function useYouTubePlayer() {
   function handleState(state: number): void {
     const S = window.YT!.PlayerState
     switch (state) {
-      case S.PLAYING:   playerStore.state = 'playing'; setPlaybackState('playing'); break
-      case S.PAUSED:    playerStore.state = 'paused';  setPlaybackState('paused');  break
-      case S.BUFFERING: playerStore.state = 'loading'; setPlaybackState('playing'); break
+      case S.PLAYING:   playerStore.state = 'playing'; setPlaybackState('playing'); anchorPlay();  break
+      case S.PAUSED:    playerStore.state = 'paused';  setPlaybackState('paused');  anchorPause(); break
+      case S.BUFFERING: playerStore.state = 'loading'; setPlaybackState('playing'); anchorPlay();  break
       case S.ENDED:
         playerStore.state = 'ended'
         setPlaybackState('none')
+        anchorPause()
         onEndedCb?.()
         break
     }
@@ -130,11 +167,12 @@ export function useYouTubePlayer() {
     if (!player) return
     playerStore.state = 'loading'
     playerStore.currentTime = 0
+    anchorPlay()   // arranca el ancla dentro del gesto (evita bloqueo de autoplay)
     player.loadVideoById(videoId)
   }
 
-  function play():  void { player?.playVideo() }
-  function pause(): void { player?.pauseVideo() }
+  function play():  void { anchorPlay(); player?.playVideo() }
+  function pause(): void { anchorPause(); player?.pauseVideo() }
   function toggle(): void {
     if (playerStore.isPlaying) pause(); else play()
   }
