@@ -2,11 +2,13 @@
 import { useRadioStore } from '@/stores/radio.store'
 import { usePlayerStore } from '@/stores/player.store'
 import { usePlayback } from '@/composables/usePlayback'
+import { useRadioQueue } from '@/composables/useRadioQueue'
 import TrackItem from '@/components/playlist/TrackItem.vue'
 
 const radio = useRadioStore()
 const player = usePlayerStore()
 const playback = usePlayback()
+const { extend, extending } = useRadioQueue()
 
 function isActive(i: number): boolean {
   return player.queueMode === 'radio' && radio.currentIndex === i
@@ -32,6 +34,17 @@ function isActive(i: number): boolean {
         @play="playback.playRadioIndex(i)"
       />
     </ul>
+
+    <!-- Radio infinita: se amplía sola al avanzar, y a mano aquí. -->
+    <div class="mt-3 flex flex-col items-center gap-1">
+      <button
+        class="text-sm text-muted hover:text-white disabled:opacity-50"
+        :disabled="extending" @click="extend()"
+      >
+        {{ extending ? 'Cargando…' : 'Cargar más' }}
+      </button>
+      <p class="text-[11px] text-muted/60">La radio no se detiene: se amplía sola mientras escuchas.</p>
+    </div>
   </div>
 
   <div v-else class="rounded-2xl border border-dashed border-line p-10 text-center text-muted text-sm">

@@ -1,8 +1,12 @@
 import { ref } from 'vue'
-import { generateRadioQueue } from '@/services/radio.service'
+import { generateRadioQueue, generateMoreRadioTracks } from '@/services/radio.service'
 import { useRadioStore } from '@/stores/radio.store'
 import { usePlayerStore } from '@/stores/player.store'
 import { useChartRegistryStore } from '@/stores/chartRegistry.store'
+
+// Estado compartido entre instancias: evita extensiones concurrentes (la cola
+// puede ampliarse desde el botón "Cargar más" y desde el auto-prefetch a la vez).
+const extending = ref(false)
 
 export function useRadioQueue() {
   const radioStore    = useRadioStore()
@@ -41,5 +45,31 @@ export function useRadioQueue() {
     }
   }
 
-  return { generate, generating, error }
+  /** Amplía la cola actual con más pistas (radio infinita). */
+  async function extend(count = 25): Promise<boolean> {
+    if (extending.value) return false
+    const chartId = radioStore.activeChartId
+    if (!chartId) return false
+    extending.value = true
+    try {
+      const existing = new Set(radioStore.queue.map(t => `${t.artist}::${t.title}`))
+      const tracks = await generateMoreRadioTracks({
+        chartId,
+        refYear:     radioStore.activeYear,
+        windowYears: radioStore.activeWindow,
+        lambda:      radioStore.activeLambda,
+        excludeKeys: existing,
+        count
+      })
+      if (tracks.length === 0) return false
+      radioStore.appendQueue(tracks)
+      return true
+    } catch {
+      return false
+    } finally {
+      extending.value = false
+    }
+  }
+
+  return { generate, generating, error, extend, extending }
 }

@@ -23,6 +23,16 @@ export async function buildRadioCandidates(
   return aggregateCandidates(periods, refYear, lambda)
 }
 
+/** Convierte un candidato consolidado en un Track reproducible. */
+function candidateToTrack(c: RadioCandidate): Track {
+  return {
+    id: nanoid(), artist: c.artist, artistDisplay: c.artistDisplay,
+    title: c.title, titleDisplay: c.titleDisplay,
+    youtubeVideoId: c.youtubeVideoId, coverUrl: c.coverUrl,
+    enriched: false
+  }
+}
+
 /** Devuelve también el lambda resuelto para que el store lo guarde correctamente. */
 export async function generateRadioQueue(params: {
   chartId: string; refYear: number
@@ -38,13 +48,24 @@ export async function generateRadioQueue(params: {
 
   const candidates = await buildRadioCandidates(chartId, refYear, windowYears, lambda)
   const sampled    = weightedSample(candidates, queueSize)
-
-  const tracks: Track[] = sampled.map(c => ({
-    id: nanoid(), artist: c.artist, artistDisplay: c.artistDisplay,
-    title: c.title, titleDisplay: c.titleDisplay,
-    youtubeVideoId: c.youtubeVideoId, coverUrl: c.coverUrl,
-    enriched: false
-  }))
+  const tracks     = sampled.map(candidateToTrack)
 
   return { tracks, resolvedLambda: lambda }
+}
+
+/**
+ * Genera más pistas para extender la radio sin que termine nunca. Prioriza
+ * canciones aún no presentes en la cola; si se agotan las novedades, vuelve a
+ * muestrear del conjunto completo (permitiendo repeticiones) para no quedarse
+ * sin música.
+ */
+export async function generateMoreRadioTracks(params: {
+  chartId: string; refYear: number; windowYears: number; lambda: number
+  excludeKeys: Set<string>; count: number
+}): Promise<Track[]> {
+  const { chartId, refYear, windowYears, lambda, excludeKeys, count } = params
+  const candidates = await buildRadioCandidates(chartId, refYear, windowYears, lambda)
+  let pool = candidates.filter(c => !excludeKeys.has(`${c.artist}::${c.title}`))
+  if (pool.length === 0) pool = candidates
+  return weightedSample(pool, count).map(candidateToTrack)
 }

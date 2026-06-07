@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useChartRegistryStore } from '@/stores/chartRegistry.store'
+import { useRadioStore } from '@/stores/radio.store'
 import { useRadioQueue } from '@/composables/useRadioQueue'
+import { usePlayback } from '@/composables/usePlayback'
 import { getYearTop } from '@/services/radio.service'
-import type { ChartPeriod } from '@/types/chart.types'
+import type { ChartPeriod, ChartRegistry } from '@/types/chart.types'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseSlider from '@/components/ui/BaseSlider.vue'
 
 const registry = useChartRegistryStore()
+const radioStore = useRadioStore()
+const playback = usePlayback()
 const { generate, generating, error } = useRadioQueue()
 
 const chartId = ref('')
@@ -18,17 +22,37 @@ const selected = computed(() => registry.getById(chartId.value))
 const yearTop  = ref<ChartPeriod | null>(null)
 const loadingTop = ref(false)
 
+/** Año por defecto: el del medio del rango de la fuente. */
+function midYear(r: ChartRegistry): number {
+  return Math.round((r.startYear + r.endYear) / 2)
+}
+
+/** Selección manual de fuente: fija λ por defecto y centra el año. */
+function selectChart(r: ChartRegistry): void {
+  chartId.value = r.chartId
+  lambda.value  = r.defaultLambda
+  year.value    = midYear(r)
+}
+
 onMounted(async () => {
   await registry.load()
-  if (!chartId.value && registry.registries.length) {
-    chartId.value = registry.registries[0].chartId
+  if (!registry.registries.length) return
+
+  // Reanuda la última configuración usada si sigue siendo válida…
+  const saved = radioStore.activeChartId ? registry.getById(radioStore.activeChartId) : null
+  if (saved) {
+    chartId.value = saved.chartId
+    year.value    = Math.min(Math.max(radioStore.activeYear, saved.startYear), saved.endYear)
+    lambda.value  = radioStore.activeLambda
+  } else {
+    // …o arranca en la primera fuente, centrada en su año medio.
+    selectChart(registry.registries[0])
   }
 })
 
-// Al cambiar de fuente: ajusta λ por defecto y encaja el año en el rango.
+// Mantiene el año dentro del rango de la fuente activa (seguridad).
 watch(selected, (s) => {
   if (!s) return
-  lambda.value = s.defaultLambda
   if (year.value > s.endYear)   year.value = s.endYear
   if (year.value < s.startYear) year.value = s.startYear
 })
@@ -56,7 +80,8 @@ const displaySize = computed(() =>
 
 async function onGenerate(): Promise<void> {
   if (!chartId.value) return
-  await generate({ chartId: chartId.value, refYear: year.value, lambda: lambda.value })
+  const ok = await generate({ chartId: chartId.value, refYear: year.value, lambda: lambda.value })
+  if (ok) playback.playRadioIndex(0)   // arranca la radio al instante
 }
 </script>
 
@@ -76,7 +101,7 @@ async function onGenerate(): Promise<void> {
             v-for="r in registry.registries" :key="r.chartId"
             class="flex items-center gap-2.5 px-3 h-12 rounded-xl border text-left transition"
             :class="chartId === r.chartId ? 'border-brand bg-brand/15 text-white' : 'border-line bg-surface-2 text-muted hover:text-white'"
-            @click="chartId = r.chartId"
+            @click="selectChart(r)"
           >
             <span class="text-xl leading-none">{{ r.flag }}</span>
             <span class="min-w-0">

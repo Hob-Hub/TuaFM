@@ -29,6 +29,11 @@ export const useRadioStore = defineStore('radio', () => {
     activeWindow.value  = params.window
   }
 
+  /** Añade pistas al final de la cola (radio infinita). */
+  function appendQueue(tracks: Track[]): void {
+    if (tracks.length) queue.value.push(...tracks)
+  }
+
   function next():           void { if (hasNext.value) currentIndex.value++ }
   function prev():           void { if (hasPrev.value) currentIndex.value-- }
   function skipTo(i: number): void { currentIndex.value = Math.max(0, Math.min(i, queue.value.length - 1)) }
@@ -43,6 +48,12 @@ export const useRadioStore = defineStore('radio', () => {
     queue, currentIndex, isActive, sourceLabel,
     activeChartId, activeYear, activeLambda, activeWindow,
     currentTrack, nextTrack, hasNext, hasPrev,
-    setQueue, next, prev, skipTo, clear, updateTrack
+    setQueue, appendQueue, next, prev, skipTo, clear, updateTrack
+  }
+}, {
+  // Persistimos la cola y los parámetros para reanudar la radio al volver.
+  persist: {
+    pick: ['queue', 'currentIndex', 'sourceLabel',
+           'activeChartId', 'activeYear', 'activeLambda', 'activeWindow']
   }
 })
