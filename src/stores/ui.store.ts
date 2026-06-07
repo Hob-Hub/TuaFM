@@ -21,9 +21,15 @@ export const useUiStore = defineStore('ui', () => {
   // Modal: guardar una pista efímera (radio/recs) en una playlist destino
   const saveToPlaylistTrack = ref<Track | null>(null)
 
+  // Vista "Now Playing" a pantalla completa (principalmente móvil)
+  const nowPlayingOpen = ref(false)
+
   // Toast / banner de error global (efímero)
   const toast = ref<{ message: string; kind: 'error' | 'info' | 'success' } | null>(null)
   let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+  function openNowPlaying()  { nowPlayingOpen.value = true }
+  function closeNowPlaying() { nowPlayingOpen.value = false }
 
   function openSidebar()  { sidebarOpen.value = true }
   function closeSidebar() { sidebarOpen.value = false }
@@ -49,7 +55,8 @@ export const useUiStore = defineStore('ui', () => {
 
   return {
     sidebarOpen, createPlaylistOpen, csvImportPlaylistId, addTrackPlaylistId,
-    saveToPlaylistTrack, toast,
+    saveToPlaylistTrack, toast, nowPlayingOpen,
+    openNowPlaying, closeNowPlaying,
     openSidebar, closeSidebar, toggleSidebar,
     openCreatePlaylist, closeCreatePlaylist,
     openCsvImport, closeCsvImport,

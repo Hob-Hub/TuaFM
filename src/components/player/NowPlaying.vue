@@ -14,6 +14,7 @@ defineProps<{ track: Track | null }>()
       <RouterLink
         :to="{ name: 'artist', params: { name: track.artistDisplay ?? track.artist } }"
         class="text-xs text-muted truncate hover:text-white/80 hover:underline block"
+        @click.stop
       >
         {{ track.artistDisplay ?? track.artist }}
       </RouterLink>

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, watch } from 'vue'
 import { RouterView, RouterLink } from 'vue-router'
-import { useOnline } from '@vueuse/core'
+import { useOnline, useMediaQuery } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayback } from '@/composables/usePlayback'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import PlayerBar from '@/components/layout/PlayerBar.vue'
 import YouTubeFrame from '@/components/player/YouTubeFrame.vue'
+import NowPlayingScreen from '@/components/player/NowPlayingScreen.vue'
 import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal.vue'
 import AddTrackModal from '@/components/playlist/AddTrackModal.vue'
 import CsvImportModal from '@/components/playlist/CsvImportModal.vue'
@@ -26,6 +27,10 @@ function onKey(e: KeyboardEvent): void {
 }
 onMounted(() => document.addEventListener('keydown', onKey))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
+
+// La vista a pantalla completa es solo móvil: si se ensancha a escritorio, ciérrala.
+const desktop = useMediaQuery('(min-width: 768px)')
+watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
 </script>
 
 <template>
@@ -48,7 +53,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
       </Transition>
 
       <!-- Contenido -->
-      <main class="min-h-0 overflow-y-auto">
+      <main class="min-w-0 min-h-0 overflow-y-auto">
         <!-- Topbar móvil -->
         <div class="md:hidden sticky top-0 z-10 h-14 flex items-center gap-3 px-4 bg-surface/90 backdrop-blur border-b border-line">
           <button class="p-2 -ml-2 rounded-lg text-white" aria-label="Abrir menú" @click="ui.toggleSidebar()">
@@ -77,6 +82,11 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
     <!-- IFrame de YouTube (invisible, instanciado una vez) -->
     <YouTubeFrame />
 
+    <!-- Vista "Now Playing" a pantalla completa (solo móvil) -->
+    <Transition name="np">
+      <NowPlayingScreen v-if="ui.nowPlayingOpen" />
+    </Transition>
+
     <!-- Modales globales -->
     <CreatePlaylistModal v-if="ui.createPlaylistOpen" />
     <AddTrackModal v-if="ui.addTrackPlaylistId" />
@@ -103,4 +113,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 .drawer-enter-from, .drawer-leave-to { opacity: 0; }
 .toast-enter-active, .toast-leave-active { transition: all .25s ease; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 8px); }
+.np-enter-active, .np-leave-active { transition: transform .28s ease, opacity .28s ease; }
+.np-enter-from, .np-leave-to { opacity: 0; transform: translateY(100%); }
 </style>

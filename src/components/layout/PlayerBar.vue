@@ -8,6 +8,7 @@ import { useFavorites } from '@/composables/useFavorites'
 import { makeCacheKey } from '@/db/local.db'
 import NowPlaying from '@/components/player/NowPlaying.vue'
 import ProgressBar from '@/components/player/ProgressBar.vue'
+import BaseSlider from '@/components/ui/BaseSlider.vue'
 
 const player = usePlayerStore()
 const ui = useUiStore()
@@ -16,6 +17,14 @@ const playback = usePlayback()
 const { favorites, toggleFavorite } = useFavorites()
 
 const current = playback.currentTrack
+
+// Tocar la pista en curso abre la vista a pantalla completa (solo en móvil:
+// en escritorio ya se ve todo el control en la propia barra).
+function expandNowPlaying(): void {
+  if (!current.value) return
+  if (window.matchMedia('(min-width: 768px)').matches) return
+  ui.openNowPlaying()
+}
 
 const isFav = computed(() => {
   if (!current.value) return false
@@ -29,15 +38,24 @@ const repeatTitle = computed(() =>
 function cycleRepeat(): void {
   player.repeatMode = player.repeatMode === 'none' ? 'all' : player.repeatMode === 'all' ? 'one' : 'none'
 }
-function onVolume(e: Event): void { yt.setVolume(Number((e.target as HTMLInputElement).value)) }
+function onVolume(v: number): void { yt.setVolume(v) }
 </script>
 
 <template>
-  <footer class="h-20 bg-surface-2/95 backdrop-blur border-t border-line px-3 sm:px-4
-                 grid grid-cols-[1fr_auto] md:grid-cols-3 items-center gap-3">
+  <footer class="bg-surface-2/95 backdrop-blur border-t border-line">
+    <!-- Progreso a ancho completo (solo móvil; en desktop va en el centro) -->
+    <ProgressBar v-if="current" compact class="md:hidden px-3 pt-2" />
+
+    <div class="h-20 px-3 sm:px-4 grid grid-cols-[1fr_auto] md:grid-cols-3 items-center gap-3">
     <!-- Izquierda: pista actual -->
     <div class="flex items-center gap-2 min-w-0">
-      <NowPlaying :track="current" />
+      <div
+        class="min-w-0 flex-1 md:flex-none md:cursor-default"
+        :class="current && 'cursor-pointer'"
+        @click="expandNowPlaying"
+      >
+        <NowPlaying :track="current" />
+      </div>
       <button
         v-if="current"
         class="p-1.5 rounded-lg hover:bg-white/10 shrink-0"
@@ -45,7 +63,7 @@ function onVolume(e: Event): void { yt.setVolume(Number((e.target as HTMLInputEl
         :aria-label="isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'"
         @click="toggleFavorite(current)"
       >
-        <svg viewBox="0 0 24 24" class="w-4 h-4" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+        <svg viewBox="-2 -2 28 28" class="w-4 h-4" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
           <path d="M12 21s-7-4.35-9.5-8.5C.5 8.5 2.5 5 6 5c2 0 3.2 1.2 4 2.5C10.8 6.2 12 5 14 5c3.5 0 5.5 3.5 3.5 7.5C19 16.65 12 21 12 21z"/>
         </svg>
       </button>
@@ -96,17 +114,18 @@ function onVolume(e: Event): void { yt.setVolume(Number((e.target as HTMLInputEl
         <svg v-if="player.isMuted || player.volume === 0" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm13.5 3 2.5 2.5-1.5 1.5-2.5-2.5L17 13l-2.5-2.5L16 9l2.5 2.5L21 9l1.5 1.5L20 13z"/></svg>
         <svg v-else viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 16 12z"/></svg>
       </button>
-      <input
-        type="range" min="0" max="100"
-        :value="player.isMuted ? 0 : player.volume"
+      <BaseSlider
+        class="w-24"
+        :model-value="player.isMuted ? 0 : player.volume"
+        :min="0" :max="100"
         aria-label="Volumen"
-        class="w-24 h-1 accent-brand cursor-pointer"
-        @input="onVolume"
+        @update:model-value="onVolume"
       />
       <button class="p-2 rounded-lg text-muted hover:text-white" aria-label="Guardar pista en playlist"
               :disabled="!current" @click="current && ui.openSaveToPlaylist(current)">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
       </button>
+    </div>
     </div>
   </footer>
 </template>
