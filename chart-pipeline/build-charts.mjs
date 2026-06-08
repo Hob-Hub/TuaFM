@@ -63,8 +63,9 @@ for (const configPath of configs) {
 }
 
 // ── 2. Catálogo normalizado (dedupe + ids + siembra) ─────────────────────────
-const { tracks, artists, trackIdByKey } = buildCatalog(charts)
+const { tracks, artists, trackIdByKey, trackAliases, artistAliases } = buildCatalog(charts)
 console.log(`· catálogo: ${tracks.length} tracks, ${artists.length} artistas`)
+console.log(`· alias: ${Object.keys(trackAliases).length} canciones, ${Object.keys(artistAliases).length} artistas (duplicados fusionados)`)
 
 // ── 3. Enriquecimiento Last.fm (opcional) ────────────────────────────────────
 const primaryName = a => String(a || '').split(', ')[0].trim()
@@ -88,6 +89,7 @@ if (!noLastfm) {
         const list = tr.listeners ? parseInt(tr.listeners, 10) : 0
         if (list) t.listeners = list
         if (tr.url) t.lastfmUrl = tr.url
+        if (tr.mbid) t.mbid = tr.mbid
       }
     } catch (e) { console.warn(`  ! track ${t.key}: ${e.message}`) }
     if (++n % 250 === 0) console.log(`  tracks ${n}/${tracks.length} (api=${lfm.stats.apiCalls} cache=${lfm.stats.cacheHits})`)
@@ -107,6 +109,10 @@ if (!noLastfm) {
         if (list) a.listeners = list
         const tags = (ar.tags?.tag ?? []).map(x => x.name).filter(Boolean).slice(0, 6)
         if (tags.length) a.tags = tags
+        if (ar.mbid) a.mbid = ar.mbid
+        // Artistas similares (para recomendaciones offline desde el catálogo).
+        const sim = (ar.similar?.artist ?? []).map(x => x.name).filter(Boolean).slice(0, 8)
+        if (sim.length) a.similar = sim
       }
       const top = await lfm.artistGetTopTracks(a.name, 50)
       const tt = (top?.toptracks?.track ?? []).map(x => ({
@@ -132,7 +138,7 @@ if (!noLastfm) {
 const ovPath = resolve(__dir, 'overrides.json')
 if (existsSync(ovPath)) {
   try {
-    const n = applyOverrides(tracks, artists, JSON.parse(readFileSync(ovPath, 'utf8')))
+    const n = applyOverrides(tracks, artists, JSON.parse(readFileSync(ovPath, 'utf8')), trackAliases, artistAliases)
     console.log(`· overrides aplicados: ${n}`)
   } catch (e) { console.warn(`! overrides.json inválido, se ignora: ${e.message}`) }
 }
@@ -150,8 +156,8 @@ for (const { chartId, periods } of charts) {
   const compact = compactPeriods(periods, trackIdByKey)
   writeFileSync(resolve(chartsDir, `${chartId}.json`), JSON.stringify({ chartId, periods: compact }))
 }
-writeFileSync(resolve(catalogDir, 'tracks.json'),  JSON.stringify({ tracks }))
-writeFileSync(resolve(catalogDir, 'artists.json'), JSON.stringify({ artists }))
+writeFileSync(resolve(catalogDir, 'tracks.json'),  JSON.stringify({ tracks,  aliases: trackAliases }))
+writeFileSync(resolve(catalogDir, 'artists.json'), JSON.stringify({ artists, aliases: artistAliases }))
 
 const kb = p => (readFileSync(p).length / 1024).toFixed(0)
 console.log('\n✓ Escrito:')

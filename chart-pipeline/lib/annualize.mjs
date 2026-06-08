@@ -28,7 +28,7 @@ export function splitArtist(raw, separator) {
   const sep   = separator || ';'
   const parts = String(raw).split(sep).map(p => p.trim()).filter(Boolean)
   const first = parts[0] ?? ''
-  return { artist: normalizeStr(first), artistDisplay: parts.join(', ') }
+  return { artist: normalizeStr(first), artistDisplay: parts.join(', '), parts }
 }
 
 // ── Puntuación de posición ───────────────────────────────────────────────────
@@ -63,6 +63,7 @@ function buildPeriod(chartId, year, aggMap) {
       weeksOnChart:   a.weeksOnChart,
       artist:         a.artist,
       artistDisplay:  a.artistDisplay,
+      artistNames:    a.artistNames,        // nombres de TODOS los artistas (display)
       title:          a.title,
       titleDisplay:   a.titleDisplay,
       ...(a.youtubeVideoId ? { youtubeVideoId: a.youtubeVideoId } : {}),
@@ -86,7 +87,7 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
     if (!Number.isFinite(position) || position < 1) continue
 
     const rawArtist = String(row[cfg.artistField] || '')
-    const { artist, artistDisplay } = splitArtist(rawArtist, cfg.artistSeparator)
+    const { artist, artistDisplay, parts } = splitArtist(rawArtist, cfg.artistSeparator)
     const titleDisplay = String(row[cfg.titleField] || '').trim().replace(/\s+/g, ' ')
     const title        = normalizeStr(titleDisplay)
     const key          = `${artist}::${title}`
@@ -105,6 +106,7 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
         // La mejor semana define display/enlaces (mejor portada/vídeo disponible).
         existing.peakPosition  = position
         existing.artistDisplay = artistDisplay
+        existing.artistNames   = parts
         existing.titleDisplay  = titleDisplay
         if (ytId)  existing.youtubeVideoId = ytId
         if (cover) existing.coverUrl       = cover
@@ -114,7 +116,7 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
       }
     } else {
       aggMap.set(key, {
-        artist, artistDisplay, title, titleDisplay,
+        artist, artistDisplay, artistNames: parts, title, titleDisplay,
         score: positionScore(position),
         peakPosition: position,
         weeksOnChart: 1,
@@ -142,7 +144,7 @@ export function annualizeAnnual(rows, cfg, fromYear, toYear) {
     if (!Number.isFinite(rank) || rank < 1) continue
 
     const rawArtist = String(row[cfg.artistField] || '')
-    const { artist, artistDisplay } = splitArtist(rawArtist, cfg.artistSeparator)
+    const { artist, artistDisplay, parts } = splitArtist(rawArtist, cfg.artistSeparator)
     const titleDisplay = String(row[cfg.titleField] || '').trim().replace(/\s+/g, ' ')
     const title        = normalizeStr(titleDisplay)
     const key          = `${artist}::${title}`
@@ -157,7 +159,7 @@ export function annualizeAnnual(rows, cfg, fromYear, toYear) {
       existing.peakPosition = Math.min(existing.peakPosition, rank)
     } else {
       aggMap.set(key, {
-        artist, artistDisplay, title, titleDisplay,
+        artist, artistDisplay, artistNames: parts, title, titleDisplay,
         score: positionScore(rank),
         peakPosition: rank,
         weeksOnChart: 1,

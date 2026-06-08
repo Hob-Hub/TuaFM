@@ -1,84 +1,108 @@
 // Construcción del catálogo normalizado (tracks + artistas) a partir de los
-// periodos anuales ricos (salida de annualize.mjs) y compactación de los charts
-// para que referencien el catálogo por id. Funciones puras (sin I/O ni Last.fm):
-// el enriquecimiento Last.fm lo añade build-charts.mjs sobre estos esqueletos.
+// periodos anuales ricos (salida de annualize.mjs) y compactación de los charts.
+// Funciones puras (sin I/O ni Last.fm): el enriquecimiento lo añade build-charts.
+//
+// DEDUP: la misma canción/artista puede venir con grafías distintas entre ES y US
+// ("Tik tok"/"Tik Tok", "Ke$ha"/"Kesha", "Jay Z"/"Jay-Z", orden de feat. A,B/B,A).
+// Se fusionan por una HUELLA agresiva en una entrada canónica, y se exporta un
+// índice de ALIAS (key → id canónico) para que el matching en runtime no cambie.
+//
+// MULTI-ARTISTA: cada track guarda artistIds[] con TODOS sus artistas, y cada
+// colaborador tiene su propia entrada de artista (enriquecida luego).
 
-const primaryName = artistDisplay => String(artistDisplay || '').split(', ')[0].trim()
+import { normalizeStr } from './annualize.mjs'
 
-/**
- * @param charts [{ chartId, periods, seedByKey }]
- *   periods    → periodos ricos de annualizeRows (songs con artist/title/display/yt/cover)
- *   seedByKey  → Map(key → { album, year }) extraído de v_chart (opcional)
- * @returns { tracks, artists, trackIdByKey }
- */
+// Clave de runtime: idéntica a makeCacheKey de la app (normalizeStr).
+const normKey = s => normalizeStr(String(s))
+
+// Huella agresiva para detectar duplicados (más allá del cacheKey): minúsculas,
+// sin diacríticos, &→and, $→s, y fuera todo lo no alfanumérico.
+const tight = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/&/g, ' and ').replace(/\$/g, 's').replace(/[^a-z0-9]+/g, '')
+
 export function buildCatalog(charts) {
-  const tracks = []
-  const artists = []
-  const trackIdByKey  = new Map()
-  const artistIdByKey = new Map()
+  const tracks = [], artists = []
+  const artistByFp = new Map()       // huella → artista canónico
+  const artistAliases = new Map()    // normKey alternativa → id canónico
+  const trackByFp = new Map()        // huella → track canónico
+  const trackIdByKey = new Map()     // CUALQUIER key de canción → id canónico (para compactar)
+  const trackAliases = new Map()     // key no canónica → id canónico (para runtime/overrides)
 
-  function ensureArtist(artistKey, displayName) {
-    let id = artistIdByKey.get(artistKey)
-    if (id === undefined) {
-      id = artists.length
-      artists.push({ id, key: artistKey, name: displayName || artistKey })
-      artistIdByKey.set(artistKey, id)
+  function ensureArtist(displayName) {
+    const name = String(displayName).trim()
+    const fp = tight(name)
+    const key = normKey(name)
+    const hit = artistByFp.get(fp)
+    if (hit) {
+      if (key !== hit.key) artistAliases.set(key, hit.id)
+      return hit.id
     }
-    return id
+    const a = { id: artists.length, key, name }
+    artists.push(a); artistByFp.set(fp, a)
+    return a.id
   }
 
   for (const { periods, seedByKey } of charts) {
     for (const period of periods) {
       for (const song of period.songs) {
-        const key = `${song.artist}::${song.title}`
-        if (trackIdByKey.has(key)) {
-          // Track ya visto (otro año u otro chart): completa enlaces si faltaban.
-          const t = tracks[trackIdByKey.get(key)]
-          if (!t.youtubeVideoId && song.youtubeVideoId) t.youtubeVideoId = song.youtubeVideoId
-          if (!t.coverUrl && song.coverUrl)             t.coverUrl       = song.coverUrl
+        const names = (song.artistNames && song.artistNames.length)
+          ? song.artistNames : [song.artistDisplay || song.artist]
+        const artistIds = names.map(ensureArtist)
+        const songKey = `${song.artist}::${song.title}`
+        const fp = artistIds.map((_, i) => tight(names[i])).sort().join('|') + '::' + tight(song.titleDisplay ?? song.title)
+
+        const canon = trackByFp.get(fp)
+        if (canon) {
+          if (!canon.youtubeVideoId && song.youtubeVideoId) canon.youtubeVideoId = song.youtubeVideoId
+          if (!canon.coverUrl && song.coverUrl)             canon.coverUrl       = song.coverUrl
+          const seed = seedByKey?.get(songKey)
+          if (!canon.album && seed?.album) canon.album = seed.album
+          if (!canon.year && seed?.year)   canon.year  = seed.year
+          for (const id of artistIds) if (!canon.artistIds.includes(id)) canon.artistIds.push(id)
+          trackIdByKey.set(songKey, canon.id)
+          if (songKey !== canon.key) trackAliases.set(songKey, canon.id)
           continue
         }
-        const artistId = ensureArtist(song.artist, primaryName(song.artistDisplay))
-        const seed = seedByKey?.get(key)
-        const id = tracks.length
-        tracks.push({
-          id, key,
+        const seed = seedByKey?.get(songKey)
+        const t = {
+          id: tracks.length, key: songKey,
           title:  song.titleDisplay ?? song.title,
           artist: song.artistDisplay ?? song.artist,
-          artistId,
+          artistId: artistIds[0], artistIds: [...new Set(artistIds)],
           ...(seed?.album ? { album: seed.album } : {}),
           ...(seed?.year  ? { year:  seed.year }  : {}),
           ...(song.youtubeVideoId ? { youtubeVideoId: song.youtubeVideoId } : {}),
           ...(song.coverUrl       ? { coverUrl:       song.coverUrl }       : {})
-        })
-        trackIdByKey.set(key, id)
+        }
+        tracks.push(t); trackByFp.set(fp, t); trackIdByKey.set(songKey, t.id)
       }
     }
   }
 
-  return { tracks, artists, trackIdByKey }
+  return {
+    tracks, artists, trackIdByKey,
+    trackAliases:  Object.fromEntries(trackAliases),
+    artistAliases: Object.fromEntries(artistAliases)
+  }
 }
 
-/** Periodos compactos: cada canción referencia el track por id. */
+/** Periodos compactos: cada canción referencia el track por id (canónico). */
 export function compactPeriods(periods, trackIdByKey) {
   return periods.map(p => ({
     year: p.year,
     songs: p.songs.map(s => ({
       t: trackIdByKey.get(`${s.artist}::${s.title}`),
-      r: s.rank,
-      s: s.score,
-      p: s.peakPosition,
-      w: s.weeksOnChart
+      r: s.rank, s: s.score, p: s.peakPosition, w: s.weeksOnChart
     }))
   }))
 }
 
 /** Map(key → { album, year }) a partir de filas de v_chart, para sembrar el catálogo. */
-export function seedMapFromRows(rows, cfg, normalizeStr, splitArtist) {
+export function seedMapFromRows(rows, cfg, normalize, splitArtist) {
   const map = new Map()
   for (const row of rows) {
     const { artist } = splitArtist(String(row[cfg.artistField] || ''), cfg.artistSeparator)
-    const title = normalizeStr(String(row[cfg.titleField] || '').trim().replace(/\s+/g, ' '))
+    const title = normalize(String(row[cfg.titleField] || '').trim().replace(/\s+/g, ' '))
     const key = `${artist}::${title}`
     if (map.has(key)) continue
     const album = cfg.albumField ? (row[cfg.albumField] || null) : null
@@ -89,25 +113,25 @@ export function seedMapFromRows(rows, cfg, normalizeStr, splitArtist) {
 }
 
 /**
- * Aplica correcciones manuales sobre el catálogo ya generado. Las overrides GANAN
- * sobre lo generado (Last.fm/Deezer/DB), así regenerar nunca pierde tus arreglos.
- * @param overrides { tracks?: { [key]: Partial<CatalogTrack> }, artists?: { [key]: Partial<CatalogArtist> } }
+ * Aplica correcciones manuales sobre el catálogo ya generado. Resuelve cada key
+ * de override por key directa O por alias (así una corrección sobre una grafía
+ * duplicada llega a la entrada canónica). Un campo null BORRA el campo generado.
  * @returns nº de entradas con override aplicado
  */
-export function applyOverrides(tracks, artists, overrides) {
+export function applyOverrides(tracks, artists, overrides, trackAliases = {}, artistAliases = {}) {
   if (!overrides) return 0
-  const tOv = overrides.tracks ?? {}
-  const aOv = overrides.artists ?? {}
-  // Un campo con valor null BORRA ese campo del generado (p. ej. limpiar un
-  // youtubeVideoId erróneo de origen para que se re-resuelva en runtime).
   const merge = (entry, ov) => {
-    for (const [k, v] of Object.entries(ov)) {
-      if (v === null) delete entry[k]
-      else entry[k] = v
-    }
+    for (const [k, v] of Object.entries(ov)) { if (v === null) delete entry[k]; else entry[k] = v }
   }
+  const tByKey = new Map(tracks.map(t => [t.key, t]))
+  const tById  = new Map(tracks.map(t => [t.id, t]))
+  const aByKey = new Map(artists.map(a => [a.key, a]))
+  const aById  = new Map(artists.map(a => [a.id, a]))
+  const resolveT = k => tByKey.get(k) || tById.get(trackAliases[k])
+  const resolveA = k => aByKey.get(k) || aById.get(artistAliases[k])
+
   let n = 0
-  for (const t of tracks)  { const ov = tOv[t.key]; if (ov) { merge(t, ov); n++ } }
-  for (const a of artists) { const ov = aOv[a.key]; if (ov) { merge(a, ov); n++ } }
+  for (const [k, ov] of Object.entries(overrides.tracks ?? {}))  { const t = resolveT(k); if (t) { merge(t, ov); n++ } }
+  for (const [k, ov] of Object.entries(overrides.artists ?? {})) { const a = resolveA(k); if (a) { merge(a, ov); n++ } }
   return n
 }
