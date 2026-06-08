@@ -14,6 +14,8 @@ import { useRadioQueue } from '@/composables/useRadioQueue'
 const playlistQueue = ref<Track[]>([])
 const playlistIndex = ref(0)
 let handlersBound = false
+let enrichWatcherSet = false
+let enrichInFlight = false
 
 // Candidatos de YouTube de la pista en curso, para reintentar en onError.
 let currentCandidates: string[] = []
@@ -34,6 +36,33 @@ export function usePlayback() {
   const { recordPlay } = usePlayHistory()
   const { updateTrack: persistPlaylistTrack, getTracks } = usePlaylists()
   const { extend: extendRadio } = useRadioQueue()
+
+  setupQueueEnrichment()
+
+  /**
+   * Enriquece la cola de radio en segundo plano para que carátulas, tags y
+   * duraciones salgan de forma consistente (no solo en la pista que ya sonó).
+   * El enriquecimiento es "catálogo primero" (local), así que es barato.
+   */
+  function setupQueueEnrichment(): void {
+    if (enrichWatcherSet) return
+    enrichWatcherSet = true
+    watch(() => radio.queue.length, () => { void enrichRadioQueueBg() }, { immediate: true })
+  }
+
+  async function enrichRadioQueueBg(): Promise<void> {
+    if (enrichInFlight) return
+    enrichInFlight = true
+    try {
+      for (const t of [...radio.queue]) {
+        if (t.enriched) continue
+        const data = await enrich(t)
+        radio.updateTrack(t.id, { ...data, enriched: true })
+      }
+    } finally {
+      enrichInFlight = false
+    }
+  }
 
   const currentTrack = computed<Track | null>(() => {
     switch (player.queueMode) {
