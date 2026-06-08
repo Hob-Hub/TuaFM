@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { nanoid } from 'nanoid'
 import { useChartRegistryStore } from '@/stores/chartRegistry.store'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRadioQueue } from '@/composables/useRadioQueue'
 import { usePlayback } from '@/composables/usePlayback'
 import { getYearTop } from '@/services/radio.service'
-import type { ChartPeriod, ChartRegistry } from '@/types/chart.types'
+import type { ChartPeriod, ChartRegistry, ChartSong } from '@/types/chart.types'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseSlider from '@/components/ui/BaseSlider.vue'
 
@@ -73,10 +74,31 @@ async function loadPreview(): Promise<void> {
 }
 watch([chartId, year], loadPreview, { immediate: true })
 
-const topPreview = computed(() => (yearTop.value?.songs ?? []).slice(0, 8))
+// Preview del Top del año: plegable, con opción de ver la lista completa.
+const previewOpen = ref(false)
+const showAll     = ref(false)
+const PREVIEW_N   = 8
+
+const allSongs    = computed(() => yearTop.value?.songs ?? [])
+const visibleSongs = computed(() => showAll.value ? allSongs.value : allSongs.value.slice(0, PREVIEW_N))
 const displaySize = computed(() =>
-  Math.min(selected.value?.listSize ?? 100, yearTop.value?.songs.length ?? 0)
+  Math.min(selected.value?.listSize ?? 100, allSongs.value.length)
 )
+
+// Al cambiar de año/fuente, colapsa la lista completa para no desorientar.
+watch([chartId, year], () => { showAll.value = false })
+
+/** Reproduce una canción del Top como pista única (efímera), como en Buscar. */
+function playSong(s: ChartSong): void {
+  playback.startPlaylistQueue(
+    [{
+      id: nanoid(), artist: s.artist, title: s.title,
+      artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
+      youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl, enriched: false
+    }],
+    0, null
+  )
+}
 
 async function onGenerate(): Promise<void> {
   if (!chartId.value) return
@@ -119,7 +141,7 @@ async function onGenerate(): Promise<void> {
           <span v-if="selected" class="text-[10px] text-muted/60 tabular-nums">{{ selected.startYear }}–{{ selected.endYear }}</span>
         </div>
         <BaseSlider
-          v-model="year"
+          v-model="year" show-thumb
           :min="selected?.startYear" :max="selected?.endYear" :step="1"
           aria-label="Año"
         />
@@ -133,7 +155,7 @@ async function onGenerate(): Promise<void> {
           <span class="text-[10px] text-muted/60 tabular-nums">λ = {{ lambda.toFixed(2) }}</span>
         </div>
         <BaseSlider
-          v-model="lambda"
+          v-model="lambda" show-thumb
           :min="0.1" :max="1" :step="0.05"
           aria-label="Nivel de nostalgia"
         />
@@ -149,23 +171,51 @@ async function onGenerate(): Promise<void> {
 
       <p v-if="error" class="text-sm text-amber-300">{{ error }}</p>
 
-      <!-- Vista previa: Top del año -->
+      <!-- Vista previa: Top del año (plegable; clic en una canción la reproduce) -->
       <div v-if="selected" class="pt-1 border-t border-line/60">
-        <div class="flex items-baseline justify-between mb-2">
-          <h3 class="text-xs font-semibold uppercase tracking-wider text-muted">Top {{ displaySize }} · {{ year }}</h3>
+        <button
+          class="w-full flex items-center justify-between -mx-1 px-1 py-1 rounded-lg hover:bg-card-hover"
+          :aria-expanded="previewOpen"
+          @click="previewOpen = !previewOpen"
+        >
+          <span class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 transition-transform" :class="previewOpen && 'rotate-90'"
+                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+            Top {{ displaySize }} · {{ year }}
+          </span>
           <span class="text-[10px] text-muted/60">{{ selected.name }}</span>
+        </button>
+
+        <div v-show="previewOpen" class="mt-2">
+          <div v-if="loadingTop" class="text-xs text-muted/60">Cargando…</div>
+          <template v-else-if="allSongs.length">
+            <ol class="space-y-0.5" :class="showAll && 'max-h-72 overflow-y-auto -mx-1 px-1'">
+              <li v-for="s in visibleSongs" :key="s.rank">
+                <button
+                  class="group w-full flex items-center gap-2.5 text-sm text-left px-1 py-1 rounded-lg hover:bg-card-hover"
+                  @click="playSong(s)"
+                >
+                  <span class="w-5 text-right tabular-nums text-muted/60 group-hover:hidden">{{ s.rank }}</span>
+                  <span class="w-5 hidden group-hover:grid place-items-center text-brand">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  </span>
+                  <span class="min-w-0 flex-1 truncate">
+                    <span class="font-medium">{{ s.titleDisplay }}</span>
+                    <span class="text-muted"> — {{ s.artistDisplay }}</span>
+                  </span>
+                </button>
+              </li>
+            </ol>
+            <button
+              v-if="allSongs.length > PREVIEW_N"
+              class="mt-2 text-xs text-brand hover:underline"
+              @click="showAll = !showAll"
+            >
+              {{ showAll ? 'Ver menos' : `Ver las ${allSongs.length}` }}
+            </button>
+          </template>
+          <div v-else class="text-xs text-muted/60">Sin datos para este año.</div>
         </div>
-        <div v-if="loadingTop" class="text-xs text-muted/60">Cargando…</div>
-        <ol v-else-if="topPreview.length" class="space-y-1">
-          <li v-for="s in topPreview" :key="s.rank" class="flex items-center gap-2.5 text-sm">
-            <span class="w-5 text-right tabular-nums text-muted/60">{{ s.rank }}</span>
-            <span class="min-w-0 flex-1 truncate">
-              <span class="font-medium">{{ s.titleDisplay }}</span>
-              <span class="text-muted"> — {{ s.artistDisplay }}</span>
-            </span>
-          </li>
-        </ol>
-        <div v-else class="text-xs text-muted/60">Sin datos para este año.</div>
       </div>
     </template>
   </section>

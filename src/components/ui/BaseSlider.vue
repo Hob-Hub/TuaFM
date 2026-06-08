@@ -7,7 +7,8 @@ const props = withDefaults(defineProps<{
   max?: number
   step?: number
   ariaLabel?: string
-}>(), { min: 0, max: 100, step: 1 })
+  showThumb?: boolean   // pomo siempre visible (controles destacados)
+}>(), { min: 0, max: 100, step: 1, showThumb: false })
 
 const emit = defineEmits<{ 'update:modelValue': [value: number] }>()
 
@@ -23,6 +24,7 @@ const pct = computed(() => {
   <input
     type="range"
     class="tua-slider"
+    :class="{ 'show-thumb': showThumb }"
     :value="modelValue"
     :min="min"
     :max="max"
@@ -68,7 +70,8 @@ const pct = computed(() => {
   transition: opacity .15s ease, transform .15s ease;
 }
 .tua-slider:hover::-webkit-slider-thumb,
-.tua-slider:focus-visible::-webkit-slider-thumb {
+.tua-slider:focus-visible::-webkit-slider-thumb,
+.tua-slider.show-thumb::-webkit-slider-thumb {
   opacity: 1;
   transform: scale(1);
 }
@@ -94,7 +97,8 @@ const pct = computed(() => {
   transition: opacity .15s ease;
 }
 .tua-slider:hover::-moz-range-thumb,
-.tua-slider:focus-visible::-moz-range-thumb {
+.tua-slider:focus-visible::-moz-range-thumb,
+.tua-slider.show-thumb::-moz-range-thumb {
   opacity: 1;
 }
 
