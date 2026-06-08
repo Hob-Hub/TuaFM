@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 
 const props = withDefaults(defineProps<{
   modelValue: number
@@ -18,10 +18,24 @@ const pct = computed(() => {
   if (range <= 0) return 0
   return Math.min(100, Math.max(0, ((props.modelValue - props.min) / range) * 100))
 })
+
+// Cuando min/max llegan después del primer render (p. ej. el rango de años de la
+// lista), el navegador deja el pomo "pegado" al valor recortado anterior. Forzamos
+// el orden min → max → value tras el patch para que recoloque el pomo correctamente.
+const inputEl = ref<HTMLInputElement | null>(null)
+watchEffect(() => {
+  const lo = props.min, hi = props.max, v = props.modelValue
+  const el = inputEl.value
+  if (!el) return
+  el.min = String(lo)
+  el.max = String(hi)
+  el.value = String(v)
+}, { flush: 'post' })
 </script>
 
 <template>
   <input
+    ref="inputEl"
     type="range"
     class="tua-slider"
     :class="{ 'show-thumb': showThumb }"
