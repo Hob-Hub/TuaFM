@@ -1,15 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { nanoid } from 'nanoid'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlayback } from '@/composables/usePlayback'
+import { useRadioQueue } from '@/composables/useRadioQueue'
+import { useRecentRadiosStore, type RecentRadio } from '@/stores/recentRadios.store'
 import PlaylistList from '@/components/playlist/PlaylistList.vue'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import type { PlayHistoryEntry } from '@/types/playlist.types'
 
 const { history } = usePlayHistory()
 const playback = usePlayback()
+const router = useRouter()
+const recentRadios = useRecentRadiosStore()
+const { generate } = useRadioQueue()
+
+// Volver a escuchar una radio: regenera con los mismos ajustes y la reproduce.
+async function playRadio(r: RecentRadio): Promise<void> {
+  const ok = await generate({ chartId: r.chartId, refYear: r.year, lambda: r.lambda })
+  if (ok) { playback.playRadioIndex(0); router.push({ name: 'radio' }) }
+}
 
 const shortcuts = [
   { name: 'radio', label: 'Radio', desc: 'La máquina del tiempo sonora', to: { name: 'radio' },
@@ -57,6 +68,30 @@ function playEntry(e: PlayHistoryEntry): void {
         <p class="text-sm text-white/70">{{ s.desc }}</p>
       </RouterLink>
     </div>
+
+    <!-- Tus radios recientes: volver a escuchar con un clic -->
+    <section v-if="recentRadios.items.length">
+      <h2 class="font-display text-lg font-bold mb-4">Tus radios recientes</h2>
+      <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+        <button
+          v-for="r in recentRadios.items" :key="`${r.chartId}-${r.year}`"
+          class="group relative w-44 shrink-0 snap-start text-left rounded-2xl border border-line p-4
+                 bg-gradient-to-br from-brand/25 to-surface-2 hover:from-brand/35 transition-colors"
+          @click="playRadio(r)"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-2xl leading-none">{{ r.flag }}</span>
+            <span class="grid place-items-center w-8 h-8 rounded-full bg-brand text-white shadow-lg
+                         opacity-0 group-hover:opacity-100 transition">
+              <svg viewBox="0 0 24 24" class="w-4 h-4 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </div>
+          <p class="font-display text-2xl font-extrabold tabular-nums mt-3">{{ r.year }}</p>
+          <p class="text-sm text-white/90 truncate">{{ r.name }}</p>
+          <p class="text-[11px] text-muted/80 mt-1 tabular-nums">Nostalgia λ = {{ r.lambda.toFixed(2) }}</p>
+        </button>
+      </div>
+    </section>
 
     <!-- Reproducido recientemente -->
     <section v-if="recent.length">

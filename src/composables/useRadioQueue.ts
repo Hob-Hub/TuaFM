@@ -3,6 +3,7 @@ import { generateRadioQueue, generateMoreRadioTracks } from '@/services/radio.se
 import { useRadioStore } from '@/stores/radio.store'
 import { usePlayerStore } from '@/stores/player.store'
 import { useChartRegistryStore } from '@/stores/chartRegistry.store'
+import { useRecentRadiosStore } from '@/stores/recentRadios.store'
 
 // Estado compartido entre instancias: evita extensiones concurrentes (la cola
 // puede ampliarse desde el botón "Cargar más" y desde el auto-prefetch a la vez).
@@ -12,6 +13,7 @@ export function useRadioQueue() {
   const radioStore    = useRadioStore()
   const playerStore   = usePlayerStore()
   const registryStore = useChartRegistryStore()
+  const recentRadios  = useRecentRadiosStore()
   const generating    = ref(false)
   const error         = ref<string | null>(null)
 
@@ -34,6 +36,13 @@ export function useRadioQueue() {
         year:    params.refYear,
         lambda:  resolvedLambda,
         window:  params.windowYears ?? 6
+      })
+      recentRadios.record({
+        chartId: params.chartId,
+        year:    params.refYear,
+        lambda:  resolvedLambda,
+        name:    registry?.name ?? params.chartId,
+        flag:    registry?.flag ?? '🎵'
       })
       playerStore.queueMode = 'radio'
       return true
