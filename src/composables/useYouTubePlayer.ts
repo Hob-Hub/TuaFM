@@ -107,8 +107,8 @@ export function useYouTubePlayer() {
     if (player) { ready.value = true; return }
 
     player = new window.YT!.Player(mountEl, {
-      height: '0',
-      width: '0',
+      height: '200',
+      width: '200',
       playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, origin: window.location.origin },
       events: {
         onReady: () => {
