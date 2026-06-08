@@ -7,6 +7,7 @@ export default createRouter({
     { path: '/search',           name: 'search',   component: () => import('@/views/SearchView.vue') },
     { path: '/playlist/:id',     name: 'playlist', component: () => import('@/views/PlaylistView.vue') },
     { path: '/radio',            name: 'radio',    component: () => import('@/views/RadioView.vue') },
+    { path: '/chart/:chartId/:year', name: 'chart', component: () => import('@/views/ChartView.vue') },
     { path: '/recommendations',  name: 'recs',     component: () => import('@/views/RecommendationsView.vue') },
     { path: '/history',          name: 'history',  component: () => import('@/views/HistoryView.vue') },
     { path: '/artist/:name',     name: 'artist',   component: () => import('@/views/ArtistView.vue') }

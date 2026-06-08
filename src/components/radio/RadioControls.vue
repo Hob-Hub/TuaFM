@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { nanoid } from 'nanoid'
 import { useChartRegistryStore } from '@/stores/chartRegistry.store'
 import { useRadioStore } from '@/stores/radio.store'
@@ -13,6 +14,7 @@ import BaseSlider from '@/components/ui/BaseSlider.vue'
 const registry = useChartRegistryStore()
 const radioStore = useRadioStore()
 const playback = usePlayback()
+const router = useRouter()
 const { generate, generating, error } = useRadioQueue()
 
 const chartId = ref('')
@@ -74,19 +76,15 @@ async function loadPreview(): Promise<void> {
 }
 watch([chartId, year], loadPreview, { immediate: true })
 
-// Preview del Top del año: plegable, con opción de ver la lista completa.
+// Preview del Top del año: plegable; un teaser corto, la lista completa va a su vista.
 const previewOpen = ref(false)
-const showAll     = ref(false)
-const PREVIEW_N   = 8
+const PREVIEW_N   = 10
 
 const allSongs    = computed(() => yearTop.value?.songs ?? [])
-const visibleSongs = computed(() => showAll.value ? allSongs.value : allSongs.value.slice(0, PREVIEW_N))
+const visibleSongs = computed(() => allSongs.value.slice(0, PREVIEW_N))
 const displaySize = computed(() =>
   Math.min(selected.value?.listSize ?? 100, allSongs.value.length)
 )
-
-// Al cambiar de año/fuente, colapsa la lista completa para no desorientar.
-watch([chartId, year], () => { showAll.value = false })
 
 /** Reproduce una canción del Top como pista única (efímera), como en Buscar. */
 function playSong(s: ChartSong): void {
@@ -98,6 +96,11 @@ function playSong(s: ChartSong): void {
     }],
     0, null
   )
+}
+
+/** Abre la vista con el Top completo del año. */
+function openFullChart(): void {
+  if (chartId.value) router.push({ name: 'chart', params: { chartId: chartId.value, year: year.value } })
 }
 
 async function onGenerate(): Promise<void> {
@@ -189,7 +192,7 @@ async function onGenerate(): Promise<void> {
         <div v-show="previewOpen" class="mt-2">
           <div v-if="loadingTop" class="text-xs text-muted/60">Cargando…</div>
           <template v-else-if="allSongs.length">
-            <ol class="space-y-0.5" :class="showAll && 'max-h-72 overflow-y-auto -mx-1 px-1'">
+            <ol class="space-y-0.5">
               <li v-for="s in visibleSongs" :key="s.rank">
                 <button
                   class="group w-full flex items-center gap-2.5 text-sm text-left px-1 py-1 rounded-lg hover:bg-card-hover"
@@ -208,10 +211,11 @@ async function onGenerate(): Promise<void> {
             </ol>
             <button
               v-if="allSongs.length > PREVIEW_N"
-              class="mt-2 text-xs text-brand hover:underline"
-              @click="showAll = !showAll"
+              class="mt-2 inline-flex items-center gap-1 text-xs text-brand hover:underline"
+              @click="openFullChart"
             >
-              {{ showAll ? 'Ver menos' : `Ver las ${allSongs.length}` }}
+              Ver el Top {{ displaySize }} completo
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
           </template>
           <div v-else class="text-xs text-muted/60">Sin datos para este año.</div>
