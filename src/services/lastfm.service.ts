@@ -3,7 +3,8 @@ import type {
   LastfmArtistSearchResponse
 } from '@/types/api.types'
 import { getCoverUrl } from '@/services/coverart.service'
-import { makeCacheKey } from '@/utils/normalize'
+import { getArtistByKey } from '@/services/catalog/static.source'
+import { makeCacheKey, normalizeStr } from '@/utils/normalize'
 
 const API_KEY = import.meta.env.VITE_LASTFM_API_KEY
 const BASE    = 'https://ws.audioscrobbler.com/2.0/'
@@ -91,11 +92,13 @@ export async function searchArtists(
     artist: query, limit
   }, signal)
   const matches = data.results?.artistmatches?.artist ?? []
-  return matches.map(m => ({
+  // Last.fm no sirve fotos de artista (devuelve un placeholder que pickImage
+  // descarta). Preferimos la imagen del catálogo (Deezer) cuando el artista existe.
+  return Promise.all(matches.map(async m => ({
     name:      m.name,
     listeners: m.listeners ? parseInt(m.listeners, 10) : 0,
-    imageUrl:  pickImage(m.image)
-  }))
+    imageUrl:  (await getArtistByKey(normalizeStr(m.name)))?.imageUrl ?? pickImage(m.image)
+  })))
 }
 
 // Carátula real por canción, SIN tocar YouTube (no gasta cuota): álbum de

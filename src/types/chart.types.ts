@@ -48,7 +48,8 @@ export interface CatalogTrack {
   key:             string        // = makeCacheKey(artist, title)
   title:           string        // display
   artist:          string        // display (con feat.)
-  artistId:        number        // → CatalogArtist.id
+  artistId:        number        // artista principal → CatalogArtist.id
+  artistIds?:      number[]      // TODOS los artistas (principal + colaboradores)
   album?:          string
   year?:           number
   durationMs?:     number
@@ -57,6 +58,7 @@ export interface CatalogTrack {
   coverUrl?:       string
   listeners?:      number
   lastfmUrl?:      string
+  mbid?:           string        // MusicBrainz recording id
 }
 
 export interface CatalogArtistTopTrack {
@@ -73,6 +75,8 @@ export interface CatalogArtist {
   imageUrl?:  string
   tags?:      string[]
   topTracks?: CatalogArtistTopTrack[]
+  similar?:   string[]           // nombres de artistas similares (recos offline)
+  mbid?:      string             // MusicBrainz artist id
 }
 
 export interface RadioCandidate {
