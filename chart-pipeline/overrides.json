@@ -1,7 +1,16 @@
 {
   "tracks": {
+    "112::peaches & cream": {
+      "youtubeVideoId": "wl2NCXzg1FQ"
+    },
     "112::u already know": {
       "youtubeVideoId": "ynMnPGmhsG0"
+    },
+    "2 chainz::i'm different": {
+      "youtubeVideoId": "OCDSxQt5lt8"
+    },
+    "2 pistols::she got it": {
+      "youtubeVideoId": "1dp9_89CWa0"
     },
     "2pac::thugz mansion": {
       "youtubeVideoId": "mVObfpaR2_I"
@@ -12,11 +21,17 @@
     "3lw::no more (baby i'ma do right)": {
       "youtubeVideoId": "drvS9w-lTMc"
     },
+    "3oh!3::my first kiss": {
+      "youtubeVideoId": "N1MMoZ-DLlY"
+    },
     "4batz::act ii: date @ 8": {
       "youtubeVideoId": "9ZAWGMPR1AA"
     },
     "5 seconds of summer::amnesia": {
       "youtubeVideoId": "DCCJCILiX3o"
+    },
+    "50 cent::ayo technology": {
+      "youtubeVideoId": "5RDSkR8_AQ0"
     },
     "50 cent::outta control": {
       "youtubeVideoId": "Z3Oux1lN__4"
@@ -39,6 +54,12 @@
     "aaliyah::i don't wanna": {
       "youtubeVideoId": "Ou2lx0DZxKQ"
     },
+    "aaliyah::rock the boat": {
+      "youtubeVideoId": "BO1_HeN3yPg"
+    },
+    "academia operacion triunfo ii::la fuerza de la vida (la razon para luchar)": {
+      "youtubeVideoId": "ut4ARC6UfII"
+    },
     "ace hood::bugatti": {
       "youtubeVideoId": "djE-BLrdDDc"
     },
@@ -48,14 +69,26 @@
     "adele::water under the bridge": {
       "youtubeVideoId": "NgNqpsWE-o0"
     },
+    "air::cherry bloosom girl": {
+      "youtubeVideoId": "3nOzKl8AV18"
+    },
+    "aitana::mon amour": {
+      "youtubeVideoId": "0GmmO7lBAm4"
+    },
     "alan jackson::drive (for daddy gene)": {
       "youtubeVideoId": "dQe3DKDQRRs"
+    },
+    "alan jackson::it's five o'clock somewhere": {
+      "youtubeVideoId": "BPCjC543llU"
     },
     "alan jackson::remember when": {
       "youtubeVideoId": "TTA2buWlNyM"
     },
     "alan jackson::where were you (when the world stopped turning)": {
       "youtubeVideoId": "Zj6rMcVNQbw"
+    },
+    "alanis morissette::everything": {
+      "youtubeVideoId": "Bgeqw7s00xg"
     },
     "alanis morissette::hands clean": {
       "youtubeVideoId": "2dH289KxkGw"
@@ -117,6 +150,9 @@
     "alicia keys::try sleeping with a broken heart": {
       "youtubeVideoId": "srMBZiqNMaM"
     },
+    "alicia keys::un-thinkable (i'm ready)": {
+      "youtubeVideoId": "HhuGQUZJot8"
+    },
     "amaral::nadie nos recordara": {
       "youtubeVideoId": "hjT1Ot6DQSY"
     },
@@ -135,6 +171,12 @@
     "andy & lucas::no entiendo": {
       "youtubeVideoId": "FWjC1kv7u34"
     },
+    "andy & lucas::yo lo que quiero": {
+      "youtubeVideoId": "I2n92MrrbBc"
+    },
+    "ann lee::no, no, no": {
+      "youtubeVideoId": "__c9rYI598k"
+    },
     "antonio orozco::hoy": {
       "youtubeVideoId": "xOgFU26r0QI"
     },
@@ -150,8 +192,17 @@
     "ariana grande::breathin": {
       "youtubeVideoId": "kN0iD0pI3o0"
     },
+    "ariana grande::god is a woman": {
+      "youtubeVideoId": "kHLHSlExFis"
+    },
+    "ariana grande::pov": {
+      "youtubeVideoId": "nQJEp-k-ogs"
+    },
     "ariana grande::stuck with u": {
       "youtubeVideoId": "pE49WK-oNjU"
+    },
+    "artists for haiti::we are the world 25 for haiti": {
+      "youtubeVideoId": "S0NfzmgNvSA"
     },
     "asap ferg::plain jane": {
       "youtubeVideoId": "meXPbvp3ldg"
@@ -165,8 +216,26 @@
     "ashanti::rain on me": {
       "youtubeVideoId": "UxP9-4xu5L8"
     },
+    "asher roth::i love college": {
+      "youtubeVideoId": "G4zgWPJ8EZQ"
+    },
+    "audioslave::like a stone": {
+      "youtubeVideoId": "7QU1nvuxaMA"
+    },
+    "austin::todo lo que pienso": {
+      "youtubeVideoId": "h3Fzmg3sbU8"
+    },
     "avant::separated": {
       "youtubeVideoId": "JmRrSQNgRJ8"
+    },
+    "aventura::obsesion (reggaeton version)": {
+      "youtubeVideoId": "8_QY5gFQUTg"
+    },
+    "avicii::the days": {
+      "youtubeVideoId": "JDglMK9sgIQ"
+    },
+    "avril lavigne::basket case": {
+      "youtubeVideoId": "LFkwfgjLxT4"
     },
     "avril lavigne::nobody's home": {
       "youtubeVideoId": "NGFSNE18Ywc"
@@ -186,6 +255,15 @@
     "bad bunny::baile inolvidable": {
       "youtubeVideoId": "a1Femq4NPxs"
     },
+    "bad bunny::despues de la playa": {
+      "youtubeVideoId": "a5rlgE6dcBY"
+    },
+    "bad bunny::efecto": {
+      "youtubeVideoId": "Nk8C9FdCdJQ"
+    },
+    "bad bunny::eoo": {
+      "youtubeVideoId": "myDIeOjqQos"
+    },
     "bad bunny::monaco": {
       "youtubeVideoId": "_PJvpq8uOZM"
     },
@@ -194,6 +272,9 @@
     },
     "bad bunny::ojitos lindos": {
       "youtubeVideoId": "wAjHQXrIj9o"
+    },
+    "bad bunny::party": {
+      "youtubeVideoId": "G9XrXnfJPsk"
     },
     "bad bunny::where she goes": {
       "youtubeVideoId": "bef8QLNHubw"
@@ -213,6 +294,9 @@
     "beenie man::dude": {
       "youtubeVideoId": "6WX4Ugjh7dE"
     },
+    "belanova::baila mi corazon": {
+      "youtubeVideoId": "qcR1KbbhRTs"
+    },
     "belen aguilera::camaleon": {
       "youtubeVideoId": "owxDYkHYTJA"
     },
@@ -225,8 +309,14 @@
     "belinda::angel (once in your lifetime)": {
       "youtubeVideoId": "lNCj-TJiMmM"
     },
+    "benny::llueve luz": {
+      "youtubeVideoId": "JSbqZkI_4Eg"
+    },
     "beret::cupido": {
       "youtubeVideoId": "onwMek79buw"
+    },
+    "beth::estas": {
+      "youtubeVideoId": "g29LPAGSxb0"
     },
     "beyonce::beautiful liar": {
       "youtubeVideoId": "QrOe2h9RtWI"
@@ -237,8 +327,14 @@
     "beyonce::diva": {
       "youtubeVideoId": "rNM5HW13_O8"
     },
+    "beyonce::partition": {
+      "youtubeVideoId": "pZ12_E5R3qc"
+    },
     "beyonce::perfect duet": {
       "youtubeVideoId": "817P8W8-mGE"
+    },
+    "beyonce::sorry": {
+      "youtubeVideoId": "QxsmWxxouIM"
     },
     "big sean::blessings": {
       "youtubeVideoId": "M6t47RI4bns"
@@ -257,6 +353,9 @@
     },
     "billy currington::people are crazy": {
       "youtubeVideoId": "PKpQRjj_WbU"
+    },
+    "bizarrap::bzrp music sessions, vol. 53": {
+      "youtubeVideoId": "CocEMWdc7Ck"
     },
     "blackbear::do re mi": {
       "youtubeVideoId": "dfzlUHOFQ5k"
@@ -297,8 +396,17 @@
     "bon jovi::who says you can't go home": {
       "youtubeVideoId": "abzbVFuxigg"
     },
+    "bow wow::outta my system": {
+      "youtubeVideoId": "U-InF9ieRRI"
+    },
+    "boys like girls::love drunk": {
+      "youtubeVideoId": "EZNDuAMJ50U"
+    },
     "boys like girls::the great escape": {
       "youtubeVideoId": "JGPgxoIPY6Q"
+    },
+    "boys like girls::two is better than one": {
+      "youtubeVideoId": "wRGeQvA4Vvw"
     },
     "brad paisley::remind me": {
       "youtubeVideoId": "7qzhngp7jh8"
@@ -318,8 +426,17 @@
     "brett young::mercy": {
       "youtubeVideoId": "Thvm6dADOms"
     },
+    "britney spears::3": {
+      "youtubeVideoId": "oTs6oQx1WJY"
+    },
     "britney spears::everytime": {
       "youtubeVideoId": "8YzabSdk7ZA"
+    },
+    "britney spears::from the bottom of my broken heart": {
+      "youtubeVideoId": "fHPnGqXXUmI"
+    },
+    "britney spears::if u seek amy": {
+      "youtubeVideoId": "432d30YVAwo"
     },
     "britney spears::piece of me": {
       "youtubeVideoId": "u4FF6MpcsRw"
@@ -329,6 +446,9 @@
     },
     "bromas aparte::mi vida sin ti": {
       "youtubeVideoId": "s_-5kly0hz0"
+    },
+    "brooke valentine::girlfight": {
+      "youtubeVideoId": "MhBM7H-ggvY"
     },
     "brooks & dunn::ain't nothing 'bout you": {
       "youtubeVideoId": "SpJdhC5E8Vg"
@@ -348,8 +468,14 @@
     "bruno mars::young girls": {
       "youtubeVideoId": "CyM5AjiZris"
     },
+    "bryan adams::open road": {
+      "youtubeVideoId": "WP7Oh8sSH6c"
+    },
     "bunbury::¡que tengas suertecita!": {
       "youtubeVideoId": "7FmRj-7-sMc"
+    },
+    "burl ives::a holly jolly christmas": {
+      "youtubeVideoId": "7Ux2h2H313U"
     },
     "bushido::la felicidad": {
       "youtubeVideoId": "_24B1wMQGu0"
@@ -363,11 +489,32 @@
     "bustamante::ni una lagrima mas": {
       "youtubeVideoId": "zHRhcRWOa6o"
     },
+    "busted::who's david": {
+      "youtubeVideoId": "lPwfSH1OTxA"
+    },
     "cafe quijano::dame de esa boca": {
       "youtubeVideoId": "dujHNFm1yLE"
     },
+    "cafe quijano::sirvame una copita": {
+      "youtubeVideoId": "rH8jBYQzCsA"
+    },
+    "cali swag district::teach me how to dougie": {
+      "youtubeVideoId": "0LLZ-PIx6Ss"
+    },
+    "cali y el dandee::+": {
+      "youtubeVideoId": "pPoAE5DnQRg"
+    },
     "calle paris::tienes que hacerlo por ti": {
       "youtubeVideoId": "m9DSXaUkFUo"
+    },
+    "calvin harris::feels": {
+      "youtubeVideoId": "ozv4q2ov3Mk"
+    },
+    "calvin harris::slide": {
+      "youtubeVideoId": "gQlKelwPX4A"
+    },
+    "carl thomas::i wish": {
+      "youtubeVideoId": "9fQwrkTktug"
     },
     "carlos baute::lo que tu quieres yo quiero": {
       "youtubeVideoId": "P0kkp36D2Ps"
@@ -387,6 +534,12 @@
     "carlos jean::lifetime": {
       "youtubeVideoId": "VcZQ3IBuYz0"
     },
+    "carlos jean::midnight": {
+      "youtubeVideoId": "tdE9Etclyvs"
+    },
+    "carlos jean::prisoners": {
+      "youtubeVideoId": "Hl-2GYv83hU"
+    },
     "carlos jean::wasting your time": {
       "youtubeVideoId": "uEeq26byIP0"
     },
@@ -395,6 +548,12 @@
     },
     "carlos vives::como tu": {
       "youtubeVideoId": "13VeucpbxWk"
+    },
+    "carly pearce::i hope you're happy now": {
+      "youtubeVideoId": "SBBhyMYnwCw"
+    },
+    "carolina gaitan::we don't talk about bruno": {
+      "youtubeVideoId": "ZinNrEWOrLE"
     },
     "carrie underwood::blown away": {
       "youtubeVideoId": "pJgoHgpsb9I"
@@ -405,8 +564,14 @@
     "carrie underwood::jesus, take the wheel": {
       "youtubeVideoId": "lydBPm2KRaU"
     },
+    "carrie underwood::undo it": {
+      "youtubeVideoId": "ywtJYvDBKek"
+    },
     "casa rusa::despertar": {
       "youtubeVideoId": "zzGx5Z38F3o"
+    },
+    "cash out::cashin' out": {
+      "youtubeVideoId": "1Gns8GBpVhg"
     },
     "ceelo green::fuck you (forget you)": {
       "youtubeVideoId": "pc0mxOXbWIU"
@@ -416,6 +581,9 @@
     },
     "celtas cortos::blues del pescador": {
       "youtubeVideoId": "F0L50iVYjqI"
+    },
+    "chad brock::yes!": {
+      "youtubeVideoId": "jELsuZCvv4M"
     },
     "charlie puth::marvin gaye": {
       "youtubeVideoId": "igNVdlXhKcI"
@@ -429,8 +597,14 @@
     "chase rice::eyes on you": {
       "youtubeVideoId": "VkloKZmQ3o4"
     },
+    "cheat codes::no promises": {
+      "youtubeVideoId": "jn40gqhxoSY"
+    },
     "chenoa::dame": {
       "youtubeVideoId": "t0ia9D9cT34"
+    },
+    "chenoa::siete petalos": {
+      "youtubeVideoId": "BBU9VFKCgqQ"
     },
     "chenoa::soy lo que me das": {
       "youtubeVideoId": "BVDm2VrWzdE"
@@ -456,11 +630,23 @@
     "chris brown::back to sleep": {
       "youtubeVideoId": "OQLuhelCaDQ"
     },
+    "chris brown::gimme that": {
+      "youtubeVideoId": "3yl-5FOZcr0"
+    },
+    "chris brown::new flame": {
+      "youtubeVideoId": "HwctEiWLe84"
+    },
     "chris brown::say goodbye": {
       "youtubeVideoId": "SrbyhoMxRWE"
     },
     "chris brown::she ain't you": {
       "youtubeVideoId": "7V2GzYcRK9E"
+    },
+    "chris brown::turn up the music": {
+      "youtubeVideoId": "eQWG8BVeryU"
+    },
+    "chris stapleton::white horse": {
+      "youtubeVideoId": "-q-IjQE8nTY"
     },
     "chris stapleton::you should probably leave": {
       "youtubeVideoId": "8e7S8l4s1OM"
@@ -468,8 +654,14 @@
     "chris young::famous friends": {
       "youtubeVideoId": "qpMOx2Ul9RA"
     },
+    "christina aguilera::come on over baby (all i want is you)": {
+      "youtubeVideoId": "0RQDIJ2CvbA"
+    },
     "christina aguilera::fighter": {
       "youtubeVideoId": "PstrAfoMKlc"
+    },
+    "christina perri::a thousand years": {
+      "youtubeVideoId": "rtOvBOTyX00"
     },
     "ciara::body party": {
       "youtubeVideoId": "B9rSBcoX9ak"
@@ -489,8 +681,14 @@
     "ckay::love nwantiti (ah ah ah)": {
       "youtubeVideoId": "D-YDEyuDxWU"
     },
+    "cody johnson::i'm gonna love you": {
+      "youtubeVideoId": "yy9PuYMU29g"
+    },
     "cody johnson::the painter": {
       "youtubeVideoId": "ur1cb_OztPQ"
+    },
+    "coi leray::no more parties": {
+      "youtubeVideoId": "fCRj3qflnHs"
     },
     "colbie caillat::fallin' for you": {
       "youtubeVideoId": "wYAnduY_eDM"
@@ -498,8 +696,14 @@
     "coldplay::clocks": {
       "youtubeVideoId": "d020hcWA_Wg"
     },
+    "coldplay::hymn for the weekend": {
+      "youtubeVideoId": "YykjpeuMNEk"
+    },
     "coldplay::lovers in japan": {
       "youtubeVideoId": "OTFFQkdhw6Q"
+    },
+    "coldplay::the hardest part": {
+      "youtubeVideoId": "WAGbq3A9HfA"
     },
     "cole swindell::never say never": {
       "youtubeVideoId": "q1WWi47ff5A"
@@ -528,6 +732,9 @@
     "craig david::all the way": {
       "youtubeVideoId": "mlMWBccgirg"
     },
+    "craig david::don't love you no more (i'm sorry)": {
+      "youtubeVideoId": "OfQnNHGN69E"
+    },
     "crime mob::rock yo hips": {
       "youtubeVideoId": "TIXU2Nlo-Rs"
     },
@@ -546,8 +753,14 @@
     "daddy yankee::rompe": {
       "youtubeVideoId": "JUrkNvQ2THI"
     },
+    "dan + shay::all to myself": {
+      "youtubeVideoId": "t4fYLsTxuEk"
+    },
     "dan + shay::glad you exist": {
       "youtubeVideoId": "eQzcHDAbfm8"
+    },
+    "dani martin::mi teatro": {
+      "youtubeVideoId": "xonDwmq0-Sk"
     },
     "dani martin::paris": {
       "youtubeVideoId": "eBcr8E5UhoM"
@@ -573,6 +786,12 @@
     "david banner::get like me": {
       "youtubeVideoId": "LPz7LCybSNk"
     },
+    "david bisbal::me derrumbo (crumbling)": {
+      "youtubeVideoId": "1MGVm6lzchs"
+    },
+    "david bisbal::wavin' flag (version latina)": {
+      "youtubeVideoId": "XYMfyjByGl4"
+    },
     "david civera::rosas y espinas": {
       "youtubeVideoId": "18bdrAhEHAk"
     },
@@ -588,8 +807,20 @@
     "david guetta::versace on the floor": {
       "youtubeVideoId": "8VXW_gW8UpM"
     },
+    "david otero::hawaii": {
+      "youtubeVideoId": "S-WVPgnk2T8"
+    },
     "david summers::pienso en aquella tarde": {
       "youtubeVideoId": "eTj5g6lutIw"
+    },
+    "daya::hide away": {
+      "youtubeVideoId": "RwHQfn0s94M"
+    },
+    "daya::sit still, look pretty": {
+      "youtubeVideoId": "uPHKkewD1G0"
+    },
+    "debelah morgan::dance with me": {
+      "youtubeVideoId": "Nnr1gkTB8Gc"
     },
     "deepest blue::deepest blue": {
       "youtubeVideoId": "_AsAbXsdhjE"
@@ -602,6 +833,9 @@
     },
     "dem franchize boyz::i think they like me": {
       "youtubeVideoId": "w5vxVuee5qA"
+    },
+    "depeche mode::enjoy the silence (reinterpreted)": {
+      "youtubeVideoId": "ofrB6OCSsgk"
     },
     "depeche mode::precious": {
       "youtubeVideoId": "GqSVrJQi8AQ"
@@ -639,6 +873,9 @@
     "diego martin::ruedan": {
       "youtubeVideoId": "kzmepU7T4KY"
     },
+    "diego martin::todo se parece a ti": {
+      "youtubeVideoId": "bje0lvE_yA8"
+    },
     "dierks bentley::drunk on a plane": {
       "youtubeVideoId": "QrM39m22jH4"
     },
@@ -647,6 +884,15 @@
     },
     "dirty vegas::days go by": {
       "youtubeVideoId": "gLCduDJVksc"
+    },
+    "dixie chicks::cowboy take me away": {
+      "youtubeVideoId": "MdkIJm65ytM"
+    },
+    "dixie chicks::landslide": {
+      "youtubeVideoId": "J4_wXPZ1Bnk"
+    },
+    "dixie chicks::long time gone": {
+      "youtubeVideoId": "3Cz-IsqecvQ"
     },
     "dj khaled::all i do is win": {
       "youtubeVideoId": "WRc4lH6_bEU"
@@ -687,8 +933,14 @@
     "dover::honest": {
       "youtubeVideoId": "152CTu1krjg"
     },
+    "dover::serenade07": {
+      "youtubeVideoId": "IjArUNEaOKw"
+    },
     "dover::soldier": {
       "youtubeVideoId": "d6wpXB84ais"
+    },
+    "dr. dre::forgot about dre": {
+      "youtubeVideoId": "QFcv5Ma8u8k"
     },
     "dr. dre::the next episode": {
       "youtubeVideoId": "QZXc39hT8t4"
@@ -707,6 +959,12 @@
     },
     "drake::headlines": {
       "youtubeVideoId": "cimoNqiulUE"
+    },
+    "drake::i'm upset": {
+      "youtubeVideoId": "rIhx2wZ8jnA"
+    },
+    "drake::idgaf": {
+      "youtubeVideoId": "pZF0w6woM5g"
     },
     "drake::pop style": {
       "youtubeVideoId": "OJu4kkAbxHQ"
@@ -732,6 +990,9 @@
     "e-40::u and dat": {
       "youtubeVideoId": "m-fL-vdcBWo"
     },
+    "eagle-eye cherry::don't give up": {
+      "youtubeVideoId": "nAMIJVmqSSM"
+    },
     "ed sheeran::south of the border": {
       "youtubeVideoId": "UPOT2tgY9QQ"
     },
@@ -753,11 +1014,17 @@
     "efecto mariposa::¿quien?": {
       "youtubeVideoId": "ZOzbdgMxMcE"
     },
+    "efecto pasillo::buscando una luz": {
+      "youtubeVideoId": "7WxmMGh73mw"
+    },
     "efecto pasillo::similares": {
       "youtubeVideoId": "vW8mO-33K_A"
     },
     "eiffel 65::blue (da ba dee)": {
       "youtubeVideoId": "kyzIQKuSqBs"
+    },
+    "ejae::free": {
+      "youtubeVideoId": "fjOeJssZX_Q"
     },
     "elefantes::abre mas ancho el camino": {
       "youtubeVideoId": "JxJUQcd4DwE"
@@ -765,11 +1032,17 @@
     "elefantes::al olvido": {
       "youtubeVideoId": "jgo6C2c0v_w"
     },
+    "elefantes::vale la pena vivir asi": {
+      "youtubeVideoId": "dYqviVnZp28"
+    },
     "eli young band::crazy girl": {
       "youtubeVideoId": "J3HwFtdVTfM"
     },
     "eli young band::even if it breaks your heart": {
       "youtubeVideoId": "VWiP7ciuGRo"
+    },
+    "ella langley::weren't for the wind": {
+      "youtubeVideoId": "U4NPZi2b0aQ"
     },
     "ella mai::trip": {
       "youtubeVideoId": "W16bk86xIY0"
@@ -810,6 +1083,9 @@
     "ernest::flower shops": {
       "youtubeVideoId": "EkIXj500KdE"
     },
+    "erykah badu::love of my life (an ode to hip-hop)": {
+      "youtubeVideoId": "dNk3R23Twgw"
+    },
     "estopa::empanados": {
       "youtubeVideoId": "4KJ5NMakPEs"
     },
@@ -836,6 +1112,9 @@
     },
     "fantasia::truth is": {
       "youtubeVideoId": "e265_NvKvRQ"
+    },
+    "fat joe::all the way up": {
+      "youtubeVideoId": "y2ak_oBeC-I"
     },
     "fat joe::we thuggin'": {
       "youtubeVideoId": "eDunquvybTA"
@@ -873,6 +1152,12 @@
     "florida georgia line::simple": {
       "youtubeVideoId": "3GeaYy6zlXU"
     },
+    "florida georgia line::talk you out of it": {
+      "youtubeVideoId": "8Ls6QyWu63s"
+    },
+    "frankie j::don't wanna try": {
+      "youtubeVideoId": "PfdMcC7nyvk"
+    },
     "frankie j::obsession (no es amor)": {
       "youtubeVideoId": "hY73MQOpg-0"
     },
@@ -882,8 +1167,14 @@
     "fuerza regida::bebe dame": {
       "youtubeVideoId": "Oie--p6YqJo"
     },
+    "fun::carry on": {
+      "youtubeVideoId": "q7yCLn-O-Y0"
+    },
     "future::puffin on zootiez": {
       "youtubeVideoId": "H8E0WIy_vFc"
+    },
+    "future::wicked": {
+      "youtubeVideoId": "3gt-rxxs-RQ"
     },
     "g-unit::wanna get to know you": {
       "youtubeVideoId": "p4AUfQEYpH0"
@@ -900,6 +1191,9 @@
     "gavin rossdale::love remains the same": {
       "youtubeVideoId": "RM0xmYN3JOM"
     },
+    "george ezra::budapest": {
+      "youtubeVideoId": "VHrLPs3_1Fs"
+    },
     "george strait::living and living well": {
       "youtubeVideoId": "jEKQa13ox4I"
     },
@@ -914,6 +1208,15 @@
     },
     "glorilla::tomorrow 2": {
       "youtubeVideoId": "zwa7NzNBQig"
+    },
+    "goo goo dolls::broadway": {
+      "youtubeVideoId": "kbwzPzJ6wCU"
+    },
+    "goo goo dolls::here is gone": {
+      "youtubeVideoId": "tNtN83-vQmw"
+    },
+    "gorillaz::feel good inc": {
+      "youtubeVideoId": "HyHNuVaZJ-k"
     },
     "green day::21 guns": {
       "youtubeVideoId": "r00ikilDxW4"
@@ -935,6 +1238,9 @@
     },
     "gwen stefani::cool": {
       "youtubeVideoId": "TGwZ7MNtBFU"
+    },
+    "gwen stefani::what you waiting for?": {
+      "youtubeVideoId": "f5qICl3Fr3w"
     },
     "gwen stefani::wind it up": {
       "youtubeVideoId": "9sY-TsLXiDo"
@@ -966,8 +1272,14 @@
     "hilary duff::so yesterday": {
       "youtubeVideoId": "hIxITmwkUIw"
     },
+    "hinder::better than me": {
+      "youtubeVideoId": "TEXBmw2jBcA"
+    },
     "hombres g::nunca mas": {
       "youtubeVideoId": "hj2RG_hCz_4"
+    },
+    "hombres g::¿que soy yo para ti?": {
+      "youtubeVideoId": "tNc1YF_HYuk"
     },
     "hudson westbrook::house again": {
       "youtubeVideoId": "5i7lrVrvykI"
@@ -975,11 +1287,17 @@
     "hunter hayes::i want crazy": {
       "youtubeVideoId": "XvtXgNtYFMs"
     },
+    "huntrix::how it's done": {
+      "youtubeVideoId": "QGsevnbItdU"
+    },
     "huntrix::takedown": {
       "youtubeVideoId": "FZQlD9RwkPY"
     },
     "huntrix::what it sounds like": {
       "youtubeVideoId": "vjaKvvuRW_g"
+    },
+    "ice spice::princess diana": {
+      "youtubeVideoId": "gMq-I0dejjE"
     },
     "iguana tango::si pudiera": {
       "youtubeVideoId": "MQ935C85ByE"
@@ -989,6 +1307,9 @@
     },
     "iguana tango::tu me dijiste adios": {
       "youtubeVideoId": "Z8ETIzDnOf0"
+    },
+    "iguana tango::volveras": {
+      "youtubeVideoId": "p-6-F4Rti-o"
     },
     "iguana tango::yo estoy aqui": {
       "youtubeVideoId": "7dRZliKhmRI"
@@ -1005,11 +1326,20 @@
     "imagine dragons::natural": {
       "youtubeVideoId": "0I647GU3Jsc"
     },
+    "imany::don't be so shy": {
+      "youtubeVideoId": "b1_B-IKEufg"
+    },
     "in-grid::shock": {
       "youtubeVideoId": "tMp6BxBc0qU"
     },
     "j balvin::i like it": {
       "youtubeVideoId": "xTlNMmZKwpA"
+    },
+    "j. holiday::bed": {
+      "youtubeVideoId": "82t_UOMHPJY"
+    },
+    "ja rule::livin' it up": {
+      "youtubeVideoId": "SFMy2NuOVic"
     },
     "ja rule::wonderful": {
       "youtubeVideoId": "QVXE1EzMrfw"
@@ -1020,26 +1350,47 @@
     "jaheim::put that woman first": {
       "youtubeVideoId": "lAVBVAUplpg"
     },
+    "jake owen::barefoot blue jean night": {
+      "youtubeVideoId": "aRh-vBOS-dU"
+    },
     "jake owen::beachin'": {
       "youtubeVideoId": "VwgCBRj3dn4"
     },
     "jamelia::superstar": {
       "youtubeVideoId": "m7DjsP8Xr2k"
     },
+    "jamelia::thank you": {
+      "youtubeVideoId": "uXasJAew4hQ"
+    },
     "james newton howard::the hanging tree": {
       "youtubeVideoId": "F3hTW9e20d8"
+    },
+    "jamie cullum::everything you didn't do (spanish version)": {
+      "youtubeVideoId": "xOq2QTaZAq0"
+    },
+    "janet jackson::just a little while (nu soul edit)": {
+      "youtubeVideoId": "iYxxAARt2Gc"
     },
     "janet::doesn't really matter": {
       "youtubeVideoId": "_IbX3LbHrbs"
     },
+    "jarabe de palo::1 m2 (solo o bien acompanado)": {
+      "youtubeVideoId": "u6dE3lsbVqA"
+    },
     "jason aldean::big green tractor": {
       "youtubeVideoId": "mSvC60wyaho"
+    },
+    "jason aldean::burnin' it down": {
+      "youtubeVideoId": "xdImDqbgc2g"
     },
     "jason aldean::fly over states": {
       "youtubeVideoId": "W1GZzucDMlQ"
     },
     "jason aldean::if i didn't love you": {
       "youtubeVideoId": "Zc3cxj5pDIs"
+    },
+    "jason aldean::take a little ride": {
+      "youtubeVideoId": "CYT6RkTe26M"
     },
     "jason aldean::trouble with a heartbreak": {
       "youtubeVideoId": "TAtWP5Mct5I"
@@ -1056,8 +1407,14 @@
     "jason mraz::lucky": {
       "youtubeVideoId": "0V7yLBKhHuo"
     },
+    "jason nevins::fireflies": {
+      "youtubeVideoId": "psuRGfAaju4"
+    },
     "jaula de grillos::746": {
       "youtubeVideoId": "nJNan6-cG30"
+    },
+    "javier calamaro::mi religion": {
+      "youtubeVideoId": "_T7mQazwWn4"
     },
     "javier puig::quiero estar contigo": {
       "youtubeVideoId": "aLcBH4SlmI0"
@@ -1080,6 +1437,9 @@
     "jay-z::numb / encore": {
       "youtubeVideoId": "w236Se63-_A"
     },
+    "jd natasha::lagrimas": {
+      "youtubeVideoId": "CnVpDpHjLTo"
+    },
     "jd natasha::tatuaje": {
       "youtubeVideoId": "5Mr0TGTX198"
     },
@@ -1098,14 +1458,29 @@
     "jennifer lopez::cherry pie": {
       "youtubeVideoId": "tOunHTi5LFA"
     },
+    "jennifer lopez::play": {
+      "youtubeVideoId": "tFuw-YZaTNo"
+    },
+    "jerrod niemann::lover, lover": {
+      "youtubeVideoId": "-q0LE3gtUn8"
+    },
     "jesse mccartney::beautiful soul": {
       "youtubeVideoId": "ek2PDE1cAyY"
+    },
+    "jesse mccartney::how do you sleep?": {
+      "youtubeVideoId": "Ic5LZNCustI"
+    },
+    "jessica andrews::who i am": {
+      "youtubeVideoId": "Jd9zYKLepCw"
     },
     "jessica simpson::irresistible": {
       "youtubeVideoId": "-qCDypgAV_E"
     },
     "jessie j::price tag": {
       "youtubeVideoId": "qMxX-QOV9tI"
+    },
+    "jet::are you gonna be my girl": {
+      "youtubeVideoId": "tuK6n2Lkza0"
     },
     "jewel::intuition": {
       "youtubeVideoId": "8Ilh1ewceco"
@@ -1116,14 +1491,23 @@
     "jewel::standing still": {
       "youtubeVideoId": "W3WMMwlHgZI"
     },
+    "jhene aiko::pussy fairy (otw)": {
+      "youtubeVideoId": "wy2ujCUtCHU"
+    },
     "jidenna::classic man": {
       "youtubeVideoId": "nsiN0W15w0U"
     },
     "jim jones::pop champagne": {
       "youtubeVideoId": "KrG4yKAVQuM"
     },
+    "jimin::who": {
+      "youtubeVideoId": "Av9DvtlJ9_M"
+    },
     "jnr choi::to the moon": {
       "youtubeVideoId": "Q_6OZd6FFYg"
+    },
+    "jo dee messina::that's the way": {
+      "youtubeVideoId": "DmEOiCzVqjA"
     },
     "joaquin sabina::no tienes corazon": {
       "youtubeVideoId": "xb7jI_qjUx0"
@@ -1136,6 +1520,9 @@
     },
     "john mayer::daughters": {
       "youtubeVideoId": "rZLbUIa7exE"
+    },
+    "john michael montgomery::letters from home": {
+      "youtubeVideoId": "FIG9C3n-SPc"
     },
     "jojo::disaster": {
       "youtubeVideoId": "6-MhiTomGXA"
@@ -1161,6 +1548,9 @@
     "joss stone::you had me": {
       "youtubeVideoId": "opwudiDgv1E"
     },
+    "juan magan::falling in love (english version)": {
+      "youtubeVideoId": "OAhuDE8w4E0"
+    },
     "juan magan::se vuelve loca": {
       "youtubeVideoId": "5donCggZzMc"
     },
@@ -1173,20 +1563,41 @@
     "juanes::y no regresas": {
       "youtubeVideoId": "ecgsmrJ5kC8"
     },
+    "juanshows::no soy un bastritboy": {
+      "youtubeVideoId": "rHFvq9-y9jo"
+    },
     "juice wrld::robbery": {
       "youtubeVideoId": "xHGIwSuUaE0"
     },
     "juice wrld::wishing well": {
       "youtubeVideoId": "C5i-UnuUKUI"
     },
+    "julieta venegas::andar conmigo": {
+      "youtubeVideoId": "wtpTCWF2fjk"
+    },
+    "julieta venegas::el presente": {
+      "youtubeVideoId": "F9ljjS4pClM"
+    },
+    "jung kook::seven": {
+      "youtubeVideoId": "Vs64cZbeY88"
+    },
+    "junior jack::da hype (vocal version)": {
+      "youtubeVideoId": "eNK6GWOVpQ4"
+    },
     "junior miguez::principe de los gatos": {
       "youtubeVideoId": "t0S8Y3r5bJ4"
+    },
+    "junior miguez::saoke": {
+      "youtubeVideoId": "oHyQHKDPI-g"
     },
     "junior miguez::tum taraka": {
       "youtubeVideoId": "OII2pa1fSvs"
     },
     "justin bieber::anyone": {
       "youtubeVideoId": "KIK3azN4w34"
+    },
+    "justin bieber::lonely": {
+      "youtubeVideoId": "xQOO2xGQ1Pc"
     },
     "justin bieber::one time": {
       "youtubeVideoId": "CHVhwcOg6y8"
@@ -1204,7 +1615,7 @@
       "youtubeVideoId": "8MPbR6Cbwi4"
     },
     "justin timberlake::senorita": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "nJHYDkvRB2Y"
     },
     "k-ci & jojo::crazy": {
       "youtubeVideoId": "qi-KCd0guJI"
@@ -1227,6 +1638,9 @@
     "kane brown::homesick": {
       "youtubeVideoId": "ukHikH_10CA"
     },
+    "kane brown::like i love country music": {
+      "youtubeVideoId": "ELZNClmKX1E"
+    },
     "kane brown::one mississippi": {
       "youtubeVideoId": "O2HpAdaE7R4"
     },
@@ -1245,6 +1659,12 @@
     "kate ryan::only if i": {
       "youtubeVideoId": "dv4Egg_1S-I"
     },
+    "keane::somewhere only we know": {
+      "youtubeVideoId": "Oextk-If8HQ"
+    },
+    "kehlani::folded": {
+      "youtubeVideoId": "KFMYx1TibeQ"
+    },
     "keith urban::one too many": {
       "youtubeVideoId": "cy1rAn9MLtQ"
     },
@@ -1254,8 +1674,14 @@
     "keith urban::you'll think of me": {
       "youtubeVideoId": "2en4ofkt1eo"
     },
+    "kelly clarkson::already gone": {
+      "youtubeVideoId": "f0T3WAbU6tg"
+    },
     "kelly clarkson::i do not hook up": {
       "youtubeVideoId": "AaafMpqXXBs"
+    },
+    "kelly clarkson::never again": {
+      "youtubeVideoId": "GVYesEpMr84"
     },
     "kelly clarkson::the trouble with love is": {
       "youtubeVideoId": "ICwfXGjVeXw"
@@ -1265,6 +1691,12 @@
     },
     "kendrick lamar::tv off": {
       "youtubeVideoId": "2l5utgkg4Rs"
+    },
+    "kenny chesney::american kids": {
+      "youtubeVideoId": "de1aPKXBdAE"
+    },
+    "kenny chesney::come over": {
+      "youtubeVideoId": "N1GfEl8XUc4"
     },
     "kenny chesney::don't happen twice": {
       "youtubeVideoId": "ueQgSEN2m9I"
@@ -1287,6 +1719,9 @@
     "kenny chesney::you and tequila": {
       "youtubeVideoId": "Q8XkLrErSHw"
     },
+    "kentish man::easy lover": {
+      "youtubeVideoId": "FSQMVQb-8u4"
+    },
     "kenya grace::strangers": {
       "youtubeVideoId": "S2TaAcwC_zI"
     },
@@ -1295,6 +1730,9 @@
     },
     "kevin gates::really really": {
       "youtubeVideoId": "pR0VsbyZxWg"
+    },
+    "kevin lyttle::last drop": {
+      "youtubeVideoId": "37CJCAVndFI"
     },
     "kevin rudolf::i made it (cash money heroes)": {
       "youtubeVideoId": "F_7baOCYg-Q"
@@ -1314,6 +1752,9 @@
     "kid rock::all summer long": {
       "youtubeVideoId": "aSkFygPCTwE"
     },
+    "kid rock::only god knows why": {
+      "youtubeVideoId": "0DQup4hd1_o"
+    },
     "kip moore::somethin' 'bout a truck": {
       "youtubeVideoId": "3YfNFR6gh2E"
     },
@@ -1323,11 +1764,20 @@
     "kongos::come with me now": {
       "youtubeVideoId": "Gz2GVlQkn4Q"
     },
+    "kool & the gang::ladies night": {
+      "youtubeVideoId": "Naq2u5R4Htg"
+    },
+    "kristinia debarge::goodbye": {
+      "youtubeVideoId": "4576ymdmemQ"
+    },
     "kylie minogue::million miles": {
       "youtubeVideoId": "qbqWU2ICaDg"
     },
     "la musicalite::lo que pueda ser": {
       "youtubeVideoId": "xy_3EoYeh64"
+    },
+    "la musicalite::siempre": {
+      "youtubeVideoId": "hnxx4eYJP9Q"
     },
     "la musicalite::te miro": {
       "youtubeVideoId": "1zrSshi_Rgg"
@@ -1335,17 +1785,26 @@
     "la oreja de van gogh::deseos de cosas imposibles": {
       "youtubeVideoId": "zpSBU0eUmmw"
     },
+    "la oreja de van gogh::nana nara": {
+      "youtubeVideoId": "UGRjrdUXj7g"
+    },
     "la sexta duda::algo personal": {
       "youtubeVideoId": "k-LZuy54-xY"
     },
+    "la sonrisa de julia::el bufon": {
+      "youtubeVideoId": "l-yotUmZatk"
+    },
     "la sonrisa de julia::libres": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "lf_gR3zG6Pw"
     },
     "la sonrisa de julia::llevo tu voz": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "NCatqZ7gtT8"
     },
     "la sonrisa de julia::sonrisas de papel": {
       "youtubeVideoId": "_2Ztz0Azd7g"
+    },
+    "la union::sigo aqui": {
+      "youtubeVideoId": "Ka2Hsj1YOB4"
     },
     "lady antebellum::american honey": {
       "youtubeVideoId": "Tzzr7RbzUTs"
@@ -1374,6 +1833,9 @@
     "lainey wilson::things a man oughta know": {
       "youtubeVideoId": "ScKbhJtfuLg"
     },
+    "lainey wilson::watermelon moonshine": {
+      "youtubeVideoId": "_3jv0_wGK1M"
+    },
     "las ninas::ya me siento mejo": {
       "youtubeVideoId": "oP_-kKsTpeQ"
     },
@@ -1383,8 +1845,14 @@
     "lauren spencer-smith::fingers crossed": {
       "youtubeVideoId": "mzwg5Ldkt5Q"
     },
+    "lee brice::hard to love": {
+      "youtubeVideoId": "WtFwuPnzidE"
+    },
     "lee brice::i don't dance": {
       "youtubeVideoId": "fBEBbgQEJy4"
+    },
+    "lee brice::one of them girls": {
+      "youtubeVideoId": "CpkZfkxdj2c"
     },
     "lee brice::rumor": {
       "youtubeVideoId": "hsqML0Bl6NE"
@@ -1395,6 +1863,12 @@
     "lenny kravitz::where are we runnin'?": {
       "youtubeVideoId": "MSL6o8sePlg"
     },
+    "leona lewis::i got you": {
+      "youtubeVideoId": "8BdyI8Uwmus"
+    },
+    "lfo::girl on tv": {
+      "youtubeVideoId": "8o8kSGAxQns"
+    },
     "lifehouse::first time": {
       "youtubeVideoId": "J0YvWQNWEJA"
     },
@@ -1404,11 +1878,23 @@
     "lil baby::close friends": {
       "youtubeVideoId": "hhzYbExfVIY"
     },
+    "lil baby::emotionally scarred": {
+      "youtubeVideoId": "iXUPeEuM1CM"
+    },
+    "lil baby::sum 2 prove": {
+      "youtubeVideoId": "xOjy0tL5EuA"
+    },
     "lil baby::the bigger picture": {
       "youtubeVideoId": "_VDGysJGNoI"
     },
     "lil durk::broadway girls": {
       "youtubeVideoId": "2CNl_CCtE-I"
+    },
+    "lil durk::what happened to virgil": {
+      "youtubeVideoId": "F0lWKNOCayg"
+    },
+    "lil jon & the east side boyz::lovers & friends": {
+      "youtubeVideoId": "ghrGEq7yzG8"
     },
     "lil tecca::dark thoughts": {
       "youtubeVideoId": "Xtq_A2NnHKQ"
@@ -1428,6 +1914,9 @@
     "lil' bow wow::bounce with me": {
       "youtubeVideoId": "RzRgScHpMGg"
     },
+    "lil' kim::the jump off": {
+      "youtubeVideoId": "xeCa5I0vZA8"
+    },
     "lil' mo::superwoman pt. ii": {
       "youtubeVideoId": "VEJsDYhAFqk"
     },
@@ -1437,8 +1926,14 @@
     "linkin park::breaking the habit": {
       "youtubeVideoId": "v2H4l9RpkwM"
     },
+    "linkin park::burn it down": {
+      "youtubeVideoId": "dxytyRy-O1k"
+    },
     "linkin park::from the inside": {
       "youtubeVideoId": "YLHpvjrFpe0"
+    },
+    "lisa kekaula::good luck": {
+      "youtubeVideoId": "HbVKmSQqELY"
     },
     "ll cool j::luv u better": {
       "youtubeVideoId": "udEN8EdJT9k"
@@ -1455,8 +1950,17 @@
     "los canos::bailar en tu boca": {
       "youtubeVideoId": "WJgEDI93N6Y"
     },
+    "los dragones::volveras a mi": {
+      "youtubeVideoId": "-MOiYGEAH94"
+    },
     "los peces::ocho brazos para abrazarte": {
       "youtubeVideoId": "-BQTJUT4eJU"
+    },
+    "los secretos::anos atras": {
+      "youtubeVideoId": "BCYGgsiS-yQ"
+    },
+    "los secretos::por el bulevar de los suenos rotos": {
+      "youtubeVideoId": "4m0v6PIjHBM"
     },
     "love spit love::how soon is now?": {
       "youtubeVideoId": "EkBN9-KVuP0"
@@ -1464,17 +1968,32 @@
     "luca dirisio::calma y sangre fria": {
       "youtubeVideoId": "xIw5GqEAhSo"
     },
+    "lucas masciano::2 dias": {
+      "youtubeVideoId": "RKEKtCweZEY"
+    },
+    "ludacris::get back": {
+      "youtubeVideoId": "5yt849wJyVk"
+    },
     "ludacris::move bitch": {
       "youtubeVideoId": "mrOTaDmxhKA"
     },
     "ludacris::number one spot": {
       "youtubeVideoId": "BEvyuub_p_s"
     },
+    "ludacris::rollout (my business)": {
+      "youtubeVideoId": "t21DFnu00Dc"
+    },
+    "ludacris::southern hospitality": {
+      "youtubeVideoId": "2QWQVm9J5DM"
+    },
     "luis lopez::god invented fridays": {
       "youtubeVideoId": "fUEq_xZ21oQ"
     },
     "luis miguel::y sigo": {
       "youtubeVideoId": "CK0AGS9iEWE"
+    },
+    "luka::to nem ai": {
+      "youtubeVideoId": "lOtLuTJpz7Y"
     },
     "luke bryan::country girl (shake it for me)": {
       "youtubeVideoId": "7HX4SfnVlP4"
@@ -1485,8 +2004,17 @@
     "luke bryan::kick the dust up": {
       "youtubeVideoId": "bhnaqcUZ7GQ"
     },
+    "luke bryan::knockin' boots": {
+      "youtubeVideoId": "Ioz93bSi2uc"
+    },
     "luke bryan::one margarita": {
       "youtubeVideoId": "YEq-cvq_cK4"
+    },
+    "luke bryan::that's my kind of night": {
+      "youtubeVideoId": "crCqWK3SmRo"
+    },
+    "luke combs::beer never broke my heart": {
+      "youtubeVideoId": "7Lb9dq-JZFI"
     },
     "luke combs::does to me": {
       "youtubeVideoId": "37IHlU8NpAI"
@@ -1505,6 +2033,9 @@
     },
     "luke combs::one number away": {
       "youtubeVideoId": "Ct9BFr9XBaI"
+    },
+    "luke combs::where the wild things are": {
+      "youtubeVideoId": "aoJwvnDuAR0"
     },
     "m-clan::mario": {
       "youtubeVideoId": "-evfFB1Wtnc"
@@ -1536,6 +2067,9 @@
     "maddie & tae::die from a broken heart": {
       "youtubeVideoId": "Xbaoi-lifOM"
     },
+    "madonna::celebration (dub mix)": {
+      "youtubeVideoId": "6JK7-rFt8pY"
+    },
     "madonna::give it 2 me": {
       "youtubeVideoId": "aQRLSBUNupg"
     },
@@ -1553,6 +2087,9 @@
     },
     "maike ludenbach::ordinary girl": {
       "youtubeVideoId": "t_sGwOTwi8w"
+    },
+    "major lazer::lay your head on me": {
+      "youtubeVideoId": "k8w0mEfx91k"
     },
     "maldita nerea::buena energia": {
       "youtubeVideoId": "uHZDbsHkxb0"
@@ -1587,6 +2124,15 @@
     "manuel carrasco::tambores de guerra": {
       "youtubeVideoId": "619JpnefK0k"
     },
+    "marc anthony::tan solo palabras": {
+      "youtubeVideoId": "lBbQ2YETILo"
+    },
+    "maren morris::circles around this town": {
+      "youtubeVideoId": "_EmOYuzBP1I"
+    },
+    "maria sagana::m.u.s.i.c.": {
+      "youtubeVideoId": "QelIhDEK830"
+    },
     "mariah carey::#beautiful": {
       "youtubeVideoId": "oe1wtkkt9-E"
     },
@@ -1620,6 +2166,9 @@
     "mary mary::shackles (praise you)": {
       "youtubeVideoId": "2Vnh_EN7Dk4"
     },
+    "maxwell::pretty wings": {
+      "youtubeVideoId": "RkPy4yq7EJo"
+    },
     "meek mill::all eyes on you": {
       "youtubeVideoId": "ut9ThAbfde0"
     },
@@ -1632,8 +2181,14 @@
     "megan thee stallion::hot girl summer": {
       "youtubeVideoId": "FbcLcSY2au4"
     },
+    "megan thee stallion::sweetest pie": {
+      "youtubeVideoId": "K7JrX7PHGBE"
+    },
     "megan thee stallion::thot shit": {
       "youtubeVideoId": "KynkMn5Hv3Q"
+    },
+    "meghan trainor::dear future husband": {
+      "youtubeVideoId": "ShlW5plD_40"
     },
     "melendi::con la luna llena (edicion vuelta a espana '04)": {
       "youtubeVideoId": "Vu3YwV8LfgI"
@@ -1643,6 +2198,9 @@
     },
     "melendi::se lo que hicisteis": {
       "youtubeVideoId": "7Vn3UKk5Ykg"
+    },
+    "melo bakale::mil razones": {
+      "youtubeVideoId": "q9_yLu6ZbZI"
     },
     "michael franti & spearhead::say hey (i love you)": {
       "youtubeVideoId": "LYTBok8Ol7k"
@@ -1659,17 +2217,26 @@
     "migos::slippery": {
       "youtubeVideoId": "Hm1YFszJWbQ"
     },
+    "miguel bose::olvidame tu": {
+      "youtubeVideoId": "REPI5cONUkY"
+    },
     "miguel nandez::un desastre": {
       "youtubeVideoId": "RUl1h7mqXTQ"
     },
     "miguel::adorn": {
       "youtubeVideoId": "8dM5QYdTo08"
     },
+    "miguel::sky walker": {
+      "youtubeVideoId": "76O3w4pt0CA"
+    },
     "mika::blame it on the girls": {
       "youtubeVideoId": "iF_w7oaBHNo"
     },
     "mika::live your life": {
       "youtubeVideoId": "5An-SV-G--c"
+    },
+    "mike jones::back then": {
+      "youtubeVideoId": "m1ERvlxgCD8"
     },
     "mike posner::please don't go": {
       "youtubeVideoId": "HpixdTlYlKU"
@@ -1701,8 +2268,20 @@
     "modestia aparte::hora punta en el metro": {
       "youtubeVideoId": "8ntjO1kvnAc"
     },
+    "modestia aparte::mi generacion": {
+      "youtubeVideoId": "wjtUpc7h2FI"
+    },
+    "moneybagg yo::said sum": {
+      "youtubeVideoId": "T8pi91qWnRw"
+    },
     "moneybagg yo::time today": {
       "youtubeVideoId": "1H6xw0B3phU"
+    },
+    "monica::u should've known better": {
+      "youtubeVideoId": "daPJTxuY7G8"
+    },
+    "mooski::track star": {
+      "youtubeVideoId": "KPfcycMj8BE"
     },
     "morgan wallen::20 cigarettes": {
       "youtubeVideoId": "pCv0oP9JLKw"
@@ -1728,8 +2307,23 @@
     "motel::y te vas": {
       "youtubeVideoId": "VzQUG55v7bk"
     },
+    "mousse t.::el gran baboomba (english with spanish chorus version)": {
+      "youtubeVideoId": "MASJafH5wMI"
+    },
+    "mousse t.::i can feel you": {
+      "youtubeVideoId": "X_BjIjXRFuI"
+    },
+    "mr probz::waves ( robin schulz remix)": {
+      "youtubeVideoId": "rwkoXft0dXU"
+    },
     "mr. cheeks::lights, camera, action!": {
       "youtubeVideoId": "Y3ewqjk64mU"
+    },
+    "mr. kilombo::que bien se te ve": {
+      "youtubeVideoId": "zjSNSKshsic"
+    },
+    "msm::solo tengo pena": {
+      "youtubeVideoId": "R0pPO0_90DE"
     },
     "murfila::loko": {
       "youtubeVideoId": "TH8MahFmUa4"
@@ -1745,6 +2339,9 @@
     },
     "n.e.r.d::lemon": {
       "youtubeVideoId": "L_u97PqWX6g"
+    },
+    "nance::if you wanna dance": {
+      "youtubeVideoId": "-LTBHqMbAQs"
     },
     "natalia::sombras": {
       "youtubeVideoId": "RE3GHlevBoA"
@@ -1776,6 +2373,9 @@
     "neiked::better days": {
       "youtubeVideoId": "GQAOrCOknCY"
     },
+    "nek::vertigo": {
+      "youtubeVideoId": "35w5JUYk9rU"
+    },
     "nelly furtado::powerless (say what you want)": {
       "youtubeVideoId": "CepriOGMC0k"
     },
@@ -1794,8 +2394,17 @@
     "nelou::echo": {
       "youtubeVideoId": "JXJ6CBSXEHk"
     },
+    "nena daconte::idiota": {
+      "youtubeVideoId": "L8bsrPj29Pg"
+    },
     "neton vega::loco": {
       "youtubeVideoId": "z7-bDzJbtis"
+    },
+    "new boyz::backseat": {
+      "youtubeVideoId": "herLMUn2-U0"
+    },
+    "new boyz::tie me down": {
+      "youtubeVideoId": "VSPQh11bi3s"
     },
     "nf::let you down": {
       "youtubeVideoId": "fbHbTBP_u7U"
@@ -1809,6 +2418,9 @@
     "nicki minaj::everybody": {
       "youtubeVideoId": "3g5AbGTqvt0"
     },
+    "nicki minaj::ftcu": {
+      "youtubeVideoId": "rV7zBXq5JsY"
+    },
     "nicki minaj::pound the alarm": {
       "youtubeVideoId": "vdrqA93sW-8"
     },
@@ -1817,6 +2429,12 @@
     },
     "nicky jam::el perdon": {
       "youtubeVideoId": "hXI8RQYC36Q"
+    },
+    "nicky jam::x": {
+      "youtubeVideoId": "_I_D_8Z4sJE"
+    },
+    "niko moon::good time": {
+      "youtubeVideoId": "mKnQXaIlrMo"
     },
     "nil moliner::vuela alto": {
       "youtubeVideoId": "CfWNpBX9s30"
@@ -1832,6 +2450,9 @@
     },
     "noah kahan::dial drunk": {
       "youtubeVideoId": "vDFmrlhwOgg"
+    },
+    "noan & alex wall::me mata(s) 2.0": {
+      "youtubeVideoId": "ntGaELboml8"
     },
     "norah jones::don't know why": {
       "youtubeVideoId": "tO4dxvguQDk"
@@ -1854,6 +2475,9 @@
     "old dominion::memory lane": {
       "youtubeVideoId": "oRzuQt70rnc"
     },
+    "oliver anthony music::rich men north of richmond": {
+      "youtubeVideoId": "sqSA-SY5Hro"
+    },
     "olly murs::troublemaker": {
       "youtubeVideoId": "4aQDOUbErNg"
     },
@@ -1862,6 +2486,12 @@
     },
     "onerepublic::no vacancy (latin version)": {
       "youtubeVideoId": "OaAI6XdVw1U"
+    },
+    "onerepublic::secrets": {
+      "youtubeVideoId": "qHm9MG9xw1o"
+    },
+    "oreja::vazilando (latin house edit)": {
+      "youtubeVideoId": "NuVD_Z2CjFE"
     },
     "orleya::del pita del": {
       "youtubeVideoId": "QXaEcY90KSk"
@@ -1875,17 +2505,32 @@
     "outkast::so fresh, so clean": {
       "youtubeVideoId": "-JfEJq56IwI"
     },
+    "outkast::the whole world": {
+      "youtubeVideoId": "udmTfK6_aM8"
+    },
     "outlandish::walou": {
       "youtubeVideoId": "V3OHIRFBH2Y"
     },
     "p!nk::god is a dj": {
       "youtubeVideoId": "XuvF7HF_kLM"
     },
+    "p!nk::sober": {
+      "youtubeVideoId": "nJ3ZM8FDBlg"
+    },
     "p!nk::true love": {
       "youtubeVideoId": "zsmUOdmm02A"
     },
     "p. diddy::i don't wanna know": {
       "youtubeVideoId": "4_W4jrym1os"
+    },
+    "p. diddy::i need a girl (part one)": {
+      "youtubeVideoId": "-f7qzwOt97Q"
+    },
+    "p. diddy::i need a girl (part two)": {
+      "youtubeVideoId": "zGUttrXgzLI"
+    },
+    "panic! at the disco::hey look ma, i made it": {
+      "youtubeVideoId": "OcDqvp7PWQ4"
     },
     "paramore::still into you": {
       "youtubeVideoId": "OblL026SvD4"
@@ -1896,8 +2541,17 @@
     "parker mccollum::burn it down": {
       "youtubeVideoId": "qbHu2Y7rnNM"
     },
+    "parker mccollum::handle on you": {
+      "youtubeVideoId": "jqkNGbd3V1E"
+    },
     "parmalee::just the way": {
       "youtubeVideoId": "d7PCSHdxdTw"
+    },
+    "parmalee::take my name": {
+      "youtubeVideoId": "9_e4Fk_G0MY"
+    },
+    "partynextdoor::somebody loves me": {
+      "youtubeVideoId": "7MJxsH9KnQ4"
     },
     "pastora::archivo de palabras tristes": {
       "youtubeVideoId": "xgPlzzo7QC4"
@@ -1910,6 +2564,21 @@
     },
     "paula deanda::walk away (remember me)": {
       "youtubeVideoId": "TojOVJel8wo"
+    },
+    "paula rojo::good to be bad (miedo a querer)": {
+      "youtubeVideoId": "KenEAdnQQ44"
+    },
+    "paulina rubio::otra vez": {
+      "youtubeVideoId": "p4qC4l8HOBE"
+    },
+    "pedro javier hermosilla::caracola submarina": {
+      "youtubeVideoId": "CJ6eeWPml0g"
+    },
+    "pedro javier hermosilla::esperando-t": {
+      "youtubeVideoId": "Ro03Cf_iukg"
+    },
+    "pedro javier hermosilla::por un ratito en tus oidos": {
+      "youtubeVideoId": "Sz8WWYch-zY"
     },
     "peso pluma::por las noches": {
       "youtubeVideoId": "fKp6AZxp9Bg"
@@ -1925,6 +2594,9 @@
     },
     "pignoise::huesos": {
       "youtubeVideoId": "rSf6IFr_n9I"
+    },
+    "pignoise::una sensacion": {
+      "youtubeVideoId": "f6PZB28xte4"
     },
     "pink::blow me (one last kiss)": {
       "youtubeVideoId": "OQNpFzwhGfc"
@@ -1986,14 +2658,23 @@
     "post malone::pour me a drink": {
       "youtubeVideoId": "RoeXmaSE7Lo"
     },
+    "post malone::white iverson": {
+      "youtubeVideoId": "SLsTskih7_I"
+    },
     "preciados::otra oportunidad": {
       "youtubeVideoId": "zo0_72PzLlQ"
     },
     "presuntos implicados::tenemos que hablar": {
       "youtubeVideoId": "UdPEQp4Bgqo"
     },
+    "pretty ricky::on the hotline": {
+      "youtubeVideoId": "CtOGprN6jA0"
+    },
     "pretty ricky::your body": {
       "youtubeVideoId": "3lWZX-cij7w"
+    },
+    "prezioso & marvin::voglio vederti danzare": {
+      "youtubeVideoId": "COnyrAjZgXE"
     },
     "prince::cinnamon girl": {
       "youtubeVideoId": "eGjTc7iIJbg"
@@ -2001,11 +2682,17 @@
     "prince::musicology": {
       "youtubeVideoId": "zILabWVdIMs"
     },
+    "puddle of mudd::she hates me": {
+      "youtubeVideoId": "BYE4CVhVkhw"
+    },
     "pussycat dolls::beep": {
       "youtubeVideoId": "cK6uMipiDlA"
     },
     "qb finest::oochie wally": {
       "youtubeVideoId": "9uISOFC47W4"
+    },
+    "queco::tengo": {
+      "youtubeVideoId": "bHcvYzV2S4I"
     },
     "r. kelly::happy people": {
       "youtubeVideoId": "QyhmeHZMc-w"
@@ -2043,6 +2730,9 @@
     "ragdog::nada mas": {
       "youtubeVideoId": "jk9Y8ed2yC8"
     },
+    "ragdog::tu y yo": {
+      "youtubeVideoId": "0_4janGxNG8"
+    },
     "randy houser::runnin' outta moonlight": {
       "youtubeVideoId": "py5VdvxO9cE"
     },
@@ -2076,17 +2766,26 @@
     "rick ross::the boss": {
       "youtubeVideoId": "78hT0H8nt_E"
     },
+    "rihanna::birthday cake": {
+      "youtubeVideoId": "leK4eoqwmfU"
+    },
     "rihanna::break it off": {
       "youtubeVideoId": "Lqfh5YdHo78"
     },
     "rihanna::cheers (drink to that)": {
       "youtubeVideoId": "dqZ6yrWEmGo"
     },
+    "rihanna::lift me up": {
+      "youtubeVideoId": "Mx_OexsUI2M"
+    },
     "rihanna::pour it up": {
       "youtubeVideoId": "ehcVomMexkY"
     },
     "rihanna::shut up and drive": {
       "youtubeVideoId": "up7pvPqNkuU"
+    },
+    "rihanna::umbrella (no rap version)": {
+      "youtubeVideoId": "CvBfHwUxHIk"
     },
     "rihanna::you da one": {
       "youtubeVideoId": "b3HeLs8Yosw"
@@ -2103,6 +2802,12 @@
     "robert ramirez::i'm a number": {
       "youtubeVideoId": "v35FNcuJ3Yk"
     },
+    "rocko::u.o.e.n.o.": {
+      "youtubeVideoId": "xHcPQ1t4xbg"
+    },
+    "rod wave::rags2riches": {
+      "youtubeVideoId": "A2mJSG0L9U0"
+    },
     "rod wave::tombstone": {
       "youtubeVideoId": "wo9AlOrQ3iE"
     },
@@ -2112,17 +2817,29 @@
     "rodney atkins::take a back road": {
       "youtubeVideoId": "-R9GrGheMRw"
     },
+    "roel::si me quisieras": {
+      "youtubeVideoId": "qryvOGXteCI"
+    },
     "rosalia::dios es un stalker": {
       "youtubeVideoId": "fLmQbJ4SDTA"
     },
     "rosalia::dolerme": {
       "youtubeVideoId": "VuUa9ZQL28w"
     },
+    "rosana::aquel corazon": {
+      "youtubeVideoId": "RpGK27mUn6I"
+    },
+    "rosario::de mil colores": {
+      "youtubeVideoId": "HwezvEAg_T4"
+    },
     "rosario::mientras me quede corazon": {
       "youtubeVideoId": "KY-TAgLezbk"
     },
     "roser::boca a boca": {
       "youtubeVideoId": "osRb2n9SP3Q"
+    },
+    "roser::fuego": {
+      "youtubeVideoId": "qsVDpTSiRXI"
     },
     "ruben studdard::flying without wings": {
       "youtubeVideoId": "oheEvnxkO5M"
@@ -2139,17 +2856,32 @@
     "russell dickerson::she likes it": {
       "youtubeVideoId": "adj9x1nBKDA"
     },
+    "ruth b::lost boy": {
+      "youtubeVideoId": "58TBZnvyGwQ"
+    },
     "ryan cabrera::on the way down": {
       "youtubeVideoId": "K12_D2WtWZs"
     },
     "ryan cabrera::true": {
       "youtubeVideoId": "ujWfA2gDvSI"
     },
+    "s club 7::never had a dream come true": {
+      "youtubeVideoId": "sz23S9_AV4M"
+    },
+    "safri duo::all the people in the world": {
+      "youtubeVideoId": "Ir3DRCb9smo"
+    },
     "saja boys::soda pop": {
       "youtubeVideoId": "y7CrvsCIjyo"
     },
+    "sam hunt::hard to forget": {
+      "youtubeVideoId": "Wxhv_HsEIl4"
+    },
     "sam hunt::house party": {
       "youtubeVideoId": "yF1-IHn8cRU"
+    },
+    "sam hunt::leave the night on": {
+      "youtubeVideoId": "BuMiMBjcvWU"
     },
     "sam smith::lay me down": {
       "youtubeVideoId": "HaMq2nn5ac0"
@@ -2169,8 +2901,17 @@
     "santiago auseron::las malas lenguas": {
       "youtubeVideoId": "Fmcj1V1yuR4"
     },
+    "sara bareilles::brave": {
+      "youtubeVideoId": "QUQsqBqxoR4"
+    },
     "sara bareilles::king of anything": {
       "youtubeVideoId": "eR7-AUmiNcA"
+    },
+    "sara::te comere a besos": {
+      "youtubeVideoId": "tlH7C3RzCxs"
+    },
+    "savage garden::crash and burn": {
+      "youtubeVideoId": "W60IPexop30"
     },
     "saving abel::addicted": {
       "youtubeVideoId": "Z-ChyVXzbjA"
@@ -2196,6 +2937,9 @@
     "sean kingston::eenie meenie": {
       "youtubeVideoId": "prmmCg5bKxA"
     },
+    "sean paul::(when you gonna) give it up to me": {
+      "youtubeVideoId": "bMoNV9oWs2E"
+    },
     "sean paul::gimme the light": {
       "youtubeVideoId": "om4cKOIrP3g"
     },
@@ -2211,6 +2955,9 @@
     "selena gomez & the scene::who says": {
       "youtubeVideoId": "BzE1mX4Px0I"
     },
+    "selena gomez::the heart wants what it wants": {
+      "youtubeVideoId": "ij_0p_6qTss"
+    },
     "sergio dalma::todo lo que quieres": {
       "youtubeVideoId": "LRsf8F1WIzI"
     },
@@ -2220,8 +2967,14 @@
     "shake shake go::england skies (papier remix)": {
       "youtubeVideoId": "Jz5VNXbu_ys"
     },
+    "shakira::addicted to you (arbadel re-work mix)": {
+      "youtubeVideoId": "MntbN1DdEP0"
+    },
     "shakira::antes de las seis": {
       "youtubeVideoId": "WgsJr7cMXeU"
+    },
+    "shakira::gitana (pop version)": {
+      "youtubeVideoId": "QL8-8badzks"
     },
     "shakira::gypsy (pop version)": {
       "youtubeVideoId": "_3-GiVIE8gc"
@@ -2251,10 +3004,13 @@
       "youtubeVideoId": "S0wdt1p6vlk"
     },
     "simple plan::when i'm gone": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "msumWLbq1Dk"
     },
     "snoop dogg::beautiful": {
       "youtubeVideoId": "_FE194VN6c4"
+    },
+    "snoop dogg::sexual eruption": {
+      "youtubeVideoId": "Y1PVmANeyAg"
     },
     "snoop dogg::that's that": {
       "youtubeVideoId": "11-UNcEQ0YA"
@@ -2283,6 +3039,9 @@
     "sr. trepador::dame un grito": {
       "youtubeVideoId": "VeIosD7HiaE"
     },
+    "sr. trepador::la noche me resbala": {
+      "youtubeVideoId": "7xpmCgYpFpA"
+    },
     "stacie orrico::i promise": {
       "youtubeVideoId": "fwDPddeF2k4"
     },
@@ -2294,6 +3053,9 @@
     },
     "sting::whenever i say your name": {
       "youtubeVideoId": "roGSyZC79Dg"
+    },
+    "suede::love the way you love": {
+      "youtubeVideoId": "fG5FyTyz-Ng"
     },
     "sugababes::too lost in you": {
       "youtubeVideoId": "tfXhFYzm7qQ"
@@ -2313,6 +3075,9 @@
     "sweet california::indigo": {
       "youtubeVideoId": "6HGug9SyUmQ"
     },
+    "sza::bmf": {
+      "youtubeVideoId": "BmIeU_-JI-8"
+    },
     "sza::love galore": {
       "youtubeVideoId": "hHXfCOjb3fk"
     },
@@ -2325,11 +3090,20 @@
     "t-pain::i'm sprung": {
       "youtubeVideoId": "rxRvDpF2FDA"
     },
+    "t.i.::big shit poppin' (do it)": {
+      "youtubeVideoId": "-Jpq9-nlea4"
+    },
+    "t.i.::bring em out": {
+      "youtubeVideoId": "vn7iMXF5R_4"
+    },
     "t.i.::no mediocre": {
       "youtubeVideoId": "qdsTUfDTEhQ"
     },
     "t.i.::u don't know me": {
       "youtubeVideoId": "mc5671xttF4"
+    },
+    "t.i.::why you wanna": {
+      "youtubeVideoId": "U6z_cilnJzg"
     },
     "tamia::stranger in my house": {
       "youtubeVideoId": "libsPVx3jlg"
@@ -2342,6 +3116,9 @@
     },
     "tate mcrae::she's all i wanna be": {
       "youtubeVideoId": "uS_y_65CcpA"
+    },
+    "taxi::perdido en la calle": {
+      "youtubeVideoId": "Z3bVaMc6Qh8"
     },
     "taylor hicks::do i make you proud": {
       "youtubeVideoId": "haMM0yGkdmU"
@@ -2359,13 +3136,16 @@
       "youtubeVideoId": "IGjXBhnj_H0"
     },
     "taylor swift::love story": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "8xg3vE8Ie_E"
     },
     "taylor swift::today was a fairytale": {
       "youtubeVideoId": "rLiXLzd2Ol8"
     },
+    "taylor swift::white horse": {
+      "youtubeVideoId": "D1Xr-JFLxik"
+    },
     "taylor swift::you belong with me": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "VuNIsY6JdUw"
     },
     "teddy geiger::for you i will (confidence)": {
       "youtubeVideoId": "Vro8pMf_PCA"
@@ -2375,6 +3155,9 @@
     },
     "tess::amor libre": {
       "youtubeVideoId": "1OLSIfDl38k"
+    },
+    "thalia::cerca de ti": {
+      "youtubeVideoId": "lgCrRcrPEhM"
     },
     "thalia::i want you": {
       "youtubeVideoId": "iSYDbWIU-Fc"
@@ -2388,6 +3171,9 @@
     "the black eyed peas::hey mama": {
       "youtubeVideoId": "rtczBseiAac"
     },
+    "the black eyed peas::mamacita": {
+      "youtubeVideoId": "4bP8wbt4SeA"
+    },
     "the black eyed peas::my humps": {
       "youtubeVideoId": "UE-mUa3n7nA"
     },
@@ -2395,7 +3181,7 @@
       "youtubeVideoId": "ZaI2IlHwmgQ"
     },
     "the chicks::not ready to make nice": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "pojL_35QlSI"
     },
     "the click five::just the girl": {
       "youtubeVideoId": "sexLNa1KStM"
@@ -2423,6 +3209,15 @@
     },
     "the isley brothers::contagious": {
       "youtubeVideoId": "-qnSz6Lh5pY"
+    },
+    "the monomes::dreamkiller": {
+      "youtubeVideoId": "7eo4Thopn5A"
+    },
+    "the monomes::tip toeing": {
+      "youtubeVideoId": "LMRJkotJ_zY"
+    },
+    "the monomes::view": {
+      "youtubeVideoId": "yz559GiP_yg"
     },
     "the neighbourhood::sweater weather": {
       "youtubeVideoId": "GCdwKhTtNNw"
@@ -2469,6 +3264,9 @@
     "thomas rhett::die a happy man": {
       "youtubeVideoId": "w2CELiObPeQ"
     },
+    "thomas rhett::it goes like this": {
+      "youtubeVideoId": "I4keD5Qvya4"
+    },
     "thomas rhett::look what god gave her": {
       "youtubeVideoId": "AbXahmBSLTk"
     },
@@ -2502,11 +3300,20 @@
     "tim mcgraw::my best friend": {
       "youtubeVideoId": "s0kbNcMdSbI"
     },
+    "tim mcgraw::real good man": {
+      "youtubeVideoId": "6NnmQuT3uNo"
+    },
     "timbaland::carry out": {
-      "youtubeVideoId": null
+      "youtubeVideoId": "NRdHsuuXxfk"
     },
     "timbaland::say something": {
       "youtubeVideoId": "NJ9pYU-fa18"
+    },
+    "tinashe::2 on": {
+      "youtubeVideoId": "-s7TCuCpB5c"
+    },
+    "tisuby & georgina::monotonia (version 2004)": {
+      "youtubeVideoId": "zFnXxeLbfh8"
     },
     "tisuby & georgina::nunca mas": {
       "youtubeVideoId": "SAG55teSLZk"
@@ -2535,6 +3342,12 @@
     "toby keith::you shouldn't kiss me like this": {
       "youtubeVideoId": "zwV2VM54CYA"
     },
+    "tony aguilar::cara o cruz": {
+      "youtubeVideoId": "WrMYx2xLD9E"
+    },
+    "tory lanez::luv": {
+      "youtubeVideoId": "P9rFeGAdX0A"
+    },
     "tory lanez::say it": {
       "youtubeVideoId": "xUq1rZ7mmns"
     },
@@ -2559,6 +3372,15 @@
     "travis scott::the scotts": {
       "youtubeVideoId": "8oaW16lGNxE"
     },
+    "travis tritt::it's a great day to be alive": {
+      "youtubeVideoId": "-ZPOmMovvRg"
+    },
+    "travis::the beautiful occupation": {
+      "youtubeVideoId": "AuEgpRPld5I"
+    },
+    "trey songz::can't help but wait": {
+      "youtubeVideoId": "uE7uc9Q7GE8"
+    },
     "trey songz::heart attack": {
       "youtubeVideoId": "4r3MZNCGzVY"
     },
@@ -2577,6 +3399,9 @@
     "tyler, the creator::sticky": {
       "youtubeVideoId": "5_eRCI0Qzw4"
     },
+    "u2::sometimes you can't make it on your own": {
+      "youtubeVideoId": "CuDqHtAR6L8"
+    },
     "u2::take me to the clouds above": {
       "youtubeVideoId": "Yos4iNlTs4Y"
     },
@@ -2589,6 +3414,12 @@
     "unk::2 step": {
       "youtubeVideoId": "kvhHVUN-sFA"
     },
+    "usher::climax": {
+      "youtubeVideoId": "nNTyfVh3nmU"
+    },
+    "usher::good good": {
+      "youtubeVideoId": "7jA-tE-4BYI"
+    },
     "usher::hey daddy (daddy's home)": {
       "youtubeVideoId": "pD8mxge6kek"
     },
@@ -2597,6 +3428,12 @@
     },
     "usher::there goes my baby": {
       "youtubeVideoId": "m6urbZyHgO4"
+    },
+    "varios::latido urbano": {
+      "youtubeVideoId": "gBPPfcRUzM8"
+    },
+    "varios::un ano mas": {
+      "youtubeVideoId": "TP1Gy-wbQcI"
     },
     "vega::la verdad": {
       "youtubeVideoId": "4AcYBfWu8p4"
@@ -2607,6 +3444,9 @@
     "virginia labuat::the time is now": {
       "youtubeVideoId": "cBfClXEkmBU"
     },
+    "wagon folk::la mejor noche de mi vida": {
+      "youtubeVideoId": "z60kNdITOUg"
+    },
     "wayne beckford::too many girls": {
       "youtubeVideoId": "-pDd8qM73VE"
     },
@@ -2615,6 +3455,9 @@
     },
     "webbie::give me that": {
       "youtubeVideoId": "mdmhlPENpVg"
+    },
+    "westlife::swear it again": {
+      "youtubeVideoId": "0UaMsIJ4bR0"
     },
     "will young::leave right now": {
       "youtubeVideoId": "WbrSLLv0AlA"
@@ -2643,17 +3486,35 @@
     "xxxtentacion::look at me!": {
       "youtubeVideoId": "qku2WZ7aRYw"
     },
+    "xxxtentacion::moonlight": {
+      "youtubeVideoId": "GX8Hg6kWQYI"
+    },
     "yerbabuena::guajira": {
       "youtubeVideoId": "ArjA43GOgqE"
+    },
+    "yfn lucci::everyday we lit": {
+      "youtubeVideoId": "44Vk5KyQbiA"
     },
     "yg::big bank": {
       "youtubeVideoId": "z61GFxVD8K4"
     },
+    "yk osiris::worth it": {
+      "youtubeVideoId": "nPiFfJ0UTqE"
+    },
+    "ylvis::the fox (what does the fox say?)": {
+      "youtubeVideoId": "jofNR_WkoCE"
+    },
     "ynw melly::suicidal": {
       "youtubeVideoId": "9OmgXxiKV7A"
     },
+    "yo gotti::down in the dm": {
+      "youtubeVideoId": "YXSpXO4N-tI"
+    },
     "young gunz::can't stop, won't stop": {
       "youtubeVideoId": "xkU9oVGr1KE"
+    },
+    "young jeezy::go getta": {
+      "youtubeVideoId": "gE09stMeRrg"
     },
     "young jeezy::put on": {
       "youtubeVideoId": "7rwVXMRxVgw"
@@ -2661,8 +3522,14 @@
     "young jeezy::soul survivor": {
       "youtubeVideoId": "ubFV-WgMzUs"
     },
+    "young nudy::peaches & eggplants": {
+      "youtubeVideoId": "pGsetzZscws"
+    },
     "young thug::hot": {
       "youtubeVideoId": "leJNDpm_G10"
+    },
+    "young thug::the london": {
+      "youtubeVideoId": "G8Hp-AKrfm0"
     },
     "youngboy never broke again::outside today": {
       "youtubeVideoId": "74hZN9i2eEA"
@@ -2673,6 +3540,9 @@
     "zac brown band::chicken fried": {
       "youtubeVideoId": "e4ujS1er1r0"
     },
+    "zac brown band::colder weather": {
+      "youtubeVideoId": "oouFE51HcqM"
+    },
     "zac brown band::knee deep": {
       "youtubeVideoId": "9n5G0qFBsHM"
     },
@@ -2681,6 +3551,9 @@
     },
     "zahara::merezco": {
       "youtubeVideoId": "VuJKElGaRg4"
+    },
+    "zay hilfigerrr & zayion mccall::juju on that beat (tz anthem)": {
+      "youtubeVideoId": "a2v_zGWawP0"
     },
     "zedd::stay the night": {
       "youtubeVideoId": "i-gyZ35074k"
