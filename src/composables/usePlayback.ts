@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Track } from '@/types/track.types'
 import { usePlayerStore } from '@/stores/player.store'
 import { useRadioStore } from '@/stores/radio.store'
@@ -68,7 +68,37 @@ export function usePlayback() {
     yt.onEnded(() => { void next() })
     yt.onError(() => { void handlePlaybackError() })
     setupMediaSessionHandlers()
+    syncRealDuration()
     handlersBound = true
+  }
+
+  /** Actualiza datos de la pista en curso (sea cual sea el modo de cola). */
+  function updateCurrentTrack(data: Partial<Track>): void {
+    const t = currentTrack.value
+    if (!t) return
+    switch (player.queueMode) {
+      case 'radio':           radio.updateTrack(t.id, data); break
+      case 'recommendations': rec.updateTrack(t.id, data); break
+      case 'playlist':
+        playlistQueue.value[playlistIndex.value] = { ...t, ...data }
+        void persistPlaylistTrack(t.id, data)
+        break
+    }
+  }
+
+  /**
+   * La duración del catálogo (Last.fm) y la del vídeo de YouTube no siempre
+   * coinciden. Cuando YouTube reporta la duración real, la guardamos en la pista
+   * para que la cola muestre el dato coherente con lo que de verdad suena.
+   */
+  function syncRealDuration(): void {
+    watch(() => player.duration, (d) => {
+      if (d <= 0) return
+      const t = currentTrack.value
+      if (!t) return
+      const ms = Math.round(d * 1000)
+      if (!t.duration || Math.abs(t.duration - ms) > 1500) updateCurrentTrack({ duration: ms })
+    })
   }
 
   /**
