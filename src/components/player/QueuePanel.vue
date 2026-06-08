@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { usePlayerStore } from '@/stores/player.store'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRecommendationsStore } from '@/stores/recommendations.store'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayback } from '@/composables/usePlayback'
+import { scrollActiveIntoView } from '@/utils/scrollActive'
 import type { Track } from '@/types/track.types'
 import TrackItem from '@/components/playlist/TrackItem.vue'
 
@@ -48,6 +49,14 @@ function jump(i: number): void {
     case 'playlist':        playback.playPlaylistIndex(i); break
   }
 }
+
+const listEl = ref<HTMLElement | null>(null)
+async function followActive(): Promise<void> {
+  await nextTick()
+  scrollActiveIntoView(listEl.value, currentIndex.value)
+}
+onMounted(followActive)                    // centra la activa al abrir el panel
+watch(currentIndex, followActive)          // y la sigue al cambiar de pista
 </script>
 
 <template>
@@ -66,7 +75,7 @@ function jump(i: number): void {
       </header>
 
       <div class="flex-1 overflow-y-auto p-2">
-        <ul v-if="tracks.length" class="flex flex-col">
+        <ul v-if="tracks.length" ref="listEl" class="flex flex-col">
           <TrackItem
             v-for="(track, i) in tracks" :key="track.id"
             :track="track" :mode="player.queueMode" :index="i"

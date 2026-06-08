@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { ref, watch, nextTick } from 'vue'
 import { useRadioStore } from '@/stores/radio.store'
 import { usePlayerStore } from '@/stores/player.store'
 import { usePlayback } from '@/composables/usePlayback'
 import { useRadioQueue } from '@/composables/useRadioQueue'
+import { scrollActiveIntoView } from '@/utils/scrollActive'
 import TrackItem from '@/components/playlist/TrackItem.vue'
 
 const radio = useRadioStore()
@@ -10,9 +12,18 @@ const player = usePlayerStore()
 const playback = usePlayback()
 const { extend, extending } = useRadioQueue()
 
+const listEl = ref<HTMLElement | null>(null)
+
 function isActive(i: number): boolean {
   return player.queueMode === 'radio' && radio.currentIndex === i
 }
+
+// Sigue la pista activa: la mantiene a la vista al avanzar la radio.
+watch(() => radio.currentIndex, async () => {
+  if (player.queueMode !== 'radio') return
+  await nextTick()
+  scrollActiveIntoView(listEl.value, radio.currentIndex)
+})
 </script>
 
 <template>
@@ -25,7 +36,7 @@ function isActive(i: number): boolean {
       <button class="text-sm text-muted hover:text-white" @click="radio.clear()">Limpiar</button>
     </div>
 
-    <ul class="flex flex-col">
+    <ul ref="listEl" class="flex flex-col">
       <TrackItem
         v-for="(track, i) in radio.queue" :key="track.id"
         :track="track" mode="radio" :index="i"
