@@ -14,6 +14,33 @@ aquí, integrada y re-priorizada.
 
 ---
 
+## 0. Aprovechar el catálogo local en la UI (pendiente reciente)
+
+El catálogo (`public/catalog/{tracks,artists}.json`) ya guarda datos que la UI
+**todavía no surfacea**. Por orden de valor:
+
+- **Multi-artista seleccionable.** Hoy [`TrackItem.vue`](src/components/playlist/TrackItem.vue)
+  enlaza el string completo (`artistDisplay`, p. ej. "David Guetta, Akon") a una
+  única ficha de artista → para colaboraciones el enlace no resuelve. El catálogo ya
+  tiene `track.artistIds[]` y cada colaborador su entrada. **Falta:** llevar la lista
+  de artistas hasta `Track` (vía hidratación + `candidateToTrack`) y que `TrackItem`
+  pinte un enlace por artista. Habilita navegar a cada feat.
+- **Sección "Artistas similares" en [`ArtistView`](src/views/ArtistView.vue).** El
+  catálogo guarda `artist.similar[]`, pero `useArtist` no lo expone ni se muestra.
+  Además, las **recomendaciones** ([`recommendations.service.ts`](src/services/recommendations.service.ts))
+  pegan a Last.fm en runtime: podrían sembrarse desde `similar`/`topTracks` del
+  catálogo y reducir llamadas (caer a la API solo si falta).
+- **Carátulas del top-50 del artista.** En `ArtistView` el top viene de Last.fm (solo
+  títulos) y son éxitos *globales*, muchos fuera de nuestro catálogo → se resuelven en
+  runtime y algunos no traen carátula (huecos visibles). Pre-cachear 50×~2000 portadas
+  es inviable (~100k llamadas). *Opción:* usar como fallback la foto del artista (o la
+  carátula de Deezer del track) en vez de dejar el hueco.
+- **`mbid` para carátulas robustas.** Se guarda `track.mbid`/`artist.mbid` pero
+  [`coverart.service.ts`](src/services/coverart.service.ts) aún busca por texto en
+  MusicBrainz. Usar el mbid directo evita ambigüedades y fallos de match.
+
+---
+
 ## 1. Decisiones abiertas (son tuyas)
 
 ### Carátulas vía MusicBrainz desde el navegador
