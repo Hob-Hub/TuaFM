@@ -1,12 +1,10 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore'
-import { getFirestoreDb, ensureAnonymousAuth, isFirebaseConfigured } from '@/firebase/index'
 import { db, makeCacheKey } from '@/db/local.db'
 import { getTrackInfo, pickImage } from '@/services/lastfm.service'
 import { searchVideoCandidates } from '@/services/youtube.service'
 import { getCoverUrl } from '@/services/coverart.service'
 import { getTrackByKey } from '@/services/catalog/static.source'
 import type { Track } from '@/types/track.types'
-import type { FirestoreTrackCache, LastfmTrackResponse } from '@/types/api.types'
+import type { LastfmTrackResponse } from '@/types/api.types'
 import type { CatalogTrack } from '@/types/chart.types'
 import type { LocalTrack } from '@/db/local.db'
 
@@ -14,23 +12,6 @@ const CACHE_TTL_DAYS = 30
 
 function isExpired(cachedAt: number, ttlDays: number): boolean {
   return Date.now() - cachedAt > ttlDays * 86_400_000
-}
-
-/** Convierte un DTO Firestore (con nulls) al dominio Track (con undefined). */
-function fromFirestore(fs: FirestoreTrackCache): Partial<Track> {
-  return {
-    artist:         fs.artist,
-    title:          fs.title,
-    album:          fs.album          ?? undefined,
-    year:           fs.year           ?? undefined,
-    duration:       fs.duration       ?? undefined,
-    coverUrl:       fs.coverUrl        ?? undefined,
-    tags:           fs.tags           ?? [],
-    youtubeVideoId: fs.youtubeVideoId ?? undefined,
-    youtubeCandidates: fs.youtubeCandidates ?? undefined,
-    listeners:      fs.listeners      ?? undefined,
-    enriched:       true
-  }
 }
 
 /** Resultado de enriquecimiento: nunca lleva `id` para no contaminar el
@@ -45,7 +26,7 @@ function stripId(t: Partial<Track>): EnrichResult {
 
 /**
  * Única puerta de entrada para enriquecer un track.
- * Lookup: Dexie → Firestore → APIs externas. Persiste en ambas cachés.
+ * Lookup: Dexie → catálogo estático → APIs externas. Persiste en Dexie.
  *
  * `displayArtist` se usa para las llamadas a Last.fm/YouTube (nombre real con
  * diacríticos), mientras `artist` (normalizado) define el cacheKey. Sin esto,
@@ -74,30 +55,12 @@ export async function resolveTrack(
   const catTrack = await getTrackByKey(cacheKey)
   if (catTrack) {
     const enriched = await fromCatalog(catTrack, existingVideoId, displayArtist)
-    await persistToFirestore(enriched, cacheKey)
     await persistToLocal(enriched, cacheKey)
     return enriched
   }
 
-  // 3 — Firestore compartido (solo si está configurado)
-  if (isFirebaseConfigured) try {
-    const fsSnap = await getDoc(doc(getFirestoreDb(), 'track_cache', cacheKey))
-    if (fsSnap.exists()) {
-      const fsData = fsSnap.data() as FirestoreTrackCache
-      if (!isExpired(fsData.cachedAt, fsData.ttlDays)) {
-        const merged = fromFirestore(fsData)
-        merged.youtubeVideoId = merged.youtubeVideoId ?? existingVideoId
-        await persistToLocal(merged, cacheKey)
-        return merged
-      }
-    }
-  } catch (err) {
-    console.warn('[trackCache] Firestore read failed:', err)
-  }
-
-  // 4 — Miss total: APIs externas
+  // 3 — Miss total: APIs externas
   const enriched = await fetchExternal(artist, title, existingVideoId, displayArtist)
-  await persistToFirestore(enriched, cacheKey)
   await persistToLocal(enriched, cacheKey)
   return enriched
 }
@@ -174,30 +137,6 @@ async function fetchExternal(
   }
 
   return result
-}
-
-async function persistToFirestore(data: Partial<Track>, cacheKey: string): Promise<void> {
-  if (!isFirebaseConfigured) return
-  try {
-    await ensureAnonymousAuth()
-    await setDoc(doc(getFirestoreDb(), 'track_cache', cacheKey), {
-      cacheKey,
-      artist:         data.artist  ?? '',
-      title:          data.title   ?? '',
-      album:          data.album          ?? null,
-      year:           data.year           ?? null,
-      duration:       data.duration       ?? null,
-      coverUrl:       data.coverUrl       ?? null,
-      tags:           data.tags           ?? [],
-      youtubeVideoId: data.youtubeVideoId ?? null,
-      youtubeCandidates: data.youtubeCandidates ?? [],
-      listeners:      data.listeners      ?? null,
-      cachedAt:       Date.now(),
-      ttlDays:        CACHE_TTL_DAYS
-    } satisfies FirestoreTrackCache)
-  } catch (err) {
-    console.warn('[trackCache] Firestore write failed:', err)
-  }
 }
 
 async function persistToLocal(data: Partial<Track>, cacheKey: string): Promise<void> {

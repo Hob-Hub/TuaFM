@@ -2,6 +2,8 @@
 
 > Tu radio imaginaria, construida desde los charts reales.
 
+**[→ tua-fm.vercel.app](https://tua-fm.vercel.app)**
+
 Reproductor de música web (Vue 3 + TypeScript) con **memoria histórica**. Tres
 modos de escucha sobre una interfaz unificada:
 
@@ -13,16 +15,14 @@ modos de escucha sobre una interfaz unificada:
 
 Funciona **100% en el navegador**, sin backend propio: audio vía YouTube IFrame,
 metadatos de Last.fm, carátulas fallback de MusicBrainz + Cover Art Archive, y
-datos de charts servidos como JSON estático local (Firestore opcional como caché
-compartida y respaldo).
+datos de charts servidos como JSON estático local.
 
 ---
 
 ## Stack
 
 Vue 3.5 · Vite 6 · TypeScript strict · Pinia 3 (+persistedstate) · Vue Router 4 ·
-Tailwind CSS v4 · Dexie.js 4 (IndexedDB) · Firebase 11 (SDK modular) · VueUse + RxJS ·
-Papa Parse · nanoid.
+Tailwind CSS v4 · Dexie.js 4 (IndexedDB) · VueUse + RxJS · Papa Parse · nanoid.
 
 > **Nota de versión:** el prompt original fijaba Pinia `^2.3`, pero
 > `pinia-plugin-persistedstate@4` requiere Pinia `>=3`. Se usa **Pinia 3** (API de
@@ -34,7 +34,7 @@ Papa Parse · nanoid.
 
 ```bash
 npm install
-cp .env.example .env.local   # y rellena las 6 claves (ver abajo)
+cp .env.example .env.local   # y rellena las 2 claves (ver abajo)
 npm run dev
 ```
 
@@ -49,15 +49,11 @@ npm run dev
 ### Variables de entorno (`.env.local`)
 
 Ninguna es un secreto de servidor: viajan en el bundle del cliente. Protege la
-YouTube Data API por *HTTP referer* en Google Cloud y Firestore con sus reglas.
+YouTube Data API por *HTTP referer* en Google Cloud.
 
 ```
 VITE_YOUTUBE_API_KEY=      # Google Cloud → YouTube Data API v3
 VITE_LASTFM_API_KEY=       # https://www.last.fm/api/account/create
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN= # tu-proyecto.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_APP_ID=
 ```
 
 La app **arranca y muestra la UI aunque falten claves**; los modos que dependen
@@ -65,28 +61,7 @@ de cada servicio degradan con un mensaje en lugar de romperse.
 
 > En este repo, `.env.local` ya viene con claves reales de Last.fm y YouTube, y los
 > charts viajan como JSON estático en `public/`, así que **los tres modos funcionan
-> de inmediato sin Firebase**. Firebase es **opcional**: solo añade la caché de
-> enriquecimiento compartida entre usuarios (`track_cache`) y un respaldo de charts.
-
----
-
-## Firebase
-
-1. Crea un proyecto y habilita **Firestore** y **Authentication → Anónimo**.
-2. Despliega reglas e índice (el índice compuesto es obligatorio para el modo radio):
-
-```bash
-firebase deploy --only firestore:rules
-firebase deploy --only firestore:indexes
-```
-
-Colecciones:
-
-| Colección         | Lectura | Escritura                          |
-|-------------------|---------|------------------------------------|
-| `track_cache`     | pública | con auth (anónima); inmutable      |
-| `chart_registry`  | pública | solo scripts de migración (Admin)  |
-| `chart_periods`   | pública | solo scripts de migración (Admin)  |
+> de inmediato**, sin backend ni base de datos.
 
 ---
 
@@ -101,7 +76,7 @@ por sus posiciones a lo largo del año (`score = Σ 1/√posición`):
 
 El pipeline de datos **versionado** vive en [`chart-pipeline/`](chart-pipeline/)
 (el scraper en Python y las `.db` están en `scripts/`, ignorado por git). Genera dos
-cosas en `public/` (sin Firebase, offline):
+cosas en `public/` (offline, sin backend):
 
 - **`public/charts/`** — listas **compactas**: `registry.json` + `<chartId>.json`,
   donde cada canción es `{t,r,s,p,w}` (referencia al catálogo por `t`=trackId).
@@ -118,15 +93,6 @@ node build-charts.mjs --no-lastfm  # rápido: solo siembra de la DB, sin tocar l
 
 La consolidación vive en [`chart-pipeline/lib/annualize.mjs`](chart-pipeline/lib/annualize.mjs)
 y la normalización del catálogo en [`lib/catalog.mjs`](chart-pipeline/lib/catalog.mjs).
-Para subir a Firestore "más adelante" (mismo Top anual, 1 doc/año/chart):
-
-```bash
-cd chart-pipeline
-npm install                                  # better-sqlite3, firebase-admin
-# coloca tu service-account.json de Firebase aquí
-node migrate-to-firestore.mjs chart-configs/es.json
-node migrate-to-firestore.mjs chart-configs/us.json
-```
 
 El scraper que genera/actualiza `los40.db` vive en `scripts/` (Python, ignorado por
 git). Ver [`chart-pipeline/README.md`](chart-pipeline/README.md).
@@ -200,23 +166,19 @@ código de la app: el selector de radio lee el `registry` en runtime.
 Bundle estático  public/charts (listas) + public/catalog (tracks/artistas) — fuente primaria, offline
 Pinia            estado volátil del player + colas efímeras (radio, recs)
 Dexie/IndexedDB  playlists, tracks enriquecidos, favoritos, historial (local, permanente)
-Firestore        track_cache compartida + charts — OPCIONAL (respaldo/caché entre usuarios)
 ```
 
 **Lookup al enriquecer una pista:** Dexie → catálogo estático (`public/catalog`)
-→ Firestore `track_cache` (si está configurado) → APIs externas (Last.fm + YouTube +
-cover fallback), persistiendo el resultado en las cachés locales. La clave estable es
-`cacheKey = normalize(artist)::normalize(title)` (NFD + sin diacríticos), idéntica en
-la app y en el pipeline.
+→ APIs externas (Last.fm + YouTube + cover fallback), persistiendo el resultado en
+Dexie. La clave estable es `cacheKey = normalize(artist)::normalize(title)`
+(NFD + sin diacríticos), idéntica en la app y en el pipeline.
 
-**Charts:** se sirven *static-first* desde `public/charts` (ver «Datos de charts»);
-Firestore es solo respaldo opcional para fuentes que no estén en el bundle. La app
-funciona 100% sin Firebase.
+**Charts:** se sirven desde el bundle estático `public/charts` (ver «Datos de
+charts»). La app funciona 100% offline, sin backend.
 
 ```
 src/
   types/        modelos de dominio + DTOs (api.types.ts)
-  firebase/     init + auth anónima
   db/           Dexie + normalización/cacheKey
   services/     Last.fm, YouTube, CoverArt, trackCache, radio, recommendations
   stores/       player, ui, radio, recommendations, chartRegistry (Pinia)
@@ -235,16 +197,14 @@ componente universal de pista en los tres modos.
 
 ## Despliegue
 
+App en producción: **[tua-fm.vercel.app](https://tua-fm.vercel.app)** (Vercel).
+
 Build estático (`dist/`) desplegable en Vercel, Netlify o Cloudflare Pages.
-Configura las 6 variables de entorno en el panel del proveedor y
-`firebase deploy --only firestore` para reglas e índices.
+Configura las 2 variables de entorno (`VITE_YOUTUBE_API_KEY`, `VITE_LASTFM_API_KEY`)
+en el panel del proveedor.
 
 El routing usa modo *history*, así que necesita un *fallback* a `index.html`
 para las rutas profundas. Ya incluido: `public/_redirects` (Netlify / Cloudflare
 Pages) y `vercel.json` (Vercel).
-
-Firestore usa **persistencia offline** (`persistentLocalCache`): los datos de
-charts leídos se cachean en IndexedDB y no se vuelven a leer de red en sesiones
-repetidas — clave para no agotar el límite de lecturas del plan Spark.
 
 Estado del proyecto, decisiones y mejoras pendientes: ver [`ROADMAP.md`](ROADMAP.md).

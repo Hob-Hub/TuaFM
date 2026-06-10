@@ -53,9 +53,10 @@ correcto; (c) depender solo de las carátulas de álbum de Last.fm.
 
 ### Protección de claves para una app pública
 Las `VITE_*` viajan en el bundle (normal en Vite). Para producción pública:
-restringe la YouTube key por *HTTP referer* en Google Cloud y, si usas Firestore,
-considera **Firebase App Check** para que `track_cache` no sea escribible por
-bots. Para uso personal no es bloqueante.
+restringe la YouTube key por *HTTP referer* en Google Cloud. Si algún día la
+exposición de claves fuese un problema, la vía es un proxy serverless (p. ej.
+Vercel Functions) que las mantenga del lado servidor. Para uso personal no es
+bloqueante.
 
 > **Dato a tener presente (corrige al PROMPT/README):** el PROMPT y el README
 > dicen que la YouTube Data API da *"10k ud/día"*, pero `search.list` cuesta
@@ -92,7 +93,7 @@ de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
   los rankea en [`youtube.scoring.ts`](src/services/youtube.scoring.ts): premia
   artista/título, "official audio" y canal Topic; penaliza cover/karaoke/remix/
   live no pedidos (determinista y estable). Los candidatos se cachean (campo
-  `youtubeCandidates` en Dexie + Firestore) sin coste extra de cuota. Cubierto
+  `youtubeCandidates` en Dexie) sin coste extra de cuota. Cubierto
   por [`youtube.scoring.test.ts`](src/services/youtube.scoring.test.ts).
 - **2.2 Fallback en `onError`** ✓ — el iframe ya no muere: reintenta el
   siguiente candidato y, si se agotan, salta de pista
@@ -173,8 +174,8 @@ Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 
 ### Lo que el stack doc sugería pero NO conviene adoptar
 - **TanStack Query:** pensado para apps *sin* capa de caché propia. La
-  arquitectura de 3 capas de TuaFM (Dexie → Firestore `track_cache` → APIs) es
-  más deliberada; meter TanStack duplicaría responsabilidades.
+  arquitectura de caché de TuaFM (Dexie → catálogo estático → APIs) es más
+  deliberada; meter TanStack duplicaría responsabilidades.
 - **idb-keyval:** TuaFM usa Dexie, que es superior para su modelo de datos.
 
 ---

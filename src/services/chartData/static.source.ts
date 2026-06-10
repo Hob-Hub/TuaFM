@@ -9,8 +9,8 @@ import { getTracksById } from '@/services/catalog/static.source'
  * tracks por id (`{ t, r, s, p, w }`). Aquí se hidratan con public/catalog/tracks.json
  * para reconstruir la forma rica `ChartSong` que consumen scoring y UI.
  *
- * Es la fuente primaria: no depende de Firebase, funciona offline y no consume
- * cuota de Firestore. Cada fichero se carga perezosamente y se cachea en memoria.
+ * Es la única fuente de charts: funciona offline, sin backend ni cuota externa.
+ * Cada fichero se carga perezosamente y se cachea en memoria.
  */
 
 const BASE = `${import.meta.env.BASE_URL}charts/`
@@ -37,7 +37,7 @@ export function listRegistries(): Promise<ChartRegistry[]> {
   return registryPromise
 }
 
-/** ¿Está este chart disponible localmente? Decide si saltarse Firestore. */
+/** ¿Está este chart disponible en el bundle estático? */
 export async function hasChart(chartId: string): Promise<boolean> {
   try {
     const regs = await listRegistries()

@@ -14,7 +14,6 @@ en `scripts/`, que está en `.gitignore`.)
 | [`lib/lastfm.mjs`](lib/lastfm.mjs) | Cliente Last.fm para el build (throttle ~5 req/s + caché de reanudación en `.lastfm-cache.db`). |
 | [`lib/deezer.mjs`](lib/deezer.mjs) | Imágenes de artista desde Deezer (Last.fm ya no las sirve). Caché en `.deezer-cache.db`. |
 | [`build-charts.mjs`](build-charts.mjs) | Orquestador: charts compactos en `../public/charts/` + catálogo en `../public/catalog/`. |
-| [`migrate-to-firestore.mjs`](migrate-to-firestore.mjs) | SQLite → Firestore (1 doc/año/chart). Para "más adelante"; necesita `npm install`. |
 | [`chart-configs/*.json`](chart-configs/) | Definición de cada fuente (consulta SQL, `consolidate`, metadatos del registry). |
 
 ## Salida
@@ -48,12 +47,6 @@ node build-charts.mjs                 # = npm run build
 node build-charts.mjs --no-lastfm     # = npm run build:fast
 
 # Acotar años:  node build-charts.mjs --from 2000 --to 2025
-
-# Subir a Firestore (opcional, "más adelante"):
-npm install                                  # better-sqlite3, firebase-admin
-# coloca service-account.json en esta carpeta
-node migrate-to-firestore.mjs chart-configs/es.json
-node migrate-to-firestore.mjs chart-configs/us.json
 ```
 
 ## Correcciones manuales (`overrides.json`)

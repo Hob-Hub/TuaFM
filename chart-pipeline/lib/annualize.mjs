@@ -1,5 +1,5 @@
-// Consolidación de charts → períodos ANUALES, compartida por los dos exportadores
-// (export-charts-static.mjs → JSON local; migrate-to-firestore.mjs → Firestore).
+// Consolidación de charts → períodos ANUALES. La consume build-charts.mjs para
+// exportar el bundle estático (JSON en ../public/).
 //
 // La SQLite de origen sigue siendo la fuente rica de la verdad (semanal para
 // España, anual para Billboard). Aquí se "aplana" a un único Top por año natural,

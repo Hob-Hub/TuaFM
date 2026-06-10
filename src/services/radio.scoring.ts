@@ -1,7 +1,7 @@
 import type { ChartPeriod, RadioCandidate } from '@/types/chart.types'
 
-// Lógica pura del algoritmo de radio (sin I/O). Aislada para poder testarla sin
-// las cadenas de import de Firebase.
+// Lógica pura del algoritmo de radio (sin I/O). Aislada para poder testarla
+// sin arrastrar dependencias de servicios.
 //
 // Modelo ANUAL: cada canción trae ya su `score` del año (Σ 1/√posición de sus
 // semanas, calculado en la consolidación). La radio mezcla varios años con un

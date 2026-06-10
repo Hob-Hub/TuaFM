@@ -2,15 +2,12 @@
   "name": "tuafm-chart-pipeline",
   "private": true,
   "type": "module",
-  "description": "Consolidación de charts SQLite → Top anual (bundle estático local y, opcionalmente, Firestore) para TuaFM",
+  "description": "Consolidación de charts SQLite → Top anual (bundle estático) para TuaFM",
   "scripts": {
     "build": "node build-charts.mjs",
-    "build:fast": "node build-charts.mjs --no-lastfm",
-    "migrate:es": "node migrate-to-firestore.mjs chart-configs/es.json",
-    "migrate:us": "node migrate-to-firestore.mjs chart-configs/us.json"
+    "build:fast": "node build-charts.mjs --no-lastfm"
   },
   "dependencies": {
-    "better-sqlite3": "^11.0.0",
-    "firebase-admin": "^13.0.0"
+    "better-sqlite3": "^11.0.0"
   }
 }

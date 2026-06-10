@@ -1,6 +1,6 @@
 // Normalización Unicode pura (sin dependencias). Debe ser idéntica a la del
-// script de migración (scripts/migrate-to-firestore.mjs) para que los cacheKey
-// coincidan entre datos de charts y enriquecimiento Last.fm.
+// chart-pipeline (lib/catalog.mjs) para que los cacheKey coincidan entre los
+// datos de charts y el enriquecimiento Last.fm.
 
 // Rango de marcas diacríticas combinantes (U+0300–U+036F). Construido con
 // escapes ASCII para mantener este archivo fuente libre de caracteres especiales.

@@ -1,22 +1,4 @@
-// DTOs de infraestructura: lo que viaja entre Firestore/APIs y el dominio.
-
-// ── Firestore DTOs ───────────────────────────────────────────────────────────
-
-export interface FirestoreTrackCache {
-  cacheKey:        string
-  artist:          string
-  title:           string
-  album?:          string | null
-  year?:           number | null
-  duration?:       number | null
-  coverUrl?:       string | null
-  tags?:           string[]
-  youtubeVideoId?: string | null
-  youtubeCandidates?: string[]
-  listeners?:      number | null
-  cachedAt:        number
-  ttlDays:         number
-}
+// DTOs de infraestructura: lo que viaja entre las APIs externas y el dominio.
 
 // ── Last.fm API responses ────────────────────────────────────────────────────
 
