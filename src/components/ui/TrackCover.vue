@@ -12,6 +12,17 @@ const props = withDefaults(defineProps<{
 const failed = ref(false)
 watch(() => props.src, () => { failed.value = false })
 
+// Hosts cuyas imágenes el navegador bloquea por ORB (Opaque Response Blocking):
+// responden sin content-type/CORS válidos, así que el <img> nunca pinta y deja
+// un hueco hasta que (a veces tarde) salta el onerror. Los descartamos de
+// entrada para ir directos al placeholder, sin parpadeo de imagen rota. El
+// catálogo trae ~450 carátulas de prisaradio así; el arreglo de fondo es
+// resolverlas al regenerar el catálogo (chart-pipeline).
+const BLOCKED_COVER_HOSTS = ['recursosweb.prisaradio.com']
+const usableSrc = computed(() =>
+  props.src && !BLOCKED_COVER_HOSTS.some(h => props.src!.includes(h)) ? props.src : undefined
+)
+
 // Degradado determinista a partir del texto (mismo nombre → mismo color).
 const gradient = computed(() => {
   const t = props.fallbackText ?? ''
@@ -30,8 +41,8 @@ const initial = computed(() => (props.fallbackText?.trim()?.[0] ?? '').toUpperCa
     :style="{ width: size + 'px', height: size + 'px' }"
   >
     <img
-      v-if="src && !failed"
-      :src="src"
+      v-if="usableSrc && !failed"
+      :src="usableSrc"
       :alt="alt ?? ''"
       loading="lazy"
       class="w-full h-full object-cover"
