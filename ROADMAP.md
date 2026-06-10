@@ -53,10 +53,9 @@ correcto; (c) depender solo de las carátulas de álbum de Last.fm.
 
 ### Protección de claves para una app pública
 Las `VITE_*` viajan en el bundle (normal en Vite). Para producción pública:
-restringe la YouTube key por *HTTP referer* en Google Cloud. Si algún día la
-exposición de claves fuese un problema, la vía es un proxy serverless (p. ej.
-Vercel Functions) que las mantenga del lado servidor. Para uso personal no es
-bloqueante.
+restringe la YouTube key por *HTTP referer* en Google Cloud y, si usas Firestore,
+considera **Firebase App Check** para que `track_cache` no sea escribible por
+bots. Para uso personal no es bloqueante.
 
 > **Dato a tener presente (corrige al PROMPT/README):** el PROMPT y el README
 > dicen que la YouTube Data API da *"10k ud/día"*, pero `search.list` cuesta
@@ -93,7 +92,7 @@ de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
   los rankea en [`youtube.scoring.ts`](src/services/youtube.scoring.ts): premia
   artista/título, "official audio" y canal Topic; penaliza cover/karaoke/remix/
   live no pedidos (determinista y estable). Los candidatos se cachean (campo
-  `youtubeCandidates` en Dexie) sin coste extra de cuota. Cubierto
+  `youtubeCandidates` en Dexie + Firestore) sin coste extra de cuota. Cubierto
   por [`youtube.scoring.test.ts`](src/services/youtube.scoring.test.ts).
 - **2.2 Fallback en `onError`** ✓ — el iframe ya no muere: reintenta el
   siguiente candidato y, si se agotan, salta de pista
@@ -120,7 +119,7 @@ de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
 
 | Prioridad | Mejora | Notas |
 |-----------|--------|-------|
-| Media | **PWA instalable** (`vite-plugin-pwa`) | App offline-first; encaja con un reproductor. Tus playlists de Dexie ya funcionan sin red → el shell offline cierra el círculo |
+| ~~Media~~ ✓ | ~~**PWA instalable**~~ (`vite-plugin-pwa`) | Hecho: manifest + service worker (Workbox). `registerType: 'prompt'` a propósito (es un reproductor → no auto-recarga a media canción; toast "Recargar" en [`PwaUpdatePrompt.vue`](src/components/ui/PwaUpdatePrompt.vue)). Precache solo del shell (~690 KiB); catálogo/charts (8 MB) por **StaleWhileRevalidate** en runtime, fonts CacheFirst, carátulas CacheFirst. YouTube y Firestore sin regla a propósito (Firebase ya tiene su offline propio). El SW solo corre en `build`/`preview`, no en `dev` |
 | Media | **Más tests** | Hoy: núcleo puro (normalize, scoring, csv, youtube.scoring). Faltan componentes (Vitest + @vue/test-utils) y un e2e (Playwright) del flujo "crear playlist → importar → reproducir" |
 | ~~Media~~ ✓ | ~~**ESLint + Prettier**~~ | Hecho: flat config (`eslint.config.js`) + `.prettierrc.json` + scripts `lint`/`format`. **Falta el remate** (ver abajo): correr `lint:fix`/`format` sobre el código existente y limpiar la deuda de lint que aflora |
 | Baja | **Validación de respuestas de API** (zod) | Hoy se confía en los tipos TS y hay `as any` en [`trackCache.service.ts`](src/services/trackCache.service.ts). Last.fm devuelve objeto-o-array según nº de resultados y campos que faltan: zod convierte esos casts en parsers tipados |
@@ -174,8 +173,8 @@ Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 
 ### Lo que el stack doc sugería pero NO conviene adoptar
 - **TanStack Query:** pensado para apps *sin* capa de caché propia. La
-  arquitectura de caché de TuaFM (Dexie → catálogo estático → APIs) es más
-  deliberada; meter TanStack duplicaría responsabilidades.
+  arquitectura de 3 capas de TuaFM (Dexie → Firestore `track_cache` → APIs) es
+  más deliberada; meter TanStack duplicaría responsabilidades.
 - **idb-keyval:** TuaFM usa Dexie, que es superior para su modelo de datos.
 
 ---

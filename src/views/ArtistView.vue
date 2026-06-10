@@ -71,7 +71,7 @@ function playTrack(track: { title: string; coverUrl?: string }): void {
               class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
               @click="playTrack(t)">
             <span class="w-5 text-sm text-muted tabular-nums shrink-0">{{ i + 1 }}</span>
-            <TrackCover :src="t.coverUrl" :alt="t.title" :size="40" />
+            <TrackCover :src="t.coverUrl" :alt="t.title" :fallback-text="t.title" :size="40" />
             <span class="flex-1 text-sm text-white truncate">{{ t.title }}</span>
             <span class="text-xs text-muted tabular-nums hidden sm:block">{{ fmtListeners(t.listeners) }}</span>
             <BaseButton size="sm" variant="ghost" class="opacity-0 group-hover:opacity-100" @click.stop="playTrack(t)">

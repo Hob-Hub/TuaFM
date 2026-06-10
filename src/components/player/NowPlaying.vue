@@ -8,7 +8,7 @@ defineProps<{ track: Track | null }>()
 
 <template>
   <div class="flex items-center gap-3 min-w-0">
-    <TrackCover :src="track?.coverUrl" :alt="track?.album" :size="52" rounded="rounded-lg" />
+    <TrackCover :src="track?.coverUrl" :alt="track?.album" :fallback-text="track?.titleDisplay ?? track?.title" :size="52" rounded="rounded-lg" />
     <div v-if="track" class="min-w-0">
       <p class="font-medium text-sm text-white truncate">{{ track.titleDisplay ?? track.title }}</p>
       <RouterLink

@@ -55,7 +55,7 @@ function fmtDuration(ms?: number): string {
     </div>
 
     <!-- Carátula o skeleton -->
-    <TrackCover v-if="track.enriched || track.coverUrl" :src="track.coverUrl" :alt="track.album" :size="44" />
+    <TrackCover v-if="track.enriched || track.coverUrl" :src="track.coverUrl" :alt="track.album" :fallback-text="titleLabel" :size="44" />
     <div v-else class="w-11 h-11 rounded-lg bg-surface-2 animate-pulse shrink-0" />
 
     <!-- Título + artista -->

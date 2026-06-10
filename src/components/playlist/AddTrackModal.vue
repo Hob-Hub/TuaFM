@@ -68,7 +68,7 @@ async function add(r: TrackSearchResult): Promise<void> {
       <ul v-else class="flex flex-col gap-1">
         <li v-for="r in results" :key="`${r.artist}-${r.title}`"
             class="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-card-hover">
-          <TrackCover :src="r.coverUrl" :size="40" />
+          <TrackCover :src="r.coverUrl" :fallback-text="r.title" :size="40" />
           <div class="min-w-0 flex-1">
             <p class="text-sm text-white truncate">{{ r.title }}</p>
             <p class="text-xs text-muted truncate">{{ r.artist }}</p>

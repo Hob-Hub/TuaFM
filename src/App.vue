@@ -15,6 +15,7 @@ import CreatePlaylistModal from '@/components/playlist/CreatePlaylistModal.vue'
 import AddTrackModal from '@/components/playlist/AddTrackModal.vue'
 import CsvImportModal from '@/components/playlist/CsvImportModal.vue'
 import SaveToPlaylistModal from '@/components/playlist/SaveToPlaylistModal.vue'
+import PwaUpdatePrompt from '@/components/ui/PwaUpdatePrompt.vue'
 
 const ui = useUiStore()
 const online = useOnline()
@@ -122,6 +123,9 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
         {{ ui.toast.message }}
       </div>
     </Transition>
+
+    <!-- Aviso de actualización de la PWA (registerType: 'prompt') -->
+    <PwaUpdatePrompt />
   </div>
 </template>
 

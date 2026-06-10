@@ -145,7 +145,7 @@ if (q.value) void runSearch(q.value)
           class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
           @click="playSong(s)"
         >
-          <TrackCover :src="s.coverUrl" :alt="s.title" :size="44" />
+          <TrackCover :src="s.coverUrl" :alt="s.title" :fallback-text="s.title" :size="44" />
           <div class="min-w-0 flex-1">
             <p class="text-sm font-medium text-white truncate">{{ s.title }}</p>
             <RouterLink

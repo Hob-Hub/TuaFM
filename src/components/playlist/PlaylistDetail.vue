@@ -59,7 +59,7 @@ function onDrop(index: number): void {
   <div v-if="playlist">
     <!-- Cabecera -->
     <header class="flex items-end gap-5 mb-6">
-      <TrackCover :src="playlist.coverUrl ?? coverFromTracks" :size="160" rounded="rounded-2xl" />
+      <TrackCover :src="playlist.coverUrl ?? coverFromTracks" :fallback-text="playlist.name" :size="160" rounded="rounded-2xl" />
       <div class="min-w-0 pb-1">
         <p class="text-xs uppercase tracking-wider text-muted">Playlist</p>
         <h1 class="font-display text-3xl sm:text-4xl font-extrabold truncate">{{ playlist.name }}</h1>
