@@ -121,6 +121,41 @@ de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
   esos IDs en el bundle estático mejora la experiencia (menos saltos). Tarea de
   datos, no de app.
 
+**Reproducción en móvil (cortes y pantalla apagada).** Ambos problemas nacen de
+usar **un único `<iframe>` de YouTube** como fuente de audio. No se plantea, de
+momento, dejar YouTube.
+
+- **Corte al pasar de canción** — *parte hecha.* El "silencio → algo → arranca"
+  es el **buffering del iframe** al hacer `loadVideoById` del vídeo siguiente
+  (un solo iframe no puede tener el próximo listo mientras suena el actual).
+  - ✓ *Hecho* (`feat(player): reanuda… y prefetch…`): **prefetch de la siguiente
+    pista** ([`usePlayback.ts`](src/composables/usePlayback.ts) → `prefetchNext`)
+    para que `next` no espere a la red. Quita la parte variable, **no** el buffering.
+  - ⏳ *Pendiente (decisión grande): **doble iframe / gapless.*** Dos players YT:
+    mientras suena el A, `cueVideoById(siguiente)` **pre-bufferiza** en el B; al
+    dar `next` se cambia al B (ya cargado → casi instantáneo) y se pre-carga el
+    nuevo siguiente en el A. Hay que rotar los handlers `onEnded`/`onError` al
+    player activo y gestionar prev/aleatorio (no pre-cacheables) y el fallback de
+    candidatos. **Riesgo en móvil:** los navegadores limitan media simultáneo y el
+    2º iframe podría **no bufferizar en segundo plano** → probar en dispositivo
+    real. En escritorio es ganancia segura. Reescribe el núcleo de
+    [`useYouTubePlayer.ts`](src/composables/useYouTubePlayer.ts) (hoy un solo
+    `player`). *Nota:* si se añade el **modo clips** (§4), esto pasa de "deseable"
+    a casi necesario (los cambios de pista son constantes).
+- **Pantalla apagada / segundo plano** — *mitigado; techo de fondo.* YouTube
+  **bloquea a propósito** la reproducción en segundo plano en web móvil (empuja
+  Premium): al apagar la pantalla, el navegador pausa el iframe. El ancla de audio
+  mantiene viva la *sesión* (controles de bloqueo), pero el sonido sale del iframe.
+  - ✓ *Hecho:* **reanudación al volver** ([`useYouTubePlayer.ts`](src/composables/useYouTubePlayer.ts)
+    → `resumeIfIntended` + listeners `visibilitychange`/`focus`/`pageshow`, con flag
+    `intendedPlaying` para no reanudar lo que pausó el usuario). No suena con la
+    pantalla apagada, pero quita el "vuelvo y se ha parado".
+  - ❌ *Sin solución limpia:* sonar de verdad en segundo plano exigiría una **fuente
+    de audio que no sea el embed de YouTube** (sacar el stream viola los ToS) o un
+    Wake Lock que mantenga la pantalla encendida (gasta batería, no es "apagada").
+    Descartado para uso personal. Reintentar `playVideo()` en background lo bloquea
+    el navegador sin gesto.
+
 ---
 
 ## 3. Mejoras pendientes (priorizadas)
@@ -158,6 +193,49 @@ son **producto**. Priorizadas por relación valor/esfuerzo.
 | Media | **Ficha de álbum** (`/artist/:name/:album`) | `album.getInfo` → tracklist reproducible reutilizando el `TrackItem` universal. Enlazar desde el buscador y desde la ficha de artista. Bruga la tenía; encaja sin fricción con la arquitectura actual |
 | Baja | **Descubrimiento en Home** | Sección de artistas/canciones destacadas. Oportunidad propia: servirlo **offline desde el catálogo** (top artistas/canciones de los charts, por país o década) en lugar de `geo.gettopartists` → cero coste de API y coherente con el alma "memoria histórica" de TuaFM |
 | Baja | **`document.title` dinámico** | "Título — Artista · TuaFM" mientras suena (Bruga lo hacía). Complementa la Media Session API ya integrada |
+| Media | **Modo clips (escucha rápida / skim)** | Botón en la barra que reproduce solo un trozo central de cada canción (15/30/45/60 s) y auto-avanza → muestrear muchas canciones en poco tiempo. Encaja con el alma "explorar charts". **Detallado abajo.** |
+
+### Modo clips (escucha rápida) — diseño
+
+Idea: un botón en la barra que, al activarlo, reproduce solo **un fragmento del
+centro** de cada canción y **salta sola** a la siguiente. Útil para "escanear" un
+Top entero o una radio rápido (como pasar emisoras). Valor/esfuerzo alto; es un
+diferenciador con poco código nuevo.
+
+**Estado (en `player.store.ts`, persistido):**
+- `clipSeconds: 0 | 15 | 30 | 45 | 60` — `0` = off (canción completa). Un único
+  botón **cicla** `0 → 15 → 30 → 45 → 60 → 0` (lo de "clicar mucho para cambiar").
+- Derivado `clipMode = clipSeconds > 0`.
+
+**Lógica (en `usePlayback.ts`), reusando lo que ya hay:**
+- **Inicio del clip:** la duración del vídeo no se sabe hasta que YouTube la
+  reporta. Ya hay un watcher de `player.duration` (`syncRealDuration`); añadir
+  ahí: cuando `clipMode` y duración conocida y aún no aplicado a esta pista →
+  `clipStart = clamp(duración/2 − clipSeconds/2, 0, …)` y `yt.seekTo(clipStart)`.
+  Flag `clipAppliedFor = track.id` para hacerlo una vez por pista.
+- **Fin del clip:** watcher de `player.currentTime`: si `clipMode` y
+  `currentTime ≥ clipStart + clipSeconds` → `next()`. (Basado en tiempo real, así
+  respeta pausas automáticamente — no usar `setTimeout`, que correría en pausa.)
+- **Centro** porque en pop suele caer el estribillo/gancho; configurable a futuro.
+- Reset de `clipAppliedFor` al cambiar de pista (lo hace el flujo de `playCurrent`).
+
+**UI:** botón en [`PlayerBar.vue`](src/components/layout/PlayerBar.vue) (cluster
+derecho en desktop; en móvil, acciones del `NowPlayingScreen`). Icono de "clip"/
+tijera + etiqueta del valor (`15s`/`30s`/…) o apagado; `aria-label` dinámico;
+resaltado en `brand` cuando activo. Click → cicla `clipSeconds`. Opcional: la
+barra de progreso podría sombrear la ventana del clip dentro de la canción.
+
+**Casos límite:**
+- Canción más corta que el clip → reproduce entera (clamp a `[0, duración]`).
+- Cambiar `clipSeconds` a mitad de pista → recalcular `clipStart` y re-seek.
+- `repeat-one` + clips → repetir el clip en bucle (decisión menor).
+- Seek manual del usuario → mantenerlo simple: el fin es absoluto (`clipStart +
+  N`); si lo pasa, avanza.
+
+**Sinergia/caveat:** cada salto sigue teniendo el **buffering del iframe** (§2).
+Como el modo clips cambia de pista constantemente, el corte se nota MÁS → este
+modo es el principal argumento para implementar el **doble-iframe gapless** (§2).
+Sin gapless funciona, pero entrecortado entre clips.
 
 ---
 
