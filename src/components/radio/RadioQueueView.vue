@@ -54,7 +54,7 @@ watch(() => radio.currentIndex, async () => {
       >
         {{ extending ? 'Cargando…' : 'Cargar más' }}
       </button>
-      <p class="text-[11px] text-muted/60">La radio no se detiene: se amplía sola mientras escuchas.</p>
+      <p class="text-[11px] text-muted/80">La radio no se detiene: se amplía sola mientras escuchas.</p>
     </div>
   </div>
 

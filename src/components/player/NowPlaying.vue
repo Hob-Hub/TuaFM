@@ -21,7 +21,7 @@ defineProps<{ track: Track | null }>()
     </div>
     <div v-else class="min-w-0">
       <p class="text-sm text-muted truncate">Nada sonando</p>
-      <p class="text-xs text-muted/60 truncate">Elige una canción para empezar</p>
+      <p class="text-xs text-muted/80 truncate">Elige una canción para empezar</p>
     </div>
   </div>
 </template>

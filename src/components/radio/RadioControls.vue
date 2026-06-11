@@ -141,7 +141,7 @@ async function onGenerate(): Promise<void> {
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-xs font-medium text-muted">Año</span>
-          <span v-if="selected" class="text-[10px] text-muted/60 tabular-nums">{{ selected.startYear }}–{{ selected.endYear }}</span>
+          <span v-if="selected" class="text-[10px] text-muted/80 tabular-nums">{{ selected.startYear }}–{{ selected.endYear }}</span>
         </div>
         <BaseSlider
           v-model="year" show-thumb
@@ -155,14 +155,14 @@ async function onGenerate(): Promise<void> {
       <div>
         <div class="flex items-center justify-between mb-1.5">
           <span class="text-xs font-medium text-muted">Nostalgia</span>
-          <span class="text-[10px] text-muted/60 tabular-nums">λ = {{ lambda.toFixed(2) }}</span>
+          <span class="text-[10px] text-muted/80 tabular-nums">λ = {{ lambda.toFixed(2) }}</span>
         </div>
         <BaseSlider
           v-model="lambda" show-thumb
           :min="0.1" :max="1" :step="0.05"
           aria-label="Nivel de nostalgia"
         />
-        <div class="flex justify-between text-[10px] text-muted/60 mt-1">
+        <div class="flex justify-between text-[10px] text-muted/80 mt-1">
           <span>Mezcla épocas</span><span>Solo ese año</span>
         </div>
       </div>
@@ -186,11 +186,11 @@ async function onGenerate(): Promise<void> {
                  fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
             Top {{ displaySize }} · {{ year }}
           </span>
-          <span class="text-[10px] text-muted/60">{{ selected.name }}</span>
+          <span class="text-[10px] text-muted/80">{{ selected.name }}</span>
         </button>
 
         <div v-show="previewOpen" class="mt-2">
-          <div v-if="loadingTop" class="text-xs text-muted/60">Cargando…</div>
+          <div v-if="loadingTop" class="text-xs text-muted/80">Cargando…</div>
           <template v-else-if="allSongs.length">
             <ol class="space-y-0.5">
               <li v-for="s in visibleSongs" :key="s.rank">
@@ -198,7 +198,7 @@ async function onGenerate(): Promise<void> {
                   class="group w-full flex items-center gap-2.5 text-sm text-left px-1 py-1 rounded-lg hover:bg-card-hover"
                   @click="playSong(s)"
                 >
-                  <span class="w-5 text-right tabular-nums text-muted/60 group-hover:hidden">{{ s.rank }}</span>
+                  <span class="w-5 text-right tabular-nums text-muted/80 group-hover:hidden">{{ s.rank }}</span>
                   <span class="w-5 hidden group-hover:grid place-items-center text-brand">
                     <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                   </span>
@@ -218,7 +218,7 @@ async function onGenerate(): Promise<void> {
               <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
           </template>
-          <div v-else class="text-xs text-muted/60">Sin datos para este año.</div>
+          <div v-else class="text-xs text-muted/80">Sin datos para este año.</div>
         </div>
       </div>
     </template>
