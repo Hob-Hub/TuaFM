@@ -37,7 +37,7 @@ const modeLabel = computed(() => {
 </script>
 
 <template>
-  <div class="md:hidden fixed inset-0 z-50 flex flex-col bg-gradient-to-b from-brand/30 via-surface to-surface
+  <div class="md:hidden fixed inset-0 z-50 flex flex-col bg-surface bg-gradient-to-b from-brand/30 via-surface to-surface
               px-6 pt-5 pb-8" style="padding-bottom: max(2rem, env(safe-area-inset-bottom));">
     <!-- Cabecera -->
     <div class="flex items-center gap-3">
