@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tua-fm.vercel.app/sitemap.xml
