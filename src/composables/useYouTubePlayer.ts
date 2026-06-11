@@ -83,6 +83,42 @@ function anchorPlay(): void {
 }
 function anchorPause(): void { try { anchor?.pause() } catch { /* noop */ } }
 
+// ── Reanudación al volver a primer plano ─────────────────────────────────────
+// Los navegadores móviles pausan el <iframe> de YouTube al apagar la pantalla o
+// mandar la pestaña a segundo plano (YouTube no permite background playback en
+// móvil). Esa pausa no se puede evitar, pero sí *reanudar* en cuanto el usuario
+// vuelve: si la intención era seguir sonando y el reproductor quedó pausado (no
+// fue el usuario), se reanuda solo — quita el molesto "se ha parado".
+let intendedPlaying = false
+let lifecycleBound  = false
+
+function resumeIfIntended(): void {
+  if (!player || !intendedPlaying || !window.YT) return
+  try {
+    const st = player.getPlayerState()
+    const S  = window.YT.PlayerState
+    if (st === S.PAUSED || st === S.CUED || st === S.UNSTARTED) {
+      anchorPlay()
+      player.playVideo()
+    }
+  } catch { /* player no listo */ }
+}
+
+function bindLifecycle(): void {
+  if (lifecycleBound) return
+  lifecycleBound = true
+  // Reintenta un par de veces: al volver, el iframe tarda un instante en aceptar play().
+  const onForeground = (): void => {
+    window.setTimeout(resumeIfIntended, 250)
+    window.setTimeout(resumeIfIntended, 900)
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') onForeground()
+  })
+  window.addEventListener('focus', onForeground)
+  window.addEventListener('pageshow', onForeground)
+}
+
 function loadApi(): Promise<void> {
   if (apiPromise) return apiPromise
   apiPromise = new Promise<void>(resolve => {
@@ -104,6 +140,7 @@ export function useYouTubePlayer() {
 
   async function init(mountEl: HTMLElement): Promise<void> {
     await loadApi()
+    bindLifecycle()
     if (player) { ready.value = true; return }
 
     player = new window.YT!.Player(mountEl, {
@@ -174,14 +211,15 @@ export function useYouTubePlayer() {
 
   function loadAndPlay(videoId: string): void {
     if (!player) return
+    intendedPlaying = true
     playerStore.state = 'loading'
     playerStore.currentTime = 0
     anchorPlay()   // arranca el ancla dentro del gesto (evita bloqueo de autoplay)
     player.loadVideoById(videoId)
   }
 
-  function play():  void { anchorPlay(); player?.playVideo() }
-  function pause(): void { anchorPause(); player?.pauseVideo() }
+  function play():  void { intendedPlaying = true;  anchorPlay();  player?.playVideo() }
+  function pause(): void { intendedPlaying = false; anchorPause(); player?.pauseVideo() }
   function toggle(): void {
     if (playerStore.isPlaying) pause(); else play()
   }

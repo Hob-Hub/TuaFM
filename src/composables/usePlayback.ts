@@ -224,6 +224,7 @@ export function usePlayback() {
       updateMediaSession(track)
       void recordPlay(track, player.queueMode)
       maybePrefetchRadio()
+      prefetchNext()
     } else {
       player.state = 'error'
       ui.showToast(`No se encontró vídeo para "${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}"`, 'error')
@@ -267,6 +268,29 @@ export function usePlayback() {
     if (player.queueMode !== 'radio') return
     const remaining = radio.queue.length - radio.currentIndex - 1
     if (remaining <= 5) void extendRadio()
+  }
+
+  /** Pista que sonaría al pulsar "siguiente" (no predecible en aleatorio). */
+  function peekNextTrack(): Track | null {
+    switch (player.queueMode) {
+      case 'radio':           return radio.queue[radio.currentIndex + 1] ?? null
+      case 'recommendations': return rec.queue[rec.currentIndex + 1] ?? null
+      case 'playlist':
+        if (player.isShuffle) return null
+        return playlistQueue.value[playlistIndex.value + 1] ?? null
+      default:                return null
+    }
+  }
+
+  /**
+   * Resuelve por adelantado la SIGUIENTE pista (vídeo + metadatos) calentando la
+   * caché de Dexie, para que al pulsar "siguiente" no haya espera de red antes de
+   * cargar el vídeo. No reduce el buffering del iframe, pero sí el resto del corte.
+   */
+  function prefetchNext(): void {
+    const t = peekNextTrack()
+    if (!t || t.enriched) return
+    void enrich(t).catch(() => { /* solo calienta la caché; se aplicará al sonar */ })
   }
 
   // ── Navegación ──────────────────────────────────────────────────────────────
