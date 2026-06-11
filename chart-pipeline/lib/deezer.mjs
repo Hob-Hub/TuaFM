@@ -48,4 +48,36 @@ export async function artistImage(name) {
   return image
 }
 
+/**
+ * Carátula de álbum para un (artista,título) desde Deezer. Respaldo cuando
+ * Last.fm no trae portada o la sembrada está bloqueada por ORB (prisaradio).
+ * Las URLs de Deezer son CORS-friendly → se pintan sin problema en el navegador.
+ */
+export async function trackCover(artist, title) {
+  const k = `track:${String(artist).toLowerCase().trim()}::${String(title).toLowerCase().trim()}`
+  const cached = sel.get(k)
+  if (cached) { stats.cacheHits++; return JSON.parse(cached.json) }
+
+  const q = `artist:"${artist}" track:"${title}"`
+  const url = `https://api.deezer.com/search?limit=1&q=${encodeURIComponent(q)}`
+  const wait = MIN_INTERVAL_MS - (Date.now() - lastAt)
+  if (wait > 0) await sleep(wait)
+  lastAt = Date.now()
+  stats.apiCalls++
+
+  let cover = null
+  try {
+    const res = await fetch(url)
+    if (res.ok) {
+      const data = await res.json()
+      const al = data?.data?.[0]?.album
+      cover = al?.cover_xl || al?.cover_big || al?.cover_medium || null
+    }
+  } catch { /* red: no cachear, se reintenta en el siguiente pase */ }
+
+  if (cover) { ins.run(k, JSON.stringify(cover), Date.now()) }
+  else { stats.misses++; ins.run(k, JSON.stringify(null), Date.now()) }
+  return cover
+}
+
 export function closeCache() { cacheDb.close() }

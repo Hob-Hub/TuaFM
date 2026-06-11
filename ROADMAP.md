@@ -30,21 +30,21 @@ El catálogo (`public/catalog/{tracks,artists}.json`) ya guarda datos que la UI
   Además, las **recomendaciones** ([`recommendations.service.ts`](src/services/recommendations.service.ts))
   pegan a Last.fm en runtime: podrían sembrarse desde `similar`/`topTracks` del
   catálogo y reducir llamadas (caer a la API solo si falta).
-- **Carátulas del top-50 del artista.** En `ArtistView` el top viene de Last.fm (solo
-  títulos) y son éxitos *globales*, muchos fuera de nuestro catálogo → se resuelven en
-  runtime y algunos no traen carátula (huecos visibles). Pre-cachear 50×~2000 portadas
-  es inviable (~100k llamadas). *Opción:* usar como fallback la foto del artista (o la
-  carátula de Deezer del track) en vez de dejar el hueco.
+- ~~**Carátulas del top-50 del artista.**~~ ✓ — resuelto cambiando el enfoque. El
+  catálogo guarda solo el **top-15** (en vez de 50: `artists.json` 6,1→3,0 MB) y la
+  ficha carga el resto **bajo demanda** ("Mostrar más" → Last.fm una vez), cacheando
+  en Dexie ([`useArtist.ts`](src/composables/useArtist.ts)). Las carátulas se resuelven
+  en runtime y **persisten en Dexie** ([`getTrackCover`](src/services/lastfm.service.ts)),
+  así no se re-piden en cada visita. Pre-cachear 50×~2000 portadas era inviable.
 - **`mbid` para carátulas robustas.** Se guarda `track.mbid`/`artist.mbid` pero
   [`coverart.service.ts`](src/services/coverart.service.ts) aún busca por texto en
   MusicBrainz. Usar el mbid directo evita ambigüedades y fallos de match.
-- **Carátulas de `recursosweb.prisaradio.com` (ORB).** ~453 pistas del catálogo
-  (~10%) traen `coverUrl` de prisaradio, que el navegador **bloquea por ORB**
-  (Opaque Response Blocking: responde sin content-type/CORS válidos) → nunca
-  pintan. Runtime ya degrada limpio: [`TrackCover.vue`](src/components/ui/TrackCover.vue)
-  las descarta de entrada y muestra el placeholder con inicial. **Falta el arreglo
-  de fondo:** re-resolver esas carátulas en `chart-pipeline` con Last.fm/Cover Art
-  Archive (como el otro ~90%) y volcarlas al catálogo, para que tengan portada real.
+- ~~**Carátulas de `recursosweb.prisaradio.com` (ORB).**~~ ✓ — re-resueltas en el
+  pipeline vía **Deezer** ([`deezer.trackCover`](chart-pipeline/lib/deezer.mjs), URLs
+  CORS-friendly): de las 453 ORB + ~117 sin portada, **438 ahora tienen carátula real**
+  y **0 quedan con URL ORB muerta** (las que Deezer no encontró caen al placeholder
+  limpio). El build futuro lo hace solo (resuelve cover ausente/ORB en
+  [`build-charts.mjs`](chart-pipeline/build-charts.mjs)).
 
 ---
 

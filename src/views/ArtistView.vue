@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, computed } from 'vue'
+import { watch, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useArtist } from '@/composables/useArtist'
 import { usePlayback } from '@/composables/usePlayback'
@@ -7,14 +7,35 @@ import { nanoid } from 'nanoid'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
+const INITIAL_VISIBLE = 15
+
 const route = useRoute()
 const router = useRouter()
-const { info, loading, error, load } = useArtist()
+const { info, loading, loadingMore, error, load, loadMore } = useArtist()
 const playback = usePlayback()
 
 const artistName = computed(() => String(route.params.name))
 
-watch(artistName, (name) => { if (name) load(name) }, { immediate: true })
+const visibleCount  = ref(INITIAL_VISIBLE)
+const visibleTracks = computed(() => info.value?.topTracks.slice(0, visibleCount.value) ?? [])
+// Hay más que mostrar si quedan filas cargadas ocultas o si aún no tenemos el top completo.
+const canShowMore   = computed(() =>
+  !!info.value && (visibleCount.value < info.value.topTracks.length || !info.value.topTracksComplete)
+)
+
+watch(artistName, (name) => { visibleCount.value = INITIAL_VISIBLE; if (name) load(name) }, { immediate: true })
+
+// "Mostrar más": primero revela las filas ya cargadas; si no quedan y el top no
+// está completo, pide el resto (loadMore() → Last.fm una vez + Dexie) y lo revela.
+async function showMore(): Promise<void> {
+  if (!info.value) return
+  if (visibleCount.value < info.value.topTracks.length) {
+    visibleCount.value = info.value.topTracks.length
+  } else if (!info.value.topTracksComplete) {
+    await loadMore()
+    visibleCount.value = info.value.topTracks.length
+  }
+}
 
 function fmtListeners(n: number): string {
   return new Intl.NumberFormat('es-ES').format(n)
@@ -68,7 +89,7 @@ function playTrack(track: { title: string; coverUrl?: string }): void {
       <section v-if="info.topTracks.length">
         <h2 class="font-display text-lg font-bold mb-3">Canciones populares</h2>
         <ul class="flex flex-col">
-          <li v-for="(t, i) in info.topTracks" :key="t.title"
+          <li v-for="(t, i) in visibleTracks" :key="t.title"
               class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
               @click="playTrack(t)">
             <span class="w-5 text-sm text-muted tabular-nums shrink-0">{{ i + 1 }}</span>
@@ -80,6 +101,12 @@ function playTrack(track: { title: string; coverUrl?: string }): void {
             </BaseButton>
           </li>
         </ul>
+
+        <div v-if="canShowMore" class="mt-4 flex justify-center">
+          <BaseButton variant="ghost" :disabled="loadingMore" @click="showMore">
+            {{ loadingMore ? 'Cargando…' : 'Mostrar más' }}
+          </BaseButton>
+        </div>
       </section>
     </template>
   </div>

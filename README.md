@@ -82,8 +82,10 @@ cosas en `public/` (offline, sin backend):
   donde cada canción es `{t,r,s,p,w}` (referencia al catálogo por `t`=trackId).
 - **`public/catalog/`** — catálogo **normalizado y deduplicado**: `tracks.json`
   (1 por canción, con YouTube/carátula de la DB + álbum/tags/duración/oyentes de
-  Last.fm) y `artists.json` (bio, imagen, oyentes, tags y **top 50** por artista).
+  Last.fm) y `artists.json` (bio, imagen, oyentes, tags y **top 15** por artista).
   Es la **primera capa de caché** en runtime → muchas menos llamadas a APIs.
+  El top de artista se guarda recortado a 15 (la ficha carga el resto bajo demanda
+  con "Mostrar más" y lo cachea en Dexie); así `artists.json` se mantiene ligero.
 
 ```bash
 cd chart-pipeline
@@ -166,12 +168,20 @@ código de la app: el selector de radio lee el `registry` en runtime.
 Bundle estático  public/charts (listas) + public/catalog (tracks/artistas) — fuente primaria, offline
 Pinia            estado volátil del player + colas efímeras (radio, recs)
 Dexie/IndexedDB  playlists, tracks enriquecidos, favoritos, historial (local, permanente)
+                 + cachés persistentes: artistas (no-catálogo), carátulas y grafo de
+                 similitud de Last.fm → lo resuelto una vez no se vuelve a pedir
 ```
 
 **Lookup al enriquecer una pista:** Dexie → catálogo estático (`public/catalog`)
 → APIs externas (Last.fm + YouTube + cover fallback), persistiendo el resultado en
 Dexie. La clave estable es `cacheKey = normalize(artist)::normalize(title)`
 (NFD + sin diacríticos), idéntica en la app y en el pipeline.
+
+**Cachés Dexie de Last.fm (`db.version(2)`):** para el contenido que NO está en el
+catálogo (artistas buscados/feats/recomendados), la ficha de artista, las carátulas
+([`getTrackCover`](src/services/lastfm.service.ts)) y el grafo de similitud
+([`lastfm.similarity.service.ts`](src/services/lastfm.similarity.service.ts)) se
+cachean en Dexie con TTL → se piden una vez por navegador, no en cada visita.
 
 **Charts:** se sirven desde el bundle estático `public/charts` (ver «Datos de
 charts»). La app funciona 100% offline, sin backend.

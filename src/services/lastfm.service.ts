@@ -5,6 +5,8 @@ import type {
 import { getCoverUrl } from '@/services/coverart.service'
 import { getArtistByKey } from '@/services/catalog/static.source'
 import { makeCacheKey, normalizeStr } from '@/utils/normalize'
+import { db } from '@/db/local.db'
+import { isExpired, TTL_COVER_DAYS } from '@/db/cache.helpers'
 
 const API_KEY = import.meta.env.VITE_LASTFM_API_KEY
 const BASE    = 'https://ws.audioscrobbler.com/2.0/'
@@ -102,8 +104,10 @@ export async function searchArtists(
 }
 
 // Carátula real por canción, SIN tocar YouTube (no gasta cuota): álbum de
-// Last.fm y, si falta, MusicBrainz + Cover Art Archive. Cacheada en memoria
-// por sesión con deduplicación de peticiones en vuelo.
+// Last.fm y, si falta, MusicBrainz + Cover Art Archive. Doble caché: un Map en
+// memoria deduplica peticiones en vuelo dentro de la sesión, y Dexie las
+// persiste entre sesiones (antes el Map se perdía en cada recarga → se re-pedían
+// todas las carátulas cada vez).
 const coverCache = new Map<string, Promise<string | undefined>>()
 
 export function getTrackCover(
@@ -112,10 +116,27 @@ export function getTrackCover(
   const key = makeCacheKey(artist, title)
   let p = coverCache.get(key)
   if (!p) {
-    p = resolveTrackCover(artist, title, signal).catch(() => undefined)
+    p = resolveCoverCached(artist, title, key, signal)
     coverCache.set(key, p)
   }
   return p
+}
+
+async function resolveCoverCached(
+  artist: string, title: string, key: string, signal?: AbortSignal
+): Promise<string | undefined> {
+  try {
+    const hit = await db.covers.get(key)
+    if (hit && !isExpired(hit.localCachedAt, TTL_COVER_DAYS)) return hit.coverUrl
+  } catch { /* Dexie no disponible → resolvemos por red */ }
+
+  const cover = await resolveTrackCover(artist, title, signal).catch(() => undefined)
+  if (cover) {
+    try {
+      await db.covers.put({ cacheKey: key, coverUrl: cover, localCachedAt: Date.now() })
+    } catch { /* persistir es best-effort */ }
+  }
+  return cover
 }
 
 async function resolveTrackCover(

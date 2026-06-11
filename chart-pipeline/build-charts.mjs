@@ -5,7 +5,7 @@
 //   public/charts/registry.json        → ChartRegistry[]
 //   public/charts/<chartId>.json       → { chartId, periods:[{year,songs:[{t,r,s,p,w}]}] }  (compacto)
 //   public/catalog/tracks.json         → { tracks:  CatalogTrack[]  }  (1 por track distinto)
-//   public/catalog/artists.json        → { artists: CatalogArtist[] }  (top 50 inline)
+//   public/catalog/artists.json        → { artists: CatalogArtist[] }  (top 15 inline)
 //
 // Uso:  node build-charts.mjs                       # ES + US, con enriquecimiento Last.fm
 //       node build-charts.mjs --no-lastfm           # rápido: solo siembra de la DB
@@ -92,6 +92,13 @@ if (!noLastfm) {
         if (tr.mbid) t.mbid = tr.mbid
       }
     } catch (e) { console.warn(`  ! track ${t.key}: ${e.message}`) }
+    // Carátula de respaldo (Deezer) si Last.fm no trajo portada o la sembrada
+    // está bloqueada por ORB (las de prisaradio no pintan en el navegador).
+    if (!t.coverUrl || /prisaradio/i.test(t.coverUrl)) {
+      const dz = await deezer.trackCover(primaryName(t.artist), t.title)
+      if (dz) t.coverUrl = dz
+      else if (/prisaradio/i.test(t.coverUrl || '')) t.coverUrl = undefined  // mejor sin cover que un ORB muerto
+    }
     if (++n % 250 === 0) console.log(`  tracks ${n}/${tracks.length} (api=${lfm.stats.apiCalls} cache=${lfm.stats.cacheHits})`)
   }
 
@@ -114,12 +121,15 @@ if (!noLastfm) {
         const sim = (ar.similar?.artist ?? []).map(x => x.name).filter(Boolean).slice(0, 8)
         if (sim.length) a.similar = sim
       }
+      // Pedimos 50 (la API/caché es igual de barata) pero guardamos solo el
+      // top-15 en el JSON: el resto la app lo carga bajo demanda ("Mostrar más")
+      // y lo cachea en Dexie. Mantiene artists.json ligero.
       const top = await lfm.artistGetTopTracks(a.name, 50)
       const tt = (top?.toptracks?.track ?? []).map(x => ({
         title: x.name,
         ...(x.listeners ? { listeners: parseInt(x.listeners, 10) || undefined } : {})
       })).filter(x => x.title)
-      if (tt.length) a.topTracks = tt
+      if (tt.length) a.topTracks = tt.slice(0, 15)
       // Foto de artista: Last.fm no la sirve → Deezer.
       if (!a.imageUrl) { const img = await deezer.artistImage(a.name); if (img) a.imageUrl = img }
     } catch (e) { console.warn(`  ! artista ${a.key}: ${e.message}`) }
