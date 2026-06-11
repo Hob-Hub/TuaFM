@@ -50,9 +50,10 @@ function playTrack(track: { title: string; coverUrl?: string }): void {
     <p v-else-if="error" class="text-amber-300 text-sm">{{ error }}</p>
 
     <template v-else-if="info">
-      <header class="flex items-end gap-5 mb-6">
-        <TrackCover :src="info.imageUrl" :fallback-text="info.name" :size="160" rounded="rounded-2xl" />
-        <div class="min-w-0 pb-1">
+      <header class="flex items-end gap-4 sm:gap-5 mb-6">
+        <TrackCover :src="info.imageUrl" :fallback-text="info.name" :size="160" rounded="rounded-2xl"
+                    class="w-28! h-28! sm:w-40! sm:h-40! shrink-0" />
+        <div class="min-w-0 flex-1 pb-1">
           <p class="text-xs uppercase tracking-wider text-muted">Artista</p>
           <h1 class="font-display text-3xl sm:text-4xl font-extrabold truncate">{{ info.name }}</h1>
           <p class="text-sm text-muted mt-2">{{ fmtListeners(info.listeners) }} oyentes en Last.fm</p>

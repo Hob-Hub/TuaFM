@@ -67,7 +67,7 @@ function fmtDuration(ms?: number): string {
       <template v-if="track.enriched || track.artist">
         <RouterLink
           :to="{ name: 'artist', params: { name: artistLabel } }"
-          class="text-xs text-muted truncate hover:text-white/80 hover:underline"
+          class="inline-block max-w-full text-xs text-muted truncate hover:text-white/80 hover:underline"
           @click.stop
         >{{ artistLabel }}</RouterLink>
       </template>

@@ -23,7 +23,7 @@ const radio = useRadioStore()
       </p>
     </template>
 
-    <div v-else class="grid lg:grid-cols-[340px_1fr] gap-6 lg:gap-8 items-start">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
       <div class="lg:sticky lg:top-6 self-start">
         <RadioControls />
       </div>

@@ -150,7 +150,7 @@ if (q.value) void runSearch(q.value)
             <p class="text-sm font-medium text-white truncate">{{ s.title }}</p>
             <RouterLink
               :to="{ name: 'artist', params: { name: s.artist } }"
-              class="text-xs text-muted truncate hover:text-white/80 hover:underline"
+              class="inline-block max-w-full text-xs text-muted truncate hover:text-white/80 hover:underline"
               @click.stop
             >{{ s.artist }}</RouterLink>
           </div>
