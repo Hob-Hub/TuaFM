@@ -23,7 +23,7 @@ function isActive(i: number): boolean {
 </script>
 
 <template>
-  <div class="p-5 sm:p-8 max-w-4xl mx-auto">
+  <div class="p-5 sm:p-8 max-w-3xl mx-auto">
     <header class="mb-6">
       <h1 class="font-display text-2xl sm:text-3xl font-extrabold">Recomendaciones</h1>
       <p class="text-muted text-sm mt-1">El oráculo de Last.fm, a partir de tus favoritos.</p>

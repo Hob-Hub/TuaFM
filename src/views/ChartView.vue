@@ -54,7 +54,7 @@ function isActiveRow(i: number): boolean {
 </script>
 
 <template>
-  <div class="p-5 sm:p-8 max-w-4xl mx-auto">
+  <div class="p-5 sm:p-8 max-w-3xl mx-auto">
     <button class="text-sm text-muted hover:text-white mb-5 flex items-center gap-1" @click="router.back()">
       <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
       Volver
