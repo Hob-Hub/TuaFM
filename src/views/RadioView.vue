@@ -1,26 +1,41 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRadioStore } from '@/stores/radio.store'
+import { useRadioQueue } from '@/composables/useRadioQueue'
+import { usePlayback } from '@/composables/usePlayback'
+import { nostalgiaLabel } from '@/utils/radioLabels'
 import RadioControls from '@/components/radio/RadioControls.vue'
 import RadioQueueView from '@/components/radio/RadioQueueView.vue'
 
 const radio = useRadioStore()
+const { generate, generating } = useRadioQueue()
+const playback = usePlayback()
 
-// Con una radio activa, los controles se colapsan a una barra-resumen fija y la
-// cola ocupa todo el ancho. "Cambiar" despliega el generador completo. Al
-// regenerar (cambia la fuente/año/nostalgia) se recoge solo.
+// Con una radio activa, el generador se colapsa a una barra-resumen fija: toda
+// la barra abre el menú, y "Regenerar" re-tira la radio con la misma fuente. Al
+// regenerar con otros ajustes, el menú se recoge solo.
 const showControls = ref(false)
 watch(
   () => `${radio.sourceLabel}|${radio.activeYear}|${radio.activeLambda}`,
   () => { showControls.value = false }
 )
+
+async function regenerate(): Promise<void> {
+  if (generating.value || !radio.activeChartId) return
+  const ok = await generate({
+    chartId: radio.activeChartId,
+    refYear: radio.activeYear,
+    lambda:  radio.activeLambda
+  })
+  if (ok) playback.playRadioIndex(0)
+}
 </script>
 
 <template>
-  <!-- Sin radio: el generador es el protagonista, centrado. Con radio: barra
-       compacta fija con el resumen + cola a todo el ancho; el generador se
-       despliega bajo demanda con "Cambiar". -->
-  <div class="p-5 sm:p-8 mx-auto" :class="radio.isActive ? 'max-w-3xl' : 'max-w-md'">
+  <!-- Sin radio: el generador es el protagonista, centrado y ancho. Con radio:
+       barra-resumen fija + cola a todo el ancho; el generador se despliega bajo
+       demanda tocando la barra. -->
+  <div class="p-5 sm:p-8 mx-auto" :class="radio.isActive ? 'max-w-3xl' : 'max-w-2xl'">
     <header class="mb-6">
       <h1 class="font-display text-2xl sm:text-3xl font-extrabold">Radio</h1>
       <p class="text-muted text-sm mt-1">La máquina del tiempo sonora — cómo habría sonado la radio ese año.</p>
@@ -34,32 +49,45 @@ watch(
     </template>
 
     <template v-else>
-      <!-- Barra-resumen fija -->
+      <!-- Barra-resumen fija. Botón-overlay invisible: toda la barra abre el
+           menú; "Regenerar" y el contenido quedan por encima sin anidar botones. -->
       <div class="sticky top-14 md:top-0 z-10 bg-surface/95 backdrop-blur pt-1 pb-3">
-        <div class="flex items-center gap-3 rounded-2xl bg-card border border-line px-4 py-3">
-          <span class="grid place-items-center w-10 h-10 rounded-xl bg-brand/20 text-brand shrink-0">
-            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11H4zM8 4l8 3M12 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
-          </span>
-          <div class="min-w-0">
-            <p class="text-sm font-semibold text-white truncate">{{ radio.sourceLabel }}</p>
-            <p class="text-xs text-muted">Nostalgia {{ radio.activeLambda.toFixed(2) }} · {{ radio.queue.length }} canciones</p>
-          </div>
+        <div
+          class="relative flex items-center gap-3 rounded-2xl bg-card border px-4 py-3 transition-colors"
+          :class="showControls ? 'border-brand/60' : 'border-line'"
+        >
           <button
-            class="ml-auto shrink-0 flex items-center gap-1.5 px-3 h-9 rounded-xl border text-sm transition-colors"
-            :class="showControls ? 'border-brand bg-brand/15 text-white' : 'border-line text-muted hover:text-white'"
+            class="absolute inset-0 rounded-2xl"
+            :aria-label="showControls ? 'Cerrar ajustes de la radio' : 'Cambiar lista, año y nostalgia'"
             :aria-expanded="showControls"
             @click="showControls = !showControls"
+          />
+
+          <span class="grid place-items-center w-10 h-10 rounded-xl bg-brand/20 text-brand shrink-0 pointer-events-none">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11H4zM8 4l8 3M12 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+          </span>
+          <div class="min-w-0 pointer-events-none">
+            <p class="text-sm font-semibold text-white truncate">{{ radio.sourceLabel }}</p>
+            <p class="text-xs text-muted truncate">{{ nostalgiaLabel(radio.activeLambda) }} · {{ radio.queue.length }} canciones</p>
+          </div>
+
+          <button
+            class="relative ml-auto shrink-0 flex items-center gap-1.5 px-3 h-9 rounded-xl bg-surface-2 border border-line text-sm text-muted hover:text-white disabled:opacity-60 transition-colors"
+            :disabled="generating"
+            @click="regenerate"
           >
-            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-            {{ showControls ? 'Cerrar' : 'Cambiar' }}
+            <svg viewBox="0 0 24 24" class="w-4 h-4" :class="generating && 'animate-spin'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            <span class="hidden sm:inline">{{ generating ? 'Generando…' : 'Regenerar' }}</span>
           </button>
+
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-muted shrink-0 pointer-events-none transition-transform"
+               :class="showControls && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </div>
       </div>
 
-      <!-- Generador completo, desplegable (en flujo normal: el botón Generar
-           siempre es alcanzable al hacer scroll). -->
+      <!-- Generador completo, desplegable (flujo normal: "Generar" siempre alcanzable). -->
       <Transition name="ctrl">
-        <div v-if="showControls" class="max-w-md mb-5">
+        <div v-if="showControls" class="mb-5">
           <RadioControls />
         </div>
       </Transition>
