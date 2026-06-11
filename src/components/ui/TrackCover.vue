@@ -28,7 +28,7 @@ const gradient = computed(() => {
   const t = props.fallbackText ?? ''
   let h = 0
   for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 360
-  return `linear-gradient(135deg, hsl(${h} 55% 38%), hsl(${(h + 40) % 360} 55% 22%))`
+  return `linear-gradient(135deg, hsl(${h} 45% 34%), hsl(${(h + 40) % 360} 45% 20%))`
 })
 
 const initial = computed(() => (props.fallbackText?.trim()?.[0] ?? '').toUpperCase())
