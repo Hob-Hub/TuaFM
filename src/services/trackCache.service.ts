@@ -75,6 +75,7 @@ async function fromCatalog(
     title:     cat.title,
     album:     cat.album,
     year:      cat.year,
+    chartYear: cat.chartYear,
     duration:  cat.durationMs,
     coverUrl:  cat.coverUrl,
     tags:      cat.tags ?? [],

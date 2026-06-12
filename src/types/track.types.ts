@@ -5,7 +5,8 @@ export interface Track {
   artist:          string        // artista principal, normalizado (para cacheKey)
   artistDisplay?:  string        // con feat., para UI
   album?:          string
-  year?:           number
+  year?:           number        // año de edición (Last.fm/DB; cobertura parcial)
+  chartYear?:      number        // año de debut en el Top (de los charts; 100% para catálogo)
   duration?:       number        // ms
   coverUrl?:       string
   tags?:           string[]

@@ -22,6 +22,9 @@ const ui = useUiStore()
 
 const artistLabel = computed(() => props.track.artistDisplay ?? props.track.artist)
 const titleLabel  = computed(() => props.track.titleDisplay  ?? props.track.title)
+// Año a mostrar: el de debut en el Top (de los charts, ~100% en catálogo) y, si
+// no, el de edición. Reemplaza a los tags (que solo cubrían ~1 de cada 5 pistas).
+const yearLabel   = computed(() => props.track.chartYear ?? props.track.year)
 
 function fmtDuration(ms?: number): string {
   if (!ms) return ''
@@ -74,11 +77,10 @@ function fmtDuration(ms?: number): string {
       <div v-else class="h-3 w-24 mt-1 rounded bg-surface-2 animate-pulse" />
     </div>
 
-    <!-- Tags (solo desktop) -->
-    <div v-if="track.tags?.length" class="hidden lg:flex gap-1 mr-2">
-      <span v-for="t in track.tags.slice(0, 2)" :key="t"
-            class="text-[10px] px-2 py-0.5 rounded-full bg-surface-2 text-muted">{{ t }}</span>
-    </div>
+    <!-- Año (debut en el Top): pill discreto en el hueco que dejaban los tags -->
+    <span v-if="yearLabel" class="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-surface-2 text-muted tabular-nums mr-1">
+      {{ yearLabel }}
+    </span>
 
     <!-- Duración -->
     <span class="text-xs text-muted tabular-nums w-10 text-right hidden sm:block">

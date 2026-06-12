@@ -80,4 +80,33 @@ export async function trackCover(artist, title) {
   return cover
 }
 
+/** Duración en ms para un (artista,título) desde Deezer, o null si no hay match.
+ *  Respaldo cuando Last.fm no trae duración (la búsqueda ya devuelve `duration`). */
+export async function trackDuration(artist, title) {
+  const k = `dur:${String(artist).toLowerCase().trim()}::${String(title).toLowerCase().trim()}`
+  const cached = sel.get(k)
+  if (cached) { stats.cacheHits++; return JSON.parse(cached.json) }
+
+  const q = `artist:"${artist}" track:"${title}"`
+  const url = `https://api.deezer.com/search?limit=1&q=${encodeURIComponent(q)}`
+  const wait = MIN_INTERVAL_MS - (Date.now() - lastAt)
+  if (wait > 0) await sleep(wait)
+  lastAt = Date.now()
+  stats.apiCalls++
+
+  let ms = null
+  try {
+    const res = await fetch(url)
+    if (res.ok) {
+      const data = await res.json()
+      const secs = data?.data?.[0]?.duration
+      if (secs) ms = Number(secs) * 1000
+    }
+  } catch { /* red: no cachear, se reintenta en el siguiente pase */ }
+
+  if (ms) { ins.run(k, JSON.stringify(ms), Date.now()) }
+  else { stats.misses++; ins.run(k, JSON.stringify(null), Date.now()) }
+  return ms
+}
+
 export function closeCache() { cacheDb.close() }

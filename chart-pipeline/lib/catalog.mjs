@@ -58,6 +58,8 @@ export function buildCatalog(charts) {
           const seed = seedByKey?.get(songKey)
           if (!canon.album && seed?.album) canon.album = seed.album
           if (!canon.year && seed?.year)   canon.year  = seed.year
+          // Año de debut en el Top: el más temprano en que aparece (en cualquier chart).
+          if (period.year < canon.chartYear) canon.chartYear = period.year
           for (const id of artistIds) if (!canon.artistIds.includes(id)) canon.artistIds.push(id)
           trackIdByKey.set(songKey, canon.id)
           if (songKey !== canon.key) trackAliases.set(songKey, canon.id)
@@ -69,6 +71,7 @@ export function buildCatalog(charts) {
           title:  song.titleDisplay ?? song.title,
           artist: song.artistDisplay ?? song.artist,
           artistId: artistIds[0], artistIds: [...new Set(artistIds)],
+          chartYear: period.year,
           ...(seed?.album ? { album: seed.album } : {}),
           ...(seed?.year  ? { year:  seed.year }  : {}),
           ...(song.youtubeVideoId ? { youtubeVideoId: song.youtubeVideoId } : {}),

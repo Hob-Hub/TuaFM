@@ -99,6 +99,11 @@ if (!noLastfm) {
       if (dz) t.coverUrl = dz
       else if (/prisaradio/i.test(t.coverUrl || '')) t.coverUrl = undefined  // mejor sin cover que un ORB muerto
     }
+    // Duración de respaldo (Deezer) cuando Last.fm no la trajo.
+    if (!t.durationMs) {
+      const ms = await deezer.trackDuration(primaryName(t.artist), t.title)
+      if (ms) t.durationMs = ms
+    }
     if (++n % 250 === 0) console.log(`  tracks ${n}/${tracks.length} (api=${lfm.stats.apiCalls} cache=${lfm.stats.cacheHits})`)
   }
 

@@ -51,7 +51,8 @@ export interface CatalogTrack {
   artistId:        number        // artista principal → CatalogArtist.id
   artistIds?:      number[]      // TODOS los artistas (principal + colaboradores)
   album?:          string
-  year?:           number
+  year?:           number        // año de edición (siembra de la DB; cobertura parcial)
+  chartYear?:      number        // año de debut en el Top (derivado de los periodos)
   durationMs?:     number
   tags?:           string[]
   youtubeVideoId?: string
