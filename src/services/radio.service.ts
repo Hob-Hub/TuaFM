@@ -29,6 +29,7 @@ function candidateToTrack(c: RadioCandidate): Track {
     id: nanoid(), artist: c.artist, artistDisplay: c.artistDisplay,
     title: c.title, titleDisplay: c.titleDisplay,
     youtubeVideoId: c.youtubeVideoId, coverUrl: c.coverUrl,
+    chartYear: c.chartYear, duration: c.duration,
     enriched: false
   }
 }

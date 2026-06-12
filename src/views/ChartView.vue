@@ -33,7 +33,8 @@ async function load(): Promise<void> {
     tracks.value = (top?.songs ?? []).map(s => ({
       id: nanoid(), artist: s.artist, title: s.title,
       artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
-      youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl, enriched: false
+      youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl,
+      chartYear: s.chartYear, duration: s.duration, enriched: false
     }))
   } finally {
     loading.value = false

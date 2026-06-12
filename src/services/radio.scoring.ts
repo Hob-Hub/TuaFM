@@ -39,12 +39,16 @@ export function aggregateCandidates(
         existing.appearances += 1
         if (!existing.youtubeVideoId && song.youtubeVideoId) existing.youtubeVideoId = song.youtubeVideoId
         if (!existing.coverUrl && song.coverUrl)             existing.coverUrl       = song.coverUrl
+        if (!existing.chartYear && song.chartYear)           existing.chartYear      = song.chartYear
+        if (!existing.duration && song.duration)             existing.duration       = song.duration
       } else {
         map.set(key, {
           artist: song.artist, artistDisplay: song.artistDisplay,
           title: song.title, titleDisplay: song.titleDisplay ?? song.title,
           youtubeVideoId: song.youtubeVideoId,
           coverUrl: song.coverUrl,
+          chartYear: song.chartYear,
+          duration: song.duration,
           weight: wScore, score: song.score, appearances: 1
         })
       }

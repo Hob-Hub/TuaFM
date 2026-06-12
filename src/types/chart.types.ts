@@ -30,6 +30,8 @@ export interface ChartSong {
   titleDisplay:    string        // título original, para UI
   youtubeVideoId?: string
   coverUrl?:       string
+  chartYear?:      number        // del catálogo: para mostrar año al cargar la cola
+  duration?:       number        // ms, del catálogo: duración al cargar la cola
 }
 
 export interface ChartPeriod {
@@ -87,6 +89,8 @@ export interface RadioCandidate {
   titleDisplay:    string
   youtubeVideoId?: string
   coverUrl?:       string
+  chartYear?:      number        // año de debut en el Top (del catálogo)
+  duration?:       number        // ms (del catálogo)
   weight:          number        // score anual × decaimiento temporal, acumulado
   score:           number        // score anual acumulado (sin decaimiento)
   appearances:     number        // en cuántos años del rango apareció

@@ -64,7 +64,9 @@ function hydrate(raw: RawChartSong, tracks: Map<number, CatalogTrack>): ChartSon
     artist, title,
     artistDisplay: t.artist, titleDisplay: t.title,
     youtubeVideoId: t.youtubeVideoId,
-    coverUrl: t.coverUrl
+    coverUrl: t.coverUrl,
+    chartYear: t.chartYear,
+    duration: t.durationMs
   }
 }
 
