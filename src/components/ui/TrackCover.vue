@@ -36,27 +36,32 @@ const initial = computed(() => (props.fallbackText?.trim()?.[0] ?? '').toUpperCa
 
 <template>
   <div
-    class="relative shrink-0 overflow-hidden bg-surface-2 grid place-items-center"
+    class="relative shrink-0 overflow-hidden bg-surface-2"
     :class="rounded"
     :style="{ width: size + 'px', height: size + 'px' }"
   >
+    <!-- Placeholder SIEMPRE de fondo: inicial con degradado o nota musical. La
+         imagen lo tapa al cargar; mientras carga (o si falla) se ve esto en vez
+         de un hueco oscuro. -->
+    <div class="absolute inset-0 grid place-items-center">
+      <div
+        v-if="fallbackText && initial"
+        class="w-full h-full grid place-items-center font-display font-bold text-white/90 select-none"
+        :style="{ background: gradient, fontSize: size * 0.42 + 'px' }"
+      >{{ initial }}</div>
+      <svg v-else viewBox="0 0 24 24" class="w-1/2 h-1/2 text-muted/50" fill="currentColor" aria-hidden="true">
+        <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
+      </svg>
+    </div>
+
+    <!-- Imagen encima (transparente mientras carga → deja ver el placeholder) -->
     <img
       v-if="usableSrc && !failed"
       :src="usableSrc"
       :alt="alt ?? ''"
       loading="lazy"
-      class="w-full h-full object-cover"
+      class="absolute inset-0 w-full h-full object-cover"
       @error="failed = true"
     />
-    <!-- Placeholder con inicial (artistas) -->
-    <div
-      v-else-if="fallbackText && initial"
-      class="w-full h-full grid place-items-center font-display font-bold text-white/90 select-none"
-      :style="{ background: gradient, fontSize: size * 0.42 + 'px' }"
-    >{{ initial }}</div>
-    <!-- Placeholder genérico (nota musical) -->
-    <svg v-else viewBox="0 0 24 24" class="w-1/2 h-1/2 text-muted/50" fill="currentColor" aria-hidden="true">
-      <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
-    </svg>
   </div>
 </template>
