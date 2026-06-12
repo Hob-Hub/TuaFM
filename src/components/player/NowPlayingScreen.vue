@@ -118,6 +118,15 @@ const modeLabel = computed(() => {
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h11M4 12h11M4 18h7M17 14v6M17 20l3-2-3-2"/></svg>
         Cola
       </button>
+      <button class="flex items-center gap-2 text-sm transition-colors"
+              :class="player.clipMode ? 'text-brand' : 'text-muted hover:text-white'"
+              :aria-label="player.clipMode ? `Modo clips, ${player.clipSeconds} segundos` : 'Activar modo clips'"
+              @click="player.cycleClip()">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="12" x2="21" y2="12" /><rect x="8" y="7" width="8" height="10" rx="2" fill="currentColor" stroke="none" />
+        </svg>
+        {{ player.clipMode ? `${player.clipSeconds}s` : 'Clips' }}
+      </button>
       <button class="flex items-center gap-2 text-sm text-muted hover:text-white"
               :disabled="!current" @click="current && ui.openSaveToPlaylist(current)">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>

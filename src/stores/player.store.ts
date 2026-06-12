@@ -15,6 +15,16 @@ export const usePlayerStore = defineStore('player', () => {
   const repeatMode        = ref<RepeatMode>('none')
   const isShuffle         = ref(false)
 
+  // Modo clips (escucha rápida): reproduce solo un trozo central de cada canción
+  // y auto-avanza. 0 = off; el botón cicla 0→15→30→45→60→0.
+  const clipSeconds       = ref(0)
+  const CLIP_STEPS = [0, 15, 30, 45, 60] as const
+  const clipMode = computed(() => clipSeconds.value > 0)
+  function cycleClip(): void {
+    const i = CLIP_STEPS.indexOf(clipSeconds.value as typeof CLIP_STEPS[number])
+    clipSeconds.value = CLIP_STEPS[(i + 1) % CLIP_STEPS.length] ?? 0
+  }
+
   const progress  = computed(() => duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0)
   const isPlaying = computed(() => state.value === 'playing')
 
@@ -26,8 +36,9 @@ export const usePlayerStore = defineStore('player', () => {
   return {
     currentTrackId, currentPlaylistId, queueMode, effectiveQueueMode,
     state, currentTime, duration, volume, isMuted, repeatMode, isShuffle,
+    clipSeconds, clipMode, cycleClip,
     progress, isPlaying
   }
 }, {
-  persist: { pick: ['volume', 'isMuted', 'repeatMode', 'isShuffle'] }
+  persist: { pick: ['volume', 'isMuted', 'repeatMode', 'isShuffle', 'clipSeconds'] }
 })

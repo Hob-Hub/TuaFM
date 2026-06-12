@@ -17,6 +17,11 @@ let handlersBound = false
 let enrichWatcherSet = false
 let enrichInFlight = false
 
+// Modo clips: a qué pista se le aplicó ya el salto al centro, y desde qué segundo.
+let clipWatcherSet = false
+let clipAppliedFor: string | null = null
+let clipStart = 0
+
 // Candidatos de YouTube de la pista en curso, para reintentar en onError.
 let currentCandidates: string[] = []
 let candidateIdx = 0
@@ -38,6 +43,38 @@ export function usePlayback() {
   const { extend: extendRadio } = useRadioQueue()
 
   setupQueueEnrichment()
+  setupClipMode()
+
+  /**
+   * Modo clips (escucha rápida): cuando está activo, salta al centro de cada
+   * canción y avanza tras `clipSeconds`. Todo se gobierna desde un único watcher
+   * del tiempo (que avanza solo cuando suena, así respeta pausas): aplica el salto
+   * una vez por pista (con la duración ya fiable porque está 'playing') y, una vez
+   * aplicado, dispara el avance al llegar al final del trozo.
+   */
+  function setupClipMode(): void {
+    if (clipWatcherSet) return
+    clipWatcherSet = true
+    watch(() => player.currentTime, (t) => {
+      if (!player.clipMode) { clipAppliedFor = null; return }
+      const id = player.currentTrackId
+      if (!id || player.state !== 'playing') return
+
+      if (clipAppliedFor !== id) {
+        const d = player.duration
+        if (d <= 0) return
+        const n = player.clipSeconds
+        clipStart = Math.min(Math.max(d / 2 - n / 2, 0), Math.max(0, d - n))
+        clipAppliedFor = id
+        if (Math.abs(t - clipStart) > 1) yt.seekTo(clipStart)   // salta al centro
+        return
+      }
+      if (t >= clipStart + player.clipSeconds) {
+        clipAppliedFor = null    // evita doble avance hasta que cargue la siguiente
+        void next()
+      }
+    })
+  }
 
   /**
    * Enriquece la cola de radio en segundo plano para que carátulas, tags y

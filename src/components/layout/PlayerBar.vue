@@ -92,6 +92,19 @@ function onVolume(v: number): void { yt.setVolume(v) }
 
     <!-- Derecha: volumen -->
     <div class="hidden md:flex items-center gap-2 justify-self-end">
+      <!-- Modo clips (escucha rápida): cicla 0→15→30→45→60 s -->
+      <button
+        class="flex items-center gap-1 px-1.5 h-8 rounded-lg transition-colors"
+        :class="player.clipMode ? 'text-brand' : 'text-muted hover:text-white'"
+        :title="player.clipMode ? `Clips de ${player.clipSeconds}s · clic para cambiar` : 'Modo clips: escucha solo el trozo central de cada canción'"
+        :aria-label="player.clipMode ? `Modo clips, ${player.clipSeconds} segundos` : 'Activar modo clips'"
+        @click="player.cycleClip()"
+      >
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="12" x2="21" y2="12" /><rect x="8" y="7" width="8" height="10" rx="2" fill="currentColor" stroke="none" />
+        </svg>
+        <span v-if="player.clipMode" class="text-xs font-semibold tabular-nums">{{ player.clipSeconds }}s</span>
+      </button>
       <button class="p-2 rounded-lg hover:text-white" :class="ui.queueOpen ? 'text-brand' : 'text-muted'"
               aria-label="Ver cola de reproducción" @click="ui.toggleQueue()">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h11M4 12h11M4 18h7M17 14v6M17 20l3-2-3-2"/></svg>
