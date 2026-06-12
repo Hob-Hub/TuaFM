@@ -23,6 +23,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Audit (vulnerabilidades high/critical)
+        run: npm audit --audit-level=high
+
       - name: Lint
         run: npm run lint
 
