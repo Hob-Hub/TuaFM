@@ -65,6 +65,23 @@ export function buildCatalog(charts) {
           if (songKey !== canon.key) trackAliases.set(songKey, canon.id)
           continue
         }
+        // Misma cacheKey ya canonizada con OTRA huella (p. ej. feat. o título con
+        // distinta puntuación que normalizeStr colapsa pero `tight` no). La key ES
+        // la identidad de caché del runtime → no puede haber dos entradas con ella
+        // (getTrackByKey solo vería una). Fusiona en la existente.
+        const sameKeyId = trackIdByKey.get(songKey)
+        if (sameKeyId != null) {
+          const c = tracks[sameKeyId]
+          if (!c.youtubeVideoId && song.youtubeVideoId) c.youtubeVideoId = song.youtubeVideoId
+          if (!c.coverUrl && song.coverUrl)             c.coverUrl       = song.coverUrl
+          const seed = seedByKey?.get(songKey)
+          if (!c.album && seed?.album) c.album = seed.album
+          if (!c.year && seed?.year)   c.year  = seed.year
+          if (period.year < c.chartYear) c.chartYear = period.year
+          for (const id of artistIds) if (!c.artistIds.includes(id)) c.artistIds.push(id)
+          trackByFp.set(fp, c)   // futuras con esta huella caen en la canónica
+          continue
+        }
         const seed = seedByKey?.get(songKey)
         const t = {
           id: tracks.length, key: songKey,
