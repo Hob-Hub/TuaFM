@@ -4,6 +4,9 @@
   "version": "0.5.0",
   "type": "module",
   "description": "TuaFM — reproductor de música web con memoria histórica de charts",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
