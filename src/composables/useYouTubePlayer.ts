@@ -31,8 +31,17 @@ declare global {
   }
 }
 
-// Estado singleton (vive una sola vez en App.vue)
-let player: YTPlayer | null = null
+// ── Reproducción sin cortes (gapless) con dos players ────────────────────────
+// Mientras `active` suena, `standby` pre-bufferiza la SIGUIENTE pista con
+// cueVideoById (sin sonar). Al pasar de canción, si la pista pedida es la que ya
+// estaba cargada en standby, se intercambian los roles y se reproduce al instante
+// (sin el silencio de bufferizar). Si no coincide (prev, salto, aleatorio), se
+// carga normal en el activo. Toda esta mecánica queda encapsulada aquí.
+let active:  YTPlayer | null = null
+let standby: YTPlayer | null = null
+let standbyVideoId: string | null = null   // qué vídeo tiene cargado el standby
+let readyCount = 0
+
 let apiPromise: Promise<void> | null = null
 let ticker: ReturnType<typeof setInterval> | null = null
 let onEndedCb: (() => void) | null = null
@@ -93,13 +102,13 @@ let intendedPlaying = false
 let lifecycleBound  = false
 
 function resumeIfIntended(): void {
-  if (!player || !intendedPlaying || !window.YT) return
+  if (!active || !intendedPlaying || !window.YT) return
   try {
-    const st = player.getPlayerState()
+    const st = active.getPlayerState()
     const S  = window.YT.PlayerState
     if (st === S.PAUSED || st === S.CUED || st === S.UNSTARTED) {
       anchorPlay()
-      player.playVideo()
+      active.playVideo()
     }
   } catch { /* player no listo */ }
 }
@@ -138,36 +147,36 @@ export function useYouTubePlayer() {
   const playerStore = usePlayerStore()
   const ready = ref(false)
 
-  async function init(mountEl: HTMLElement): Promise<void> {
+  /** Crea los dos players (activo + standby) montados en dos divs distintos. */
+  async function init(mountA: HTMLElement, mountB: HTMLElement): Promise<void> {
     await loadApi()
     bindLifecycle()
-    if (player) { ready.value = true; return }
+    if (active && standby) { ready.value = true; return }
 
-    player = new window.YT!.Player(mountEl, {
+    const make = (el: HTMLElement): YTPlayer => new window.YT!.Player(el, {
       height: '200',
       width: '200',
       playerVars: { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, origin: window.location.origin },
       events: {
-        onReady: () => {
-          ready.value = true
-          player!.setVolume(playerStore.volume)
-          if (playerStore.isMuted) player!.mute()
-          startTicker()
+        onReady: (e: YTPlayerEvent) => {
+          e.target.setVolume(playerStore.volume)
+          if (playerStore.isMuted) e.target.mute()
+          readyCount++
+          if (readyCount >= 2) { ready.value = true; startTicker() }
         },
-        onStateChange: (e: YTPlayerEvent) => handleState(e.data),
-        onError: (e: YTPlayerEvent) => {
-          // Si hay handler de fallback (probar otro candidato / saltar), delegamos
-          // en él; si no, dejamos el estado de error como antes.
-          if (onErrorCb) onErrorCb(e.data)
-          else playerStore.state = 'error'
-        }
+        onStateChange: (e: YTPlayerEvent) => handleState(e),
+        onError: (e: YTPlayerEvent) => handleError(e)
       }
     })
+
+    active  = make(mountA)
+    standby = make(mountB)
   }
 
-  function handleState(state: number): void {
+  function handleState(e: YTPlayerEvent): void {
+    if (e.target !== active) return   // ignora eventos del player en standby (pre-buffer)
     const S = window.YT!.PlayerState
-    switch (state) {
+    switch (e.data) {
       case S.PLAYING:   playerStore.state = 'playing'; setPlaybackState('playing'); anchorPlay();  break
       case S.PAUSED:    playerStore.state = 'paused';  setPlaybackState('paused');  anchorPause(); break
       case S.BUFFERING: playerStore.state = 'loading'; setPlaybackState('playing'); anchorPlay();  break
@@ -180,6 +189,14 @@ export function useYouTubePlayer() {
     }
   }
 
+  function handleError(e: YTPlayerEvent): void {
+    // Si falla el vídeo pre-bufferizado en standby, invalida el preload (no
+    // saltaremos a un vídeo roto; se cargará normal y entrará el fallback).
+    if (e.target === standby) { standbyVideoId = null; return }
+    if (onErrorCb) onErrorCb(e.data)
+    else playerStore.state = 'error'
+  }
+
   /** Refleja en el SO si está sonando o en pausa (pantalla de bloqueo, etc.). */
   function setPlaybackState(s: MediaSessionPlaybackState): void {
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s
@@ -188,10 +205,10 @@ export function useYouTubePlayer() {
   function startTicker(): void {
     if (ticker) return
     ticker = setInterval(() => {
-      if (!player) return
+      if (!active) return
       try {
-        playerStore.currentTime = player.getCurrentTime() || 0
-        const d = player.getDuration() || 0
+        playerStore.currentTime = active.getCurrentTime() || 0
+        const d = active.getDuration() || 0
         if (d > 0) {
           playerStore.duration = d
           // Posición para la barra de progreso del SO.
@@ -209,35 +226,64 @@ export function useYouTubePlayer() {
     }, 500)
   }
 
+  /**
+   * Carga y reproduce un vídeo. Si es el que el standby ya tenía pre-bufferizado,
+   * intercambia roles y arranca al instante (gapless). Si no, lo carga en el
+   * activo (con el buffering normal).
+   */
   function loadAndPlay(videoId: string): void {
-    if (!player) return
+    if (!active) return
     intendedPlaying = true
     playerStore.state = 'loading'
     playerStore.currentTime = 0
-    anchorPlay()   // arranca el ancla dentro del gesto (evita bloqueo de autoplay)
-    player.loadVideoById(videoId)
+    anchorPlay()
+
+    if (standby && standbyVideoId === videoId) {
+      // ── Swap gapless ──────────────────────────────────────────────────────
+      const old = active
+      active  = standby
+      standby = old
+      standbyVideoId = null
+      try { old.stopVideo() } catch { /* noop */ }        // corta la pista anterior primero
+      try {
+        active.setVolume(playerStore.volume)
+        if (playerStore.isMuted) active.mute(); else active.unMute()
+      } catch { /* noop */ }
+      active.playVideo()                                   // ya cueado → arranca casi al instante
+    } else {
+      standbyVideoId = null                                // preload obsoleto
+      active.loadVideoById(videoId)
+    }
   }
 
-  function play():  void { intendedPlaying = true;  anchorPlay();  player?.playVideo() }
-  function pause(): void { intendedPlaying = false; anchorPause(); player?.pauseVideo() }
+  /** Pre-bufferiza la siguiente pista en el player en standby (sin sonar). */
+  function preload(videoId: string): void {
+    if (!standby || !videoId || standbyVideoId === videoId) return
+    standbyVideoId = videoId
+    try { standby.cueVideoById(videoId) } catch { standbyVideoId = null }
+  }
+
+  function play():  void { intendedPlaying = true;  anchorPlay();  active?.playVideo() }
+  function pause(): void { intendedPlaying = false; anchorPause(); active?.pauseVideo() }
   function toggle(): void {
     if (playerStore.isPlaying) pause(); else play()
   }
-  function seekTo(seconds: number): void { player?.seekTo(seconds, true) }
+  function seekTo(seconds: number): void { active?.seekTo(seconds, true) }
   function setVolume(v: number): void {
     playerStore.volume = v
-    player?.setVolume(v)
+    active?.setVolume(v)
+    standby?.setVolume(v)
     if (v > 0 && playerStore.isMuted) unmute()
   }
-  function mute():   void { playerStore.isMuted = true;  player?.mute() }
-  function unmute(): void { playerStore.isMuted = false; player?.unMute() }
+  function mute():   void { playerStore.isMuted = true;  active?.mute();   standby?.mute() }
+  function unmute(): void { playerStore.isMuted = false; active?.unMute(); standby?.unMute() }
   function toggleMute(): void { if (playerStore.isMuted) unmute(); else mute() }
 
   function onEnded(cb: () => void): void { onEndedCb = cb }
   function onError(cb: (code: number) => void): void { onErrorCb = cb }
 
   return {
-    ready, init, loadAndPlay, play, pause, toggle, seekTo,
+    ready, init, loadAndPlay, preload, play, pause, toggle, seekTo,
     setVolume, mute, unmute, toggleMute, onEnded, onError
   }
 }

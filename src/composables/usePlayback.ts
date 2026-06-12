@@ -224,7 +224,7 @@ export function usePlayback() {
       updateMediaSession(track)
       void recordPlay(track, player.queueMode)
       maybePrefetchRadio()
-      prefetchNext()
+      void prefetchNext()
     } else {
       player.state = 'error'
       ui.showToast(`No se encontró vídeo para "${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}"`, 'error')
@@ -282,15 +282,38 @@ export function usePlayback() {
     }
   }
 
+  /** Aplica enriquecimiento a una pista concreta (por id) en su cola. */
+  function applyEnrichmentToTrack(track: Track, data: Partial<Track>): void {
+    const merged = { ...data, enriched: true }
+    switch (player.queueMode) {
+      case 'radio':           radio.updateTrack(track.id, merged); break
+      case 'recommendations': rec.updateTrack(track.id, merged); break
+      case 'playlist': {
+        const i = playlistQueue.value.findIndex(t => t.id === track.id)
+        if (i >= 0) playlistQueue.value[i] = { ...playlistQueue.value[i], ...merged }
+        void persistPlaylistTrack(track.id, merged)
+        break
+      }
+    }
+  }
+
   /**
-   * Resuelve por adelantado la SIGUIENTE pista (vídeo + metadatos) calentando la
-   * caché de Dexie, para que al pulsar "siguiente" no haya espera de red antes de
-   * cargar el vídeo. No reduce el buffering del iframe, pero sí el resto del corte.
+   * Prepara la SIGUIENTE pista: la resuelve (vídeo + metadatos, caché de Dexie) y
+   * la **pre-bufferiza** en el player en standby. Así al pulsar "siguiente" el
+   * salto es casi instantáneo (gapless), sin la espera de red ni el buffering.
    */
-  function prefetchNext(): void {
-    const t = peekNextTrack()
-    if (!t || t.enriched) return
-    void enrich(t).catch(() => { /* solo calienta la caché; se aplicará al sonar */ })
+  async function prefetchNext(): Promise<void> {
+    let t = peekNextTrack()
+    if (!t) return
+    if (!t.youtubeVideoId || !t.enriched) {
+      const data = await enrich(t).catch(() => null)
+      if (!data) return
+      applyEnrichmentToTrack(t, data)
+      t = peekNextTrack()
+      if (!t) return
+    }
+    const cands = buildCandidates(t)
+    if (cands.length) yt.preload(cands[0])
   }
 
   // ── Navegación ──────────────────────────────────────────────────────────────
