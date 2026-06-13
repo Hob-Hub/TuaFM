@@ -1,0 +1,14 @@
+{
+  "name": "tuafm-youtube-audit",
+  "private": true,
+  "type": "module",
+  "description": "Auditoría de reproducción de YouTube (Playwright) sobre el bundle de TuaFM",
+  "scripts": {
+    "audit": "node playback-audit.mjs",
+    "audit:all": "node playback-audit-batches.mjs --all",
+    "postinstall": "playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.60.0"
+  }
+}
