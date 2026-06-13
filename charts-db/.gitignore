@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# SQLite generadas por los scrapers (se copian a TuaFM/data/, no se versionan)
+*.db
+*.db-wal
+*.db-shm
+
+# Logs de ejecución
+*.log
