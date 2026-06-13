@@ -1,7 +1,8 @@
-// Imágenes de artista desde la API pública de Deezer (sin clave). Last.fm dejó de
-// servir fotos de artista (devuelve un placeholder), así que para la ficha de
-// artista las tomamos de Deezer EN BUILD (en Node no hay CORS; la URL resultante
-// se muestra como <img> en el navegador sin problema).
+// Datos desde la API pública de Deezer (sin clave), EN BUILD: foto de artista
+// (Last.fm sirve un placeholder), y carátula + duración de pista como respaldo
+// cuando Last.fm no las trae o la carátula sembrada está bloqueada por ORB
+// (prisaradio). En Node no hay CORS y las URLs de Deezer son CORS-friendly → se
+// pintan como <img> en el navegador sin problema.
 //
 // Throttle suave + caché de reanudación en .deezer-cache.db (gitignored).
 
@@ -18,95 +19,68 @@ const ins = cacheDb.prepare('INSERT OR REPLACE INTO cache (k, json, fetched_at) 
 const MIN_INTERVAL_MS = 120
 let lastAt = 0
 const sleep = ms => new Promise(r => setTimeout(r, ms))
+const norm = s => String(s).toLowerCase().trim()
 
 export const stats = { apiCalls: 0, cacheHits: 0, misses: 0 }
 
-/** Devuelve la mejor URL de imagen del artista, o null si no hay coincidencia. */
-export async function artistImage(name) {
-  const k = `artist:${String(name).toLowerCase().trim()}`
-  const cached = sel.get(k)
+/**
+ * GET a Deezer con throttle y caché de reanudación. `extract(body)` saca el valor
+ * del cuerpo JSON. Cachea también el "sin resultado" (null) para no repetirlo; un
+ * fallo de RED no se cachea, se reintenta en la siguiente pasada.
+ */
+async function cachedGet(key, url, extract) {
+  const cached = sel.get(key)
   if (cached) { stats.cacheHits++; return JSON.parse(cached.json) }
 
-  const url = `https://api.deezer.com/search/artist?limit=1&q=${encodeURIComponent(name)}`
   const wait = MIN_INTERVAL_MS - (Date.now() - lastAt)
   if (wait > 0) await sleep(wait)
   lastAt = Date.now()
   stats.apiCalls++
 
-  let image = null
+  let value
   try {
     const res = await fetch(url)
-    if (res.ok) {
-      const data = await res.json()
-      const a = data?.data?.[0]
-      image = a?.picture_xl || a?.picture_big || a?.picture_medium || null
-    }
-  } catch { /* red: no cachear, se reintenta en el siguiente pase */ }
+    value = res.ok ? extract(await res.json()) : null
+  } catch {
+    return null   // red caída: no cachear → se reintenta en el siguiente pase
+  }
+  if (value == null) stats.misses++
+  ins.run(key, JSON.stringify(value ?? null), Date.now())
+  return value ?? null
+}
 
-  if (image) { ins.run(k, JSON.stringify(image), Date.now()) }
-  else { stats.misses++; ins.run(k, JSON.stringify(null), Date.now()) }   // cachear "sin foto"
-  return image
+/** Mejor URL de imagen del artista, o null si no hay coincidencia. */
+export function artistImage(name) {
+  return cachedGet(
+    `artist:${norm(name)}`,
+    `https://api.deezer.com/search/artist?limit=1&q=${encodeURIComponent(name)}`,
+    d => { const a = d?.data?.[0]; return a?.picture_xl || a?.picture_big || a?.picture_medium || null }
+  )
 }
 
 /**
- * Carátula de álbum para un (artista,título) desde Deezer. Respaldo cuando
- * Last.fm no trae portada o la sembrada está bloqueada por ORB (prisaradio).
- * Las URLs de Deezer son CORS-friendly → se pintan sin problema en el navegador.
+ * Carátula + duración de una pista en UNA sola búsqueda cacheada (la respuesta de
+ * Deezer trae ambas). `trackCover`/`trackDuration` la comparten: una pista a la
+ * que le falten las dos cosas hace 1 llamada, no 2.
  */
-export async function trackCover(artist, title) {
-  const k = `track:${String(artist).toLowerCase().trim()}::${String(title).toLowerCase().trim()}`
-  const cached = sel.get(k)
-  if (cached) { stats.cacheHits++; return JSON.parse(cached.json) }
-
+function dzTrackInfo(artist, title) {
   const q = `artist:"${artist}" track:"${title}"`
-  const url = `https://api.deezer.com/search?limit=1&q=${encodeURIComponent(q)}`
-  const wait = MIN_INTERVAL_MS - (Date.now() - lastAt)
-  if (wait > 0) await sleep(wait)
-  lastAt = Date.now()
-  stats.apiCalls++
-
-  let cover = null
-  try {
-    const res = await fetch(url)
-    if (res.ok) {
-      const data = await res.json()
-      const al = data?.data?.[0]?.album
-      cover = al?.cover_xl || al?.cover_big || al?.cover_medium || null
+  return cachedGet(
+    `trk:${norm(artist)}::${norm(title)}`,
+    `https://api.deezer.com/search?limit=1&q=${encodeURIComponent(q)}`,
+    d => {
+      const tr = d?.data?.[0]
+      if (!tr) return null
+      const al = tr.album
+      return {
+        cover:      al?.cover_xl || al?.cover_big || al?.cover_medium || null,
+        durationMs: tr.duration ? Number(tr.duration) * 1000 : null
+      }
     }
-  } catch { /* red: no cachear, se reintenta en el siguiente pase */ }
-
-  if (cover) { ins.run(k, JSON.stringify(cover), Date.now()) }
-  else { stats.misses++; ins.run(k, JSON.stringify(null), Date.now()) }
-  return cover
+  )
 }
 
-/** Duración en ms para un (artista,título) desde Deezer, o null si no hay match.
- *  Respaldo cuando Last.fm no trae duración (la búsqueda ya devuelve `duration`). */
-export async function trackDuration(artist, title) {
-  const k = `dur:${String(artist).toLowerCase().trim()}::${String(title).toLowerCase().trim()}`
-  const cached = sel.get(k)
-  if (cached) { stats.cacheHits++; return JSON.parse(cached.json) }
-
-  const q = `artist:"${artist}" track:"${title}"`
-  const url = `https://api.deezer.com/search?limit=1&q=${encodeURIComponent(q)}`
-  const wait = MIN_INTERVAL_MS - (Date.now() - lastAt)
-  if (wait > 0) await sleep(wait)
-  lastAt = Date.now()
-  stats.apiCalls++
-
-  let ms = null
-  try {
-    const res = await fetch(url)
-    if (res.ok) {
-      const data = await res.json()
-      const secs = data?.data?.[0]?.duration
-      if (secs) ms = Number(secs) * 1000
-    }
-  } catch { /* red: no cachear, se reintenta en el siguiente pase */ }
-
-  if (ms) { ins.run(k, JSON.stringify(ms), Date.now()) }
-  else { stats.misses++; ins.run(k, JSON.stringify(null), Date.now()) }
-  return ms
-}
+export async function trackCover(artist, title)    { return (await dzTrackInfo(artist, title))?.cover ?? null }
+export async function trackDuration(artist, title) { return (await dzTrackInfo(artist, title))?.durationMs ?? null }
 
 export function closeCache() { cacheDb.close() }
