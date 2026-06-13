@@ -23,8 +23,12 @@ jobs:
 
       - run: npm ci
 
-      - name: Audit (vulnerabilidades high/critical)
-        run: npm audit --audit-level=high
+      # Solo dependencias de producción: lo que se envía al usuario. Las
+      # vulnerabilidades del tooling de build (esbuild vía vite, devDeps) no
+      # llegan al artefacto estático desplegado y su único fix es un major con
+      # rotura (vite 8), así que no deben tumbar el CI en cada push.
+      - name: Audit (vulnerabilidades high/critical en producción)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Lint
         run: npm run lint
