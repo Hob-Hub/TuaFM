@@ -2,8 +2,9 @@
 
 Tooling **versionado** que consolida los charts a un **Top por año**, construye un
 **catálogo normalizado** (tracks + artistas, pre-cacheado con Last.fm) y genera el
-bundle estático que consume la app. (El scraper en Python y las bases `.db` viven
-en `scripts/`, que está en `.gitignore`.)
+bundle estático que consume la app. (Los scrapers en Python viven en
+[`../charts-db/`](../charts-db/); las bases `.db` que producen van a
+[`../data/`](../data/), no versionadas.)
 
 ## Qué hay aquí
 
@@ -15,6 +16,9 @@ en `scripts/`, que está en `.gitignore`.)
 | [`lib/deezer.mjs`](lib/deezer.mjs) | Imágenes de artista desde Deezer (Last.fm ya no las sirve). Caché en `.deezer-cache.db`. |
 | [`build-charts.mjs`](build-charts.mjs) | Orquestador: charts compactos en `../public/charts/` + catálogo en `../public/catalog/`. |
 | [`chart-configs/*.json`](chart-configs/) | Definición de cada fuente (consulta SQL, `consolidate`, metadatos del registry). |
+| [`overrides.json`](overrides.json) | Correcciones manuales que ganan sobre lo generado (ver más abajo). |
+| [`audit/`](audit/) | Auditoría de reproducción de YouTube (Node + Playwright) sobre el bundle. |
+| [`youtube-tools/`](youtube-tools/) | Descubrimiento/QA de `youtubeVideoId` (Python); sus `--apply` escriben en `overrides.json`. |
 
 ## Salida
 
@@ -31,17 +35,22 @@ Carátulas: se prefiere la de **Last.fm** (álbum); la de `los40.db` queda de fa
 
 ## Requisitos
 
-Las bases SQLite de origen deben estar en la **raíz del repo** (un nivel por
-encima de esta carpeta): `../los40.db`, `../billboard_year_end_hot100.db`. No se
-versionan. El enriquecimiento Last.fm necesita `VITE_LASTFM_API_KEY` (del entorno
-o de `../.env.local`).
+Las bases SQLite de origen viven en `../data/` (ver `dbPath` de cada
+`chart-configs/*.json`): `../data/los40.db`, `../data/billboard_year_end_hot100.db`,
+`../data/italy_year_end_singles.db`. No se versionan. El enriquecimiento Last.fm
+necesita `VITE_LASTFM_API_KEY` (del entorno o de `../.env.local`).
 
 ## Uso
 
 ```bash
-# Build completo (charts + catálogo enriquecido con Last.fm). Resumible: la caché
-# .lastfm-cache.db evita repetir llamadas en pasadas sucesivas (~25 min la 1ª vez).
+# Build INCREMENTAL por defecto: reutiliza lo ya enriquecido en public/catalog y
+# solo pega a la API por las pistas/artistas NUEVOS. Añadir una lista cuesta minutos,
+# no ~25 min, y nunca regresiona datos buenos (el catálogo versionado es la caché).
 node build-charts.mjs                 # = npm run build
+
+# Re-enriquecer TODO desde cero (ignora el catálogo previo; ~25 min la 1ª vez,
+# resumible vía .lastfm-cache.db dentro de la misma máquina):
+node build-charts.mjs --refresh
 
 # Build rápido sin tocar la API (solo siembra de la DB: YouTube/carátula/álbum):
 node build-charts.mjs --no-lastfm     # = npm run build:fast

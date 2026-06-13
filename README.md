@@ -74,9 +74,9 @@ por sus posiciones a lo largo del año (`score = Σ 1/√posición`):
 - **España** (`es`) ← `los40.db` (semanal: solo Nº1 hasta 2003, top 40 desde 2004).
 - **Estados Unidos / Billboard** (`us`) ← `billboard_year_end_hot100.db` (anual, top 100).
 
-El pipeline de datos **versionado** vive en [`chart-pipeline/`](chart-pipeline/)
-(el scraper en Python y las `.db` están en `scripts/`, ignorado por git). Genera dos
-cosas en `public/` (offline, sin backend):
+El pipeline de datos **versionado** vive en [`chart-pipeline/`](chart-pipeline/).
+Lee las `.db` de [`data/`](data/) (no versionadas; las producen los scrapers de
+[`charts-db/`](charts-db/)) y genera dos cosas en `public/` (offline, sin backend):
 
 - **`public/charts/`** — listas **compactas**: `registry.json` + `<chartId>.json`,
   donde cada canción es `{t,r,s,p,w}` (referencia al catálogo por `t`=trackId).
@@ -96,8 +96,10 @@ node build-charts.mjs --no-lastfm  # rápido: solo siembra de la DB, sin tocar l
 La consolidación vive en [`chart-pipeline/lib/annualize.mjs`](chart-pipeline/lib/annualize.mjs)
 y la normalización del catálogo en [`lib/catalog.mjs`](chart-pipeline/lib/catalog.mjs).
 
-El scraper que genera/actualiza `los40.db` vive en `scripts/` (Python, ignorado por
-git). Ver [`chart-pipeline/README.md`](chart-pipeline/README.md).
+Los scrapers que generan/actualizan las `.db` (LOS40, Billboard, FIMI, SNEP) viven
+en [`charts-db/`](charts-db/) (Python). El contrato entre scrapers y pipeline está
+en [`data/README.md`](data/README.md). Ver también
+[`chart-pipeline/README.md`](chart-pipeline/README.md).
 
 ### Algoritmo de consolidación (semanal → Top del año)
 

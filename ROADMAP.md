@@ -116,8 +116,8 @@ de YouTube con scoring y fallback en error de reproducción` (`4f916a5`):
   cableados en [`useYouTubePlayer.ts`](src/composables/useYouTubePlayer.ts) y
   [`usePlayback.ts`](src/composables/usePlayback.ts).
 - **Auditoría de videoId muertos en los charts** (pendiente): hay un audit en
-  marcha (`chart-pipeline` / `youtube_audit_*`) que detecta los embebidos no
-  reproducibles. El fallback de 2.2 ya lo salva en runtime, pero re-resolver
+  marcha ([`chart-pipeline/audit/`](chart-pipeline/audit/)) que detecta los
+  embebidos no reproducibles. El fallback de 2.2 ya lo salva en runtime, pero re-resolver
   esos IDs en el bundle estático mejora la experiencia (menos saltos). Tarea de
   datos, no de app.
 
