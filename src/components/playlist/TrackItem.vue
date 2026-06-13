@@ -68,11 +68,16 @@ function fmtDuration(ms?: number): string {
         <span v-if="track.enrichError" title="No se pudo enriquecer" class="text-amber-400 text-xs">⚠</span>
       </div>
       <template v-if="track.enriched || track.artist">
+        <!-- En escritorio el artista es un enlace; en móvil (táctil, sin hover y
+             con poco sitio) un toque bajo caía en el enlace y navegaba en vez de
+             reproducir, así que ahí va como texto y el toque cae en la fila. El
+             artista sigue accesible desde la pantalla de canción. -->
         <RouterLink
           :to="{ name: 'artist', params: { name: artistLabel } }"
-          class="inline-block max-w-full text-xs text-muted truncate hover:text-white/80 hover:underline"
+          class="hidden sm:inline-block max-w-full text-xs text-muted truncate hover:text-white/80 hover:underline"
           @click.stop
         >{{ artistLabel }}</RouterLink>
+        <span class="sm:hidden block text-xs text-muted truncate">{{ artistLabel }}</span>
       </template>
       <div v-else class="h-3 w-24 mt-1 rounded bg-surface-2 animate-pulse" />
     </div>

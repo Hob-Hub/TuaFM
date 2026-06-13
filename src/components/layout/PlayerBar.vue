@@ -54,7 +54,7 @@ function onVolume(v: number): void { yt.setVolume(v) }
     <!-- Centro: transporte + progreso -->
     <div class="flex flex-col items-center gap-1.5 justify-self-end md:justify-self-center w-full max-w-md">
       <div class="flex items-center gap-1 sm:gap-2">
-        <button class="p-2 rounded-lg text-muted hover:text-white transition"
+        <button class="hidden md:inline-flex p-2 rounded-lg text-muted hover:text-white transition"
                 :class="player.isShuffle && 'text-brand'"
                 aria-label="Aleatorio" @click="player.isShuffle = !player.isShuffle">
           <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
@@ -80,7 +80,7 @@ function onVolume(v: number): void { yt.setVolume(v) }
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l11 6L4 18z"/></svg>
         </button>
 
-        <button class="p-2 rounded-lg text-muted hover:text-white transition relative"
+        <button class="hidden md:inline-flex p-2 rounded-lg text-muted hover:text-white transition relative"
                 :class="player.repeatMode !== 'none' && 'text-brand'"
                 :title="repeatTitle" :aria-label="repeatTitle" @click="cycleRepeat()">
           <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>

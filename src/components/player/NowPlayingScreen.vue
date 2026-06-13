@@ -49,17 +49,17 @@ const modeLabel = computed(() => {
     </div>
 
     <!-- Carátula -->
-    <div class="flex-1 grid place-items-center py-6 min-h-0">
+    <div class="flex-1 grid place-items-center py-4 min-h-0">
       <TrackCover
         :src="current?.coverUrl" :fallback-text="title" :alt="title"
         :size="320" rounded="rounded-3xl"
-        class="w-full! h-auto! max-w-xs aspect-square shadow-2xl"
+        class="w-full! h-auto! max-w-sm aspect-square shadow-2xl"
       />
     </div>
 
     <!-- Título + artista -->
     <div class="min-w-0 mb-5">
-      <p class="font-display text-2xl font-extrabold truncate">{{ title || 'Nada sonando' }}</p>
+      <p class="font-display text-2xl font-extrabold leading-tight line-clamp-2">{{ title || 'Nada sonando' }}</p>
       <RouterLink
         v-if="current"
         :to="{ name: 'artist', params: { name: artist } }"
@@ -112,6 +112,7 @@ const modeLabel = computed(() => {
               :disabled="!current" @click="current && yt.toggleMute()">
         <svg v-if="player.isMuted || player.volume === 0" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm13.5 3 2.5 2.5-1.5 1.5-2.5-2.5L17 13l-2.5-2.5L16 9l2.5 2.5L21 9l1.5 1.5L20 13z"/></svg>
         <svg v-else viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 16 12z"/></svg>
+        {{ player.isMuted || player.volume === 0 ? 'Silencio' : 'Sonido' }}
       </button>
       <button class="flex items-center gap-2 text-sm text-muted hover:text-white" aria-label="Ver cola"
               @click="ui.openQueue()">

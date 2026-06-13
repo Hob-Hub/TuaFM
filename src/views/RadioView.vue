@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRadioQueue } from '@/composables/useRadioQueue'
 import { usePlayback } from '@/composables/usePlayback'
@@ -15,10 +15,21 @@ const playback = usePlayback()
 // la barra abre el menú, y "Regenerar" re-tira la radio con la misma fuente. Al
 // regenerar con otros ajustes, el menú se recoge solo.
 const showControls = ref(false)
+const controlsEl = ref<HTMLElement | null>(null)
 watch(
   () => `${radio.sourceLabel}|${radio.activeYear}|${radio.activeLambda}`,
   () => { showControls.value = false }
 )
+
+// Al abrir los ajustes con la cola scrolleada, el panel se despliega arriba (bajo
+// la barra-resumen) y quedaba fuera de pantalla: había que subir a mano. Lo
+// traemos a la vista. El scroll-margin deja hueco para topbar + barra sticky.
+function toggleControls(): void {
+  showControls.value = !showControls.value
+  if (showControls.value) {
+    void nextTick(() => controlsEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+}
 
 async function regenerate(): Promise<void> {
   if (generating.value || !radio.activeChartId) return
@@ -60,7 +71,7 @@ async function regenerate(): Promise<void> {
             class="absolute inset-0 rounded-2xl"
             :aria-label="showControls ? 'Cerrar ajustes de la radio' : 'Cambiar lista, año y nostalgia'"
             :aria-expanded="showControls"
-            @click="showControls = !showControls"
+            @click="toggleControls"
           />
 
           <span class="grid place-items-center w-10 h-10 rounded-xl bg-brand/20 text-brand shrink-0 pointer-events-none">
@@ -87,7 +98,7 @@ async function regenerate(): Promise<void> {
 
       <!-- Generador completo, desplegable (flujo normal: "Generar" siempre alcanzable). -->
       <Transition name="ctrl">
-        <div v-if="showControls" class="mb-5">
+        <div v-if="showControls" ref="controlsEl" class="mb-5 scroll-mt-28 md:scroll-mt-4">
           <RadioControls />
         </div>
       </Transition>
