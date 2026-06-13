@@ -18,6 +18,7 @@ const current = playback.currentTrack
 
 const title  = computed(() => current.value?.titleDisplay  ?? current.value?.title  ?? '')
 const artist = computed(() => current.value?.artistDisplay ?? current.value?.artist ?? '')
+const silent = computed(() => player.isMuted || player.volume === 0)
 
 const repeatTitle = computed(() =>
   player.repeatMode === 'one' ? 'Repetir una' : player.repeatMode === 'all' ? 'Repetir todo' : 'Sin repetición')
@@ -110,9 +111,9 @@ const modeLabel = computed(() => {
     <div class="flex items-center justify-between mt-5">
       <button class="flex items-center gap-2 text-sm text-muted hover:text-white"
               :disabled="!current" @click="current && yt.toggleMute()">
-        <svg v-if="player.isMuted || player.volume === 0" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm13.5 3 2.5 2.5-1.5 1.5-2.5-2.5L17 13l-2.5-2.5L16 9l2.5 2.5L21 9l1.5 1.5L20 13z"/></svg>
+        <svg v-if="silent" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm13.5 3 2.5 2.5-1.5 1.5-2.5-2.5L17 13l-2.5-2.5L16 9l2.5 2.5L21 9l1.5 1.5L20 13z"/></svg>
         <svg v-else viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 16 12z"/></svg>
-        {{ player.isMuted || player.volume === 0 ? 'Silencio' : 'Sonido' }}
+        {{ silent ? 'Silencio' : 'Sonido' }}
       </button>
       <button class="flex items-center gap-2 text-sm text-muted hover:text-white" aria-label="Ver cola"
               @click="ui.openQueue()">
