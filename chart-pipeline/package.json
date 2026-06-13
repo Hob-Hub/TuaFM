@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "description": "Consolidación de charts SQLite → Top anual (bundle estático) para TuaFM",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "build": "node build-charts.mjs",
     "build:fast": "node build-charts.mjs --no-lastfm"
-  },
-  "dependencies": {
-    "better-sqlite3": "^11.0.0"
   }
 }

@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-scripts/node_modules/
 
 # Build output
 dist/
@@ -11,8 +10,7 @@ dist-ssr/
 .env
 .env.local
 .env.*.local
-scripts/service-account.json
-chart-pipeline/service-account.json
+**/service-account.json
 
 # Caché de reanudación del build (Last.fm / Deezer)
 chart-pipeline/*cache.db*
@@ -23,18 +21,20 @@ chart-pipeline/*cache.db*
 .idea/
 .DS_Store
 
-# Python (scraper)
+# Python (scrapers / youtube-tools)
 .venv/
 __pycache__/
 *.pyc
-scraper.log
 
-# SQLite (datos generados — pueden ser grandes)
-# los40.db está versionado aparte; los .db de muestra sí se ignoran si crecen
+# SQLite de origen: las .db NO se versionan; el contrato (data/README.md) sí.
+*.db
 *.db-wal
 *.db-shm
-*.db
-scripts/
+
+# Artefactos de trabajo de la auditoría/QA (dryruns, logs, chunks, caché…)
+chart-pipeline/audit/out/
+chart-pipeline/youtube-tools/out/
+charts-db/**/*.log
 
 # Logs
 *.log

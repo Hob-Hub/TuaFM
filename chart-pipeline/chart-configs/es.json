@@ -12,7 +12,7 @@
   "source": {
     "type":            "sqlite",
     "consolidate":     "annual-from-weekly",
-    "dbPath":          "../los40.db",
+    "dbPath":          "../data/los40.db",
     "query":           "SELECT chart_date, position, song AS title, artists AS artist_raw, cover_url, youtube_url, album, album_year FROM v_chart ORDER BY chart_date, position",
     "artistSeparator": ";",
     "dateField":       "chart_date",
