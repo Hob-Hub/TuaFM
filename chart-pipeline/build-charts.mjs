@@ -27,10 +27,11 @@ const __dir = dirname(fileURLToPath(import.meta.url))
 const args  = process.argv.slice(2)
 const flag  = (name, def) => { const i = args.indexOf(`--${name}`); return i >= 0 && args[i + 1] && !args[i + 1].startsWith('--') ? Number(args[i + 1]) : def }
 const noLastfm = args.includes('--no-lastfm')
+const refresh  = args.includes('--refresh')   // re-enriquece TODO, ignorando el catálogo ya generado
 const fromYear = flag('from', 2000)
 const toYear   = flag('to', 2025)
 const configArgs = args.filter(a => !a.startsWith('--') && !/^\d+$/.test(a))
-const configs = configArgs.length ? configArgs : ['chart-configs/es.json', 'chart-configs/us.json']
+const configs = configArgs.length ? configArgs : ['chart-configs/es.json', 'chart-configs/us.json', 'chart-configs/it.json']
 
 const stripLinks = html => String(html || '').replace(/<a\b[^>]*>.*?<\/a>/gi, '').replace(/\s+/g, ' ').trim()
 
@@ -67,6 +68,40 @@ const { tracks, artists, trackIdByKey, trackAliases, artistAliases } = buildCata
 console.log(`· catálogo: ${tracks.length} tracks, ${artists.length} artistas`)
 console.log(`· alias: ${Object.keys(trackAliases).length} canciones, ${Object.keys(artistAliases).length} artistas (duplicados fusionados)`)
 
+const catalogDir = resolve(__dir, '..', 'public', 'catalog')
+
+// ── 2.5. Reutilización del catálogo ya generado (build INCREMENTAL) ───────────
+// Por defecto, cada pista/artista que YA está enriquecido en public/catalog se
+// reutiliza tal cual y NO se vuelve a pedir a la API: añadir una lista nueva solo
+// enriquece lo nuevo (~minutos en vez de ~25 min) y nunca regresiona datos buenos.
+// El catálogo versionado actúa así de caché reproducible. `--refresh` reenriquece
+// TODO desde cero. Los overrides se aplican igual al final y siguen ganando.
+const reuseTrack = new Set(), reuseArtist = new Set()
+if (!noLastfm && !refresh) {
+  const load = f => { const p = resolve(catalogDir, f); return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null }
+  const prevT = load('tracks.json'), prevA = load('artists.json')
+  if (prevT?.tracks) {
+    const byKey = new Map(prevT.tracks.map(t => [t.key, t]))
+    const FIELDS = ['album', 'coverUrl', 'durationMs', 'tags', 'listeners', 'lastfmUrl', 'mbid']
+    for (const t of tracks) {
+      const p = byKey.get(t.key); if (!p) continue
+      for (const f of FIELDS) if (p[f] !== undefined && t[f] === undefined) t[f] = p[f]
+      reuseTrack.add(t.key)
+    }
+  }
+  if (prevA?.artists) {
+    const byKey = new Map(prevA.artists.map(a => [a.key, a]))
+    const FIELDS = ['bio', 'imageUrl', 'listeners', 'tags', 'similar', 'mbid', 'topTracks']
+    for (const a of artists) {
+      const p = byKey.get(a.key); if (!p) continue
+      for (const f of FIELDS) if (p[f] !== undefined && a[f] === undefined) a[f] = p[f]
+      reuseArtist.add(a.key)
+    }
+  }
+  if (reuseTrack.size || reuseArtist.size)
+    console.log(`· reutilizados del catálogo previo: ${reuseTrack.size} tracks, ${reuseArtist.size} artistas (--refresh para re-enriquecer todo)`)
+}
+
 // ── 3. Enriquecimiento Last.fm (opcional) ────────────────────────────────────
 const primaryName = a => String(a || '').split(', ')[0].trim()
 if (!noLastfm) {
@@ -75,6 +110,7 @@ if (!noLastfm) {
   console.log(`\nEnriqueciendo ${tracks.length} tracks vía Last.fm (track.getInfo)…`)
   let n = 0
   for (const t of tracks) {
+    if (reuseTrack.has(t.key)) continue   // ya enriquecido en el catálogo previo
     try {
       const data = await lfm.trackGetInfo(primaryName(t.artist), t.title)
       const tr = data?.track
@@ -110,6 +146,7 @@ if (!noLastfm) {
   console.log(`\nEnriqueciendo ${artists.length} artistas (artist.getInfo + getTopTracks 50)…`)
   n = 0
   for (const a of artists) {
+    if (reuseArtist.has(a.key)) continue   // ya enriquecido en el catálogo previo
     try {
       const info = await lfm.artistGetInfo(a.name)
       const ar = info?.artist
@@ -160,7 +197,6 @@ if (existsSync(ovPath)) {
 
 // ── 4. Escritura ─────────────────────────────────────────────────────────────
 const chartsDir  = resolve(__dir, '..', 'public', 'charts')
-const catalogDir = resolve(__dir, '..', 'public', 'catalog')
 mkdirSync(chartsDir,  { recursive: true })
 mkdirSync(catalogDir, { recursive: true })
 
