@@ -31,7 +31,7 @@ const refresh  = args.includes('--refresh')   // re-enriquece TODO, ignorando el
 const fromYear = flag('from', 2000)
 const toYear   = flag('to', 2025)
 const configArgs = args.filter(a => !a.startsWith('--') && !/^\d+$/.test(a))
-const configs = configArgs.length ? configArgs : ['chart-configs/es.json', 'chart-configs/us.json', 'chart-configs/it.json']
+const configs = configArgs.length ? configArgs : ['chart-configs/es.json', 'chart-configs/us.json', 'chart-configs/it.json', 'chart-configs/fr.json']
 
 const stripLinks = html => String(html || '').replace(/<a\b[^>]*>.*?<\/a>/gi, '').replace(/\s+/g, ' ').trim()
 

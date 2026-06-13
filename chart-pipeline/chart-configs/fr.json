@@ -1,0 +1,24 @@
+{
+  "chartId":        "fr",
+  "name":           "Francia",
+  "shortName":      "Francia",
+  "subtitle":       null,
+  "country":        "FR",
+  "flag":           "🇫🇷",
+  "language":       "fr",
+  "listSize":       100,
+  "defaultLambda":  0.35,
+  "description":    "Los éxitos más escuchados en Francia, consolidados por año",
+  "source": {
+    "type":            "sqlite",
+    "consolidate":     "annual",
+    "dbPath":          "../data/france_year_end_singles.db",
+    "query":           "SELECT chart_date, position, song AS title, artists AS artist_raw, cover_url FROM v_chart ORDER BY chart_year, position",
+    "artistSeparator": ";",
+    "dateField":       "chart_date",
+    "posField":        "position",
+    "titleField":      "title",
+    "artistField":     "artist_raw",
+    "coverField":      "cover_url"
+  }
+}
