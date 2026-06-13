@@ -1,0 +1,8 @@
+# QA/descubrimiento de IDs de YouTube para el catálogo.
+requests>=2.31
+
+# Descubrimiento (opcionales según el proveedor que uses):
+#   ytmusicapi → ytmusic_probe.py y el proveedor ytmusic del enricher
+#   yt-dlp     → proveedor yt-dlp del enricher (también vale el CLI yt-dlp en PATH)
+ytmusicapi>=1.7
+yt-dlp>=2024.1.1
