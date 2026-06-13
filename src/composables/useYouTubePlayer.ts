@@ -46,6 +46,19 @@ let apiPromise: Promise<void> | null = null
 let ticker: ReturnType<typeof setInterval> | null = null
 let onEndedCb: (() => void) | null = null
 let onErrorCb: ((code: number) => void) | null = null
+let onClipEndCb: (() => void) | null = null
+
+// ── Modo clips, sin ruido de buffer ──────────────────────────────────────────
+// El problema: al arrancar un clip, la pista sonaba desde el segundo 0 (la intro
+// pre-bufferizada) y solo DESPUÉS saltaba al centro, dejando oír un trozo de la
+// intro + el "glitch" del seek en caliente. Solución: mientras posicionamos el
+// clip mantenemos el player MUTEADO; el salto al centro (que en el camino gapless
+// se hace antes de reproducir, porque el standby ya está cueado y su duración se
+// conoce) queda en silencio, y solo desmuteamos cuando ya suena en el centro.
+//   armed  → muteado, esperando a colocarse en el centro
+//   seeked → ya saltó al centro
+//   full   → reproducir ESTA pista entera (atrás en modo clips la "rescata")
+let clip = { id: null as string | null, armed: false, seeked: false, start: 0, full: false }
 
 // ── Ancla de sesión multimedia ───────────────────────────────────────────────
 // El vídeo se reproduce dentro de un <iframe> cross-origin de YouTube, y el SO
@@ -147,6 +160,62 @@ export function useYouTubePlayer() {
   const playerStore = usePlayerStore()
   const ready = ref(false)
 
+  // ── Helpers de modo clips ───────────────────────────────────────────────────
+  function clipSecs(): number { return playerStore.clipMode ? playerStore.clipSeconds : 0 }
+  function centreStart(d: number, n: number): number {
+    return Math.min(Math.max(d / 2 - n / 2, 0), Math.max(0, d - n))
+  }
+
+  /** Arranque de una pista en modo clips: muteamos y, en cuanto la duración esté
+   *  disponible, saltamos al centro (todo en silencio). Se llama desde loadAndPlay. */
+  function beginClip(p: YTPlayer, id: string | null): void {
+    clip = { id, armed: false, seeked: false, start: 0, full: false }
+    if (!clipSecs()) return
+    clip.armed = true
+    positionClip(p)            // si ya hay duración (standby cueado) salta ya
+  }
+
+  /** Coloca el player en el centro del clip mientras siga muteado. Idempotente:
+   *  reintenta cada tick/estado hasta que la duración del vídeo esté lista. */
+  function positionClip(p: YTPlayer): void {
+    if (!clip.armed || clip.seeked) return
+    const n = clipSecs(); if (!n) return
+    try { p.mute() } catch { /* loadVideoById puede resetear el mute: lo reafirmamos */ }
+    const d = p.getDuration() || 0
+    if (d <= 0) return
+    clip.start = centreStart(d, n)
+    try { p.seekTo(clip.start, true) } catch { /* noop */ }
+    clip.seeked = true
+  }
+
+  /** Revela (desmutea) el clip una vez ya suena en el centro, respetando el mute
+   *  del usuario. Solo cuando ya se ha posicionado, nunca durante la intro. */
+  function revealClip(p: YTPlayer): void {
+    if (!clip.armed || !clip.seeked) return
+    clip.armed = false
+    try { if (!playerStore.isMuted) p.unMute() } catch { /* noop */ }
+  }
+
+  /** Reaplica el clip a la pista que ya suena (al activar el modo a media canción). */
+  function repositionCurrentClip(): void {
+    if (!active || !clipSecs() || clip.full) return
+    if (clip.armed || clip.seeked) return        // ya está en modo clip
+    clip.armed = true
+    positionClip(active)
+  }
+
+  /** "Rescata" la pista actual para oírla entera (atrás estando en modo clips):
+   *  desactiva el recorte solo para esta pista y la reproduce desde el principio. */
+  function playCurrentFull(): void {
+    clip.full = true
+    clip.armed = false
+    clip.seeked = false
+    try { if (!playerStore.isMuted) active?.unMute() } catch { /* noop */ }
+    try { active?.seekTo(0, true) } catch { /* noop */ }
+    intendedPlaying = true
+    active?.playVideo()
+  }
+
   /** Crea los dos players (activo + standby) montados en dos divs distintos. */
   async function init(mountA: HTMLElement, mountB: HTMLElement): Promise<void> {
     await loadApi()
@@ -177,9 +246,13 @@ export function useYouTubePlayer() {
     if (e.target !== active) return   // ignora eventos del player en standby (pre-buffer)
     const S = window.YT!.PlayerState
     switch (e.data) {
-      case S.PLAYING:   playerStore.state = 'playing'; setPlaybackState('playing'); anchorPlay();  break
+      case S.PLAYING:
+        playerStore.state = 'playing'; setPlaybackState('playing'); anchorPlay()
+        revealClip(active!)        // ya posicionado → suena en el centro: desmutea
+        positionClip(active!)      // o aún en 0 → coloca ahora (sigue muteado)
+        break
       case S.PAUSED:    playerStore.state = 'paused';  setPlaybackState('paused');  anchorPause(); break
-      case S.BUFFERING: playerStore.state = 'loading'; setPlaybackState('playing'); anchorPlay();  break
+      case S.BUFFERING: playerStore.state = 'loading'; setPlaybackState('playing'); anchorPlay(); positionClip(active!); break
       case S.ENDED:
         playerStore.state = 'ended'
         setPlaybackState('none')
@@ -209,6 +282,21 @@ export function useYouTubePlayer() {
       try {
         playerStore.currentTime = active.getCurrentTime() || 0
         const d = active.getDuration() || 0
+
+        // ── Modo clips (backstop del flujo de estados) ─────────────────────────
+        const n = clipSecs()
+        if (clip.armed && !n) {                       // se apagó el modo a media: desmutea
+          clip.armed = false
+          try { if (!playerStore.isMuted) active.unMute() } catch { /* noop */ }
+        } else if (clip.armed) {
+          positionClip(active)                        // asegura el salto al centro
+          revealClip(active)                          // y el desmuteo una vez colocado
+        }
+        if (n && clip.seeked && !clip.full && playerStore.currentTime >= clip.start + n) {
+          clip.seeked = false                         // evita doble avance
+          onClipEndCb?.()                             // fin del trozo → siguiente
+        }
+
         if (d > 0) {
           playerStore.duration = d
           // Posición para la barra de progreso del SO.
@@ -231,7 +319,7 @@ export function useYouTubePlayer() {
    * intercambia roles y arranca al instante (gapless). Si no, lo carga en el
    * activo (con el buffering normal).
    */
-  function loadAndPlay(videoId: string): void {
+  function loadAndPlay(videoId: string, trackId: string | null = null): void {
     if (!active) return
     intendedPlaying = true
     playerStore.state = 'loading'
@@ -249,9 +337,11 @@ export function useYouTubePlayer() {
         active.setVolume(playerStore.volume)
         if (playerStore.isMuted) active.mute(); else active.unMute()
       } catch { /* noop */ }
-      active.playVideo()                                   // ya cueado → arranca casi al instante
+      beginClip(active, trackId)    // cueado → duración conocida → salta al centro YA (en silencio)
+      active.playVideo()                                   // arranca casi al instante, en el centro
     } else {
       standbyVideoId = null                                // preload obsoleto
+      beginClip(active, trackId)    // sin duración aún: mutea y posiciona en cuanto cargue
       active.loadVideoById(videoId)
     }
   }
@@ -281,9 +371,11 @@ export function useYouTubePlayer() {
 
   function onEnded(cb: () => void): void { onEndedCb = cb }
   function onError(cb: (code: number) => void): void { onErrorCb = cb }
+  function onClipEnd(cb: () => void): void { onClipEndCb = cb }
 
   return {
     ready, init, loadAndPlay, preload, play, pause, toggle, seekTo,
-    setVolume, mute, unmute, toggleMute, onEnded, onError
+    setVolume, mute, unmute, toggleMute, onEnded, onError,
+    onClipEnd, repositionCurrentClip, playCurrentFull
   }
 }

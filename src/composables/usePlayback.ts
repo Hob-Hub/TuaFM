@@ -16,10 +16,9 @@ let handlersBound = false
 let enrichWatcherSet = false
 let enrichInFlight = false
 
-// Modo clips: a qué pista se le aplicó ya el salto al centro, y desde qué segundo.
+// Modo clips: la mecánica (salto al centro sin ruido + avance) vive en
+// useYouTubePlayer; aquí solo reaccionamos a activarlo a media canción.
 let clipWatcherSet = false
-let clipAppliedFor: string | null = null
-let clipStart = 0
 
 // Candidatos de YouTube de la pista en curso, para reintentar en onError.
 let currentCandidates: string[] = []
@@ -56,34 +55,15 @@ export function usePlayback() {
   setupStartWatchdog()
 
   /**
-   * Modo clips (escucha rápida): cuando está activo, salta al centro de cada
-   * canción y avanza tras `clipSeconds`. Todo se gobierna desde un único watcher
-   * del tiempo (que avanza solo cuando suena, así respeta pausas): aplica el salto
-   * una vez por pista (con la duración ya fiable porque está 'playing') y, una vez
-   * aplicado, dispara el avance al llegar al final del trozo.
+   * Modo clips (escucha rápida): el salto al centro sin ruido y el avance al final
+   * del trozo los gobierna useYouTubePlayer (acceso síncrono al player y sus
+   * eventos). Aquí solo reaccionamos a *activar* el modo a media canción para
+   * recolocar la pista que ya suena en su centro.
    */
   function setupClipMode(): void {
     if (clipWatcherSet) return
     clipWatcherSet = true
-    watch(() => player.currentTime, (t) => {
-      if (!player.clipMode) { clipAppliedFor = null; return }
-      const id = player.currentTrackId
-      if (!id || player.state !== 'playing') return
-
-      if (clipAppliedFor !== id) {
-        const d = player.duration
-        if (d <= 0) return
-        const n = player.clipSeconds
-        clipStart = Math.min(Math.max(d / 2 - n / 2, 0), Math.max(0, d - n))
-        clipAppliedFor = id
-        if (Math.abs(t - clipStart) > 1) yt.seekTo(clipStart)   // salta al centro
-        return
-      }
-      if (t >= clipStart + player.clipSeconds) {
-        clipAppliedFor = null    // evita doble avance hasta que cargue la siguiente
-        void next()
-      }
-    })
+    watch(() => player.clipMode, (on) => { if (on) yt.repositionCurrentClip() })
   }
 
   /**
@@ -175,6 +155,7 @@ export function usePlayback() {
   function bindHandlers(): void {
     if (handlersBound) return
     yt.onEnded(() => { void next() })
+    yt.onClipEnd(() => { void next() })
     yt.onError(() => { void handlePlaybackError() })
     setupMediaSessionHandlers()
     syncRealDuration()
@@ -250,7 +231,7 @@ export function usePlayback() {
     candidateIdx++
     if (candidateIdx < currentCandidates.length) {
       player.state = 'loading'
-      yt.loadAndPlay(currentCandidates[candidateIdx])
+      yt.loadAndPlay(currentCandidates[candidateIdx], currentTrack.value?.id ?? null)
       armStartWatchdog()
       return
     }
@@ -301,7 +282,7 @@ export function usePlayback() {
     candidateIdx = 0
 
     if (currentCandidates.length > 0) {
-      yt.loadAndPlay(currentCandidates[0])
+      yt.loadAndPlay(currentCandidates[0], track.id)
       armStartWatchdog()
       player.currentTrackId = track.id
       updateMediaSession(track)
@@ -437,6 +418,9 @@ export function usePlayback() {
   }
 
   async function prev(): Promise<void> {
+    // En modo clips, "atrás" rescata la pista actual para oírla ENTERA (desde el
+    // principio); las siguientes vuelven a sonar en clips.
+    if (player.clipMode) { yt.playCurrentFull(); return }
     // Si llevamos >3s, reiniciar la pista en lugar de ir a la anterior
     if (player.currentTime > 3) { yt.seekTo(0); return }
     switch (player.queueMode) {
