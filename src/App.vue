@@ -5,6 +5,8 @@ import { useOnline, useMediaQuery } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayerStore } from '@/stores/player.store'
 import { useRadioStore } from '@/stores/radio.store'
+import { useRecommendationsStore } from '@/stores/recommendations.store'
+import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { usePlayback } from '@/composables/usePlayback'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import PlayerBar from '@/components/layout/PlayerBar.vue'
@@ -21,6 +23,8 @@ const ui = useUiStore()
 const online = useOnline()
 const player = usePlayerStore()
 const radio = useRadioStore()
+const rec = useRecommendationsStore()
+const pq = usePlaylistQueueStore()
 const playback = usePlayback()
 
 // Atajos de teclado globales: espacio = play/pausa, ←/→ = seek ±5s
@@ -33,11 +37,16 @@ function onKey(e: KeyboardEvent): void {
 }
 onMounted(() => {
   document.addEventListener('keydown', onKey)
-  // Reanuda la radio persistida: el reproductor muestra la pista lista para play.
-  if (radio.isActive && player.queueMode === 'idle') {
-    player.queueMode = 'radio'
-    player.currentTrackId = radio.currentTrack?.id ?? null
-  }
+  // Reanuda la cola persistida según el modo que quedó activo (radio,
+  // recomendaciones o playlist): el reproductor muestra la pista lista para play,
+  // sin auto-reproducir (los navegadores bloquean el autoplay al cargar).
+  const resumeTrack =
+    player.queueMode === 'radio'           && radio.isActive ? radio.currentTrack
+  : player.queueMode === 'recommendations' && rec.isActive   ? rec.currentTrack
+  : player.queueMode === 'playlist'        && pq.isActive     ? pq.currentTrack
+  : null
+  if (resumeTrack) player.currentTrackId = resumeTrack.id
+  else player.queueMode = 'idle'   // nada persistido que reanudar
 })
 onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 

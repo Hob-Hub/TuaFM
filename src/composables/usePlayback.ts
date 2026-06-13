@@ -1,8 +1,9 @@
-import { ref, computed, watch } from 'vue'
+import { computed, watch } from 'vue'
 import type { Track } from '@/types/track.types'
 import { usePlayerStore } from '@/stores/player.store'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRecommendationsStore } from '@/stores/recommendations.store'
+import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { useUiStore } from '@/stores/ui.store'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
 import { useTrackEnrich } from '@/composables/useTrackEnrich'
@@ -10,9 +11,7 @@ import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useRadioQueue } from '@/composables/useRadioQueue'
 
-// ── Cola de playlist: estado singleton efímero (no persistido) ───────────────
-const playlistQueue = ref<Track[]>([])
-const playlistIndex = ref(0)
+// La cola de playlist vive ahora en usePlaylistQueueStore (persistida), no aquí.
 let handlersBound = false
 let enrichWatcherSet = false
 let enrichInFlight = false
@@ -44,6 +43,7 @@ export function usePlayback() {
   const player = usePlayerStore()
   const radio  = useRadioStore()
   const rec    = useRecommendationsStore()
+  const pq     = usePlaylistQueueStore()
   const ui     = useUiStore()
   const yt     = useYouTubePlayer()
   const { enrich } = useTrackEnrich()
@@ -148,7 +148,7 @@ export function usePlayback() {
     switch (player.queueMode) {
       case 'radio':           return radio.currentTrack
       case 'recommendations': return rec.currentTrack
-      case 'playlist':        return playlistQueue.value[playlistIndex.value] ?? null
+      case 'playlist':        return pq.currentTrack
       default:                return null
     }
   })
@@ -157,7 +157,7 @@ export function usePlayback() {
     switch (player.queueMode) {
       case 'radio':           return radio.hasNext
       case 'recommendations': return rec.hasNext
-      case 'playlist':        return player.repeatMode === 'all' || playlistIndex.value < playlistQueue.value.length - 1
+      case 'playlist':        return player.repeatMode === 'all' || pq.hasNext
       default:                return false
     }
   })
@@ -166,7 +166,7 @@ export function usePlayback() {
     switch (player.queueMode) {
       case 'radio':           return radio.hasPrev
       case 'recommendations': return rec.hasPrev
-      case 'playlist':        return playlistIndex.value > 0
+      case 'playlist':        return pq.hasPrev
       default:                return false
     }
   })
@@ -189,7 +189,7 @@ export function usePlayback() {
       case 'radio':           radio.updateTrack(t.id, data); break
       case 'recommendations': rec.updateTrack(t.id, data); break
       case 'playlist':
-        playlistQueue.value[playlistIndex.value] = { ...t, ...data }
+        pq.updateTrack(t.id, data)
         void persistPlaylistTrack(t.id, data)
         break
     }
@@ -267,7 +267,7 @@ export function usePlayback() {
       case 'radio':           radio.updateTrack(track.id, merged); break
       case 'recommendations': rec.updateTrack(track.id, merged); break
       case 'playlist':
-        playlistQueue.value[playlistIndex.value] = { ...track, ...merged }
+        pq.updateTrack(track.id, merged)
         void persistPlaylistTrack(track.id, merged)
         break
     }
@@ -318,10 +318,8 @@ export function usePlayback() {
 
   // ── Arranque de cada modo ──────────────────────────────────────────────────
   function startPlaylistQueue(tracks: Track[], startIndex: number, playlistId: string | null): void {
-    playlistQueue.value = tracks
-    playlistIndex.value = Math.max(0, Math.min(startIndex, tracks.length - 1))
+    pq.setQueue(tracks, startIndex, playlistId)
     player.queueMode = 'playlist'
-    player.currentPlaylistId = playlistId
     void playCurrent()
   }
 
@@ -340,8 +338,8 @@ export function usePlayback() {
 
   /** Salta a un índice de la cola de playlist efímera ya en curso. */
   function playPlaylistIndex(i: number): void {
-    if (i < 0 || i >= playlistQueue.value.length) return
-    playlistIndex.value = i
+    if (i < 0 || i >= pq.queue.length) return
+    pq.skipTo(i)
     player.queueMode = 'playlist'
     void playCurrent()
   }
@@ -360,7 +358,7 @@ export function usePlayback() {
       case 'recommendations': return rec.queue[rec.currentIndex + 1] ?? null
       case 'playlist':
         if (player.isShuffle) return null
-        return playlistQueue.value[playlistIndex.value + 1] ?? null
+        return pq.queue[pq.currentIndex + 1] ?? null
       default:                return null
     }
   }
@@ -371,12 +369,10 @@ export function usePlayback() {
     switch (player.queueMode) {
       case 'radio':           radio.updateTrack(track.id, merged); break
       case 'recommendations': rec.updateTrack(track.id, merged); break
-      case 'playlist': {
-        const i = playlistQueue.value.findIndex(t => t.id === track.id)
-        if (i >= 0) playlistQueue.value[i] = { ...playlistQueue.value[i], ...merged }
+      case 'playlist':
+        pq.updateTrack(track.id, merged)
         void persistPlaylistTrack(track.id, merged)
         break
-      }
     }
   }
 
@@ -425,18 +421,18 @@ export function usePlayback() {
     if (player.repeatMode === 'one') { yt.seekTo(0); yt.play(); return }
 
     let idx: number
-    if (player.isShuffle && playlistQueue.value.length > 1) {
-      do { idx = Math.floor(Math.random() * playlistQueue.value.length) }
-      while (idx === playlistIndex.value)
+    if (player.isShuffle && pq.queue.length > 1) {
+      do { idx = Math.floor(Math.random() * pq.queue.length) }
+      while (idx === pq.currentIndex)
     } else {
-      idx = playlistIndex.value + 1
+      idx = pq.currentIndex + 1
     }
 
-    if (idx >= playlistQueue.value.length) {
+    if (idx >= pq.queue.length) {
       if (player.repeatMode === 'all') idx = 0
       else { player.state = 'ended'; return }
     }
-    playlistIndex.value = idx
+    pq.skipTo(idx)
     await playCurrent()
   }
 
@@ -447,7 +443,7 @@ export function usePlayback() {
       case 'radio':           if (radio.hasPrev) { radio.prev(); await playCurrent() } return
       case 'recommendations': if (rec.hasPrev)   { rec.prev();   await playCurrent() } return
       case 'playlist':
-        if (playlistIndex.value > 0) { playlistIndex.value--; await playCurrent() }
+        if (pq.hasPrev) { pq.skipTo(pq.currentIndex - 1); await playCurrent() }
         else yt.seekTo(0)
         return
     }
@@ -467,7 +463,6 @@ export function usePlayback() {
     currentTrack, hasNext, hasPrev,
     playCurrent, startPlaylistQueue, playPlaylistById,
     playRadioIndex, playRecIndex, playPlaylistIndex,
-    next, prev, togglePlay,
-    playlistIndex, playlistQueue
+    next, prev, togglePlay
   }
 }

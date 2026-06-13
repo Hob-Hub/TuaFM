@@ -5,7 +5,6 @@ import type { QueueMode } from '@/types/queue.types'
 
 export const usePlayerStore = defineStore('player', () => {
   const currentTrackId    = ref<string | null>(null)
-  const currentPlaylistId = ref<string | null>(null)
   const queueMode         = ref<QueueMode>('idle')
   const state             = ref<PlayerState>('idle')
   const currentTime       = ref(0)
@@ -34,11 +33,13 @@ export const usePlayerStore = defineStore('player', () => {
   const effectiveQueueMode = computed<QueueMode>(() => queueMode.value)
 
   return {
-    currentTrackId, currentPlaylistId, queueMode, effectiveQueueMode,
+    currentTrackId, queueMode, effectiveQueueMode,
     state, currentTime, duration, volume, isMuted, repeatMode, isShuffle,
     clipSeconds, clipMode, cycleClip,
     progress, isPlaying
   }
 }, {
-  persist: { pick: ['volume', 'isMuted', 'repeatMode', 'isShuffle', 'clipSeconds'] }
+  // queueMode se persiste para saber qué cola reanudar al reabrir (radio,
+  // recomendaciones o playlist); las propias colas viven en sus stores.
+  persist: { pick: ['volume', 'isMuted', 'repeatMode', 'isShuffle', 'clipSeconds', 'queueMode'] }
 })

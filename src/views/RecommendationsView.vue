@@ -20,6 +20,12 @@ const canGenerate = computed(() => favCount.value >= 3)
 function isActive(i: number): boolean {
   return player.queueMode === 'recommendations' && recStore.currentIndex === i
 }
+
+// Genera y arranca la reproducción al instante, igual que "Generar radio".
+async function onGenerate(): Promise<void> {
+  const ok = await generate()
+  if (ok) playback.playRecIndex(0)
+}
 </script>
 
 <template>
@@ -38,7 +44,7 @@ function isActive(i: number): boolean {
         </p>
         <p class="text-xs text-muted mt-0.5">Marca corazones en cualquier modo para alimentar el oráculo.</p>
       </div>
-      <BaseButton variant="brand" :disabled="!canGenerate || generating" @click="generate()">
+      <BaseButton variant="brand" :disabled="!canGenerate || generating" @click="onGenerate">
         <svg v-if="!generating" viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6z"/></svg>
         {{ generating ? 'Generando…' : 'Generar' }}
       </BaseButton>

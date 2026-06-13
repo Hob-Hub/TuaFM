@@ -28,4 +28,7 @@ export const useRecommendationsStore = defineStore('recommendations', () => {
     queue, currentIndex, isActive, currentTrack, nextTrack, hasNext, hasPrev,
     setQueue, next, prev, skipTo, clear, updateTrack
   }
+}, {
+  // Persistimos la cola para reanudar las recomendaciones al volver, como la radio.
+  persist: { pick: ['queue', 'currentIndex'] }
 })

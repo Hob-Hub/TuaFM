@@ -41,13 +41,14 @@ function fmtListeners(n: number): string {
   return new Intl.NumberFormat('es-ES').format(n)
 }
 
-// Reproduce un top track creando una mini-cola de playlist efímera
-function playTrack(track: { title: string; coverUrl?: string }): void {
+// Reproduce desde la canción pulsada y encadena el resto de las populares del
+// artista en una cola de playlist (no una sola pista): así suenan una tras otra.
+function playTrack(index: number): void {
   if (!info.value) return
-  playback.startPlaylistQueue(
-    [{ id: nanoid(), artist: info.value.name, title: track.title, coverUrl: track.coverUrl, enriched: false }],
-    0, null
-  )
+  const queue = info.value.topTracks.map(t => ({
+    id: nanoid(), artist: info.value!.name, title: t.title, coverUrl: t.coverUrl, enriched: false
+  }))
+  playback.startPlaylistQueue(queue, index, null)
 }
 </script>
 
@@ -91,12 +92,12 @@ function playTrack(track: { title: string; coverUrl?: string }): void {
         <ul class="flex flex-col">
           <li v-for="(t, i) in visibleTracks" :key="t.title"
               class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
-              @click="playTrack(t)">
+              @click="playTrack(i)">
             <span class="w-5 text-sm text-muted tabular-nums shrink-0">{{ i + 1 }}</span>
             <TrackCover :src="t.coverUrl" :alt="t.title" :fallback-text="t.title" :size="40" />
             <span class="flex-1 text-sm text-white truncate">{{ t.title }}</span>
             <span class="text-xs text-muted tabular-nums hidden sm:block">{{ fmtListeners(t.listeners) }}</span>
-            <BaseButton size="sm" variant="ghost" class="opacity-0 group-hover:opacity-100" @click.stop="playTrack(t)">
+            <BaseButton size="sm" variant="ghost" class="opacity-0 group-hover:opacity-100" @click.stop="playTrack(i)">
               <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             </BaseButton>
           </li>

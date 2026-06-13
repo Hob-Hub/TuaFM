@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { usePlayback } from '@/composables/usePlayback'
 import { usePlayerStore } from '@/stores/player.store'
+import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { useUiStore } from '@/stores/ui.store'
 import TrackItem from '@/components/playlist/TrackItem.vue'
 import TrackCover from '@/components/ui/TrackCover.vue'
@@ -14,6 +15,7 @@ const props = defineProps<{ playlistId: string }>()
 const { observePlaylistDetail, removeTrackAt, reorderTracks, deletePlaylist } = usePlaylists()
 const playback = usePlayback()
 const player = usePlayerStore()
+const pq = usePlaylistQueueStore()
 const ui = useUiStore()
 const router = useRouter()
 
@@ -26,8 +28,8 @@ const dragIndex = ref<number | null>(null)
 
 function isActiveRow(index: number): boolean {
   return player.queueMode === 'playlist'
-    && player.currentPlaylistId === props.playlistId
-    && playback.playlistIndex.value === index
+    && pq.playlistId === props.playlistId
+    && pq.currentIndex === index
 }
 
 function play(index: number): void {

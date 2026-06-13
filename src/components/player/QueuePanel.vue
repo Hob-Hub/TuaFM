@@ -3,6 +3,7 @@ import { computed, ref, watch, onMounted, nextTick } from 'vue'
 import { usePlayerStore } from '@/stores/player.store'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRecommendationsStore } from '@/stores/recommendations.store'
+import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayback } from '@/composables/usePlayback'
 import { scrollActiveIntoView } from '@/utils/scrollActive'
@@ -12,6 +13,7 @@ import TrackItem from '@/components/playlist/TrackItem.vue'
 const player = usePlayerStore()
 const radio = useRadioStore()
 const rec = useRecommendationsStore()
+const pq = usePlaylistQueueStore()
 const ui = useUiStore()
 const playback = usePlayback()
 
@@ -19,7 +21,7 @@ const tracks = computed<Track[]>(() => {
   switch (player.queueMode) {
     case 'radio':           return radio.queue
     case 'recommendations': return rec.queue
-    case 'playlist':        return playback.playlistQueue.value
+    case 'playlist':        return pq.queue
     default:                return []
   }
 })
@@ -28,7 +30,7 @@ const currentIndex = computed(() => {
   switch (player.queueMode) {
     case 'radio':           return radio.currentIndex
     case 'recommendations': return rec.currentIndex
-    case 'playlist':        return playback.playlistIndex.value
+    case 'playlist':        return pq.currentIndex
     default:                return -1
   }
 })
