@@ -7,12 +7,7 @@ import type { Track } from '@/types/track.types'
 import type { LastfmTrackResponse } from '@/types/api.types'
 import type { CatalogTrack } from '@/types/chart.types'
 import type { LocalTrack } from '@/db/local.db'
-
-const CACHE_TTL_DAYS = 30
-
-function isExpired(cachedAt: number, ttlDays: number): boolean {
-  return Date.now() - cachedAt > ttlDays * 86_400_000
-}
+import { isExpired, TTL_TRACK_DAYS } from '@/db/cache.helpers'
 
 /** Resultado de enriquecimiento: nunca lleva `id` para no contaminar el
  *  nanoid de las pistas en las colas al hacer merge (bug C1). */
@@ -42,7 +37,7 @@ export async function resolveTrack(
 
   // 1 — Dexie local (lookup por PK: id === cacheKey)
   const local = await db.tracks.get(cacheKey)
-  if (local && !isExpired(local.localCachedAt, CACHE_TTL_DAYS)) {
+  if (local && !isExpired(local.localCachedAt, TTL_TRACK_DAYS)) {
     if (existingVideoId && !local.youtubeVideoId) {
       await db.tracks.update(local.id, { youtubeVideoId: existingVideoId })
       return stripId({ ...local, youtubeVideoId: existingVideoId })

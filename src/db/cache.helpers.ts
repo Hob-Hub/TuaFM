@@ -22,6 +22,7 @@ export function makeLastfmCacheKey(method: string, params: Record<string, string
 
 // TTLs por tipo de dato (en días). La info de catálogo/similitud apenas cambia;
 // las carátulas, prácticamente nunca.
+export const TTL_TRACK_DAYS = 30
 export const TTL_ARTIST_DAYS = 30
 export const TTL_COVER_DAYS = 90
 export const TTL_SIMILARITY_DAYS = 30

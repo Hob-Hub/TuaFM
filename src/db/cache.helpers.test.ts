@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   isExpired, makeLastfmCacheKey,
-  TTL_ARTIST_DAYS, TTL_COVER_DAYS, TTL_SIMILARITY_DAYS
+  TTL_TRACK_DAYS, TTL_ARTIST_DAYS, TTL_COVER_DAYS, TTL_SIMILARITY_DAYS
 } from './cache.helpers'
 
 const DAY = 86_400_000
@@ -25,9 +25,10 @@ describe('isExpired', () => {
     expect(isExpired(now - 30 * DAY - 1, 30, now)).toBe(true)
   })
 
-  it('TTLs definidos son coherentes (covers > artista = similitud)', () => {
+  it('TTLs definidos son coherentes (covers > artista = similitud = track)', () => {
     expect(TTL_COVER_DAYS).toBeGreaterThan(TTL_ARTIST_DAYS)
     expect(TTL_ARTIST_DAYS).toBe(TTL_SIMILARITY_DAYS)
+    expect(TTL_TRACK_DAYS).toBe(TTL_ARTIST_DAYS)
   })
 })
 
