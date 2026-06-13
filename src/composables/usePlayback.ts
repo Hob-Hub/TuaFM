@@ -26,6 +26,15 @@ let clipStart = 0
 let currentCandidates: string[] = []
 let candidateIdx = 0
 
+// Watchdog de arranque: algunos vídeos ni reproducen ni emiten onError (autoplay
+// bloqueado en el iframe recién intercambiado, interstitial de consentimiento/
+// región, rebuffer infinito…). Si tras pedir reproducción el estado no llega a
+// 'playing' en este margen, lo tratamos como fallo y avanzamos. Antes el
+// reproductor se quedaba colgado para siempre porque solo recuperaba ante onError.
+const START_TIMEOUT_MS = 12000
+let startWatchdog: ReturnType<typeof setTimeout> | null = null
+let watchdogWatcherSet = false
+
 /**
  * Orquestador central de reproducción. Unifica los tres modos (playlist, radio,
  * recommendations) sobre el reproductor YouTube. Es el único sitio que sabe
@@ -44,6 +53,7 @@ export function usePlayback() {
 
   setupQueueEnrichment()
   setupClipMode()
+  setupStartWatchdog()
 
   /**
    * Modo clips (escucha rápida): cuando está activo, salta al centro de cada
@@ -74,6 +84,39 @@ export function usePlayback() {
         void next()
       }
     })
+  }
+
+  /**
+   * Vigila el arranque de cada pista: en cuanto el reproductor sale de 'loading'
+   * (suena, se pausa, termina…) desarma el watchdog; si se queda colgado en
+   * 'loading', el timer de `armStartWatchdog` salta y dispara la recuperación.
+   */
+  function setupStartWatchdog(): void {
+    if (watchdogWatcherSet) return
+    watchdogWatcherSet = true
+    watch(() => player.state, (s) => {
+      if (s !== 'loading') clearStartWatchdog()
+    })
+  }
+
+  function clearStartWatchdog(): void {
+    if (startWatchdog) { clearTimeout(startWatchdog); startWatchdog = null }
+  }
+
+  /**
+   * Arma el watchdog tras pedir reproducción de una pista. Si pasado el margen
+   * seguimos sin sonar y sigue siendo la misma pista, lo tratamos como un fallo
+   * silencioso y reutilizamos la ruta de error (siguiente candidato → saltar).
+   */
+  function armStartWatchdog(): void {
+    clearStartWatchdog()
+    const armedFor = currentTrack.value?.id ?? null
+    startWatchdog = setTimeout(() => {
+      startWatchdog = null
+      if (player.state === 'playing') return
+      if (currentTrack.value?.id !== armedFor) return
+      void handlePlaybackError()
+    }, START_TIMEOUT_MS)
   }
 
   /**
@@ -203,10 +246,12 @@ export function usePlayback() {
    * Reintenta con el siguiente candidato; si se agotan, salta de pista.
    */
   async function handlePlaybackError(): Promise<void> {
+    clearStartWatchdog()   // ya estamos gestionando un fallo; evita disparos solapados
     candidateIdx++
     if (candidateIdx < currentCandidates.length) {
       player.state = 'loading'
       yt.loadAndPlay(currentCandidates[candidateIdx])
+      armStartWatchdog()
       return
     }
     const t = currentTrack.value
@@ -257,6 +302,7 @@ export function usePlayback() {
 
     if (currentCandidates.length > 0) {
       yt.loadAndPlay(currentCandidates[0])
+      armStartWatchdog()
       player.currentTrackId = track.id
       updateMediaSession(track)
       void recordPlay(track, player.queueMode)
