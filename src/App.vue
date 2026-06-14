@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { routeTitle } from '@/router/index'
 import { useOnline, useMediaQuery } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayerStore } from '@/stores/player.store'
+import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
+import { useFavorites } from '@/composables/useFavorites'
+import ShortcutsHelp from '@/components/ui/ShortcutsHelp.vue'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRecommendationsStore } from '@/stores/recommendations.store'
 import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
@@ -28,13 +31,25 @@ const rec = useRecommendationsStore()
 const pq = usePlaylistQueueStore()
 const playback = usePlayback()
 
-// Atajos de teclado globales: espacio = play/pausa, ←/→ = seek ±5s
+const yt = useYouTubePlayer()
+const { toggleFavorite } = useFavorites()
+const showShortcuts = ref(false)
+
+// Atajos de teclado globales. Espacio = play/pausa; ←/→ = seek ±5s; Shift+←/→ =
+// pista anterior/siguiente; M = silenciar; F = favorito; ? = esta ayuda.
 function onKey(e: KeyboardEvent): void {
   const tag = (e.target as HTMLElement)?.tagName
   if (tag === 'INPUT' || tag === 'TEXTAREA') return
-  if (e.code === 'Space') { e.preventDefault(); playback.togglePlay() }
-  else if (e.code === 'ArrowRight' && e.shiftKey) { e.preventDefault(); playback.next() }
-  else if (e.code === 'ArrowLeft'  && e.shiftKey) { e.preventDefault(); playback.prev() }
+  // Con la ayuda abierta, solo permitimos cerrarla (Escape lo gestiona el modal).
+  if (showShortcuts.value && e.key !== '?') return
+  if (e.key === '?') { e.preventDefault(); showShortcuts.value = !showShortcuts.value; return }
+  switch (e.code) {
+    case 'Space':      e.preventDefault(); playback.togglePlay(); break
+    case 'ArrowRight': e.preventDefault(); e.shiftKey ? playback.next() : yt.seekTo(player.currentTime + 5); break
+    case 'ArrowLeft':  e.preventDefault(); e.shiftKey ? playback.prev() : yt.seekTo(Math.max(0, player.currentTime - 5)); break
+    case 'KeyM':       yt.toggleMute(); break
+    case 'KeyF':       { const t = playback.currentTrack.value; if (t) void toggleFavorite(t); break }
+  }
 }
 onMounted(() => {
   document.addEventListener('keydown', onKey)
@@ -148,6 +163,9 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
 
     <!-- Aviso de actualización de la PWA (registerType: 'prompt') -->
     <PwaUpdatePrompt />
+
+    <!-- Ayuda de atajos de teclado (tecla ?) -->
+    <ShortcutsHelp v-if="showShortcuts" @close="showShortcuts = false" />
   </div>
 </template>
 

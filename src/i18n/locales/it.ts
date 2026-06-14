@@ -137,6 +137,15 @@ const it: typeof es = {
     empty: 'Non hai ancora preferiti.',
     emptyHint: 'Cerca brani e mettici un cuore.',
   },
+  shortcuts: {
+    title: 'Scorciatoie da tastiera',
+    playPause: 'Riproduci / pausa',
+    seek: 'Avanti / indietro 5 s',
+    prevNext: 'Brano precedente / successivo',
+    mute: 'Silenzia',
+    favorite: 'Preferito',
+    help: 'Mostra questo aiuto',
+  },
   player: {
     nothingPlaying: 'Niente in riproduzione',
     pickSong: 'Scegli una canzone per iniziare',

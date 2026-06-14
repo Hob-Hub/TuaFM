@@ -137,6 +137,15 @@ const en: typeof es = {
     empty: 'You don\'t have any favorites yet.',
     emptyHint: 'Search for songs and heart them.',
   },
+  shortcuts: {
+    title: 'Keyboard shortcuts',
+    playPause: 'Play / pause',
+    seek: 'Seek forward / back 5 s',
+    prevNext: 'Previous / next track',
+    mute: 'Mute',
+    favorite: 'Favorite',
+    help: 'Show this help',
+  },
   player: {
     nothingPlaying: 'Nothing playing',
     pickSong: 'Pick a song to start',

@@ -137,6 +137,15 @@ export default {
     empty: 'Aún no tienes favoritos.',
     emptyHint: 'Busca canciones y márcalas con un corazón.',
   },
+  shortcuts: {
+    title: 'Atajos de teclado',
+    playPause: 'Reproducir / pausar',
+    seek: 'Avanzar / retroceder 5 s',
+    prevNext: 'Pista anterior / siguiente',
+    mute: 'Silenciar',
+    favorite: 'Favorito',
+    help: 'Mostrar esta ayuda',
+  },
   player: {
     nothingPlaying: 'Nada sonando',
     pickSong: 'Elige una canción para empezar',

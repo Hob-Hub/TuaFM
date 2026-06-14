@@ -137,6 +137,15 @@ const fr: typeof es = {
     empty: 'Vous n\'avez pas encore de favoris.',
     emptyHint: 'Cherchez des morceaux et ajoutez-les en favori.',
   },
+  shortcuts: {
+    title: 'Raccourcis clavier',
+    playPause: 'Lecture / pause',
+    seek: 'Avancer / reculer de 5 s',
+    prevNext: 'Morceau précédent / suivant',
+    mute: 'Couper le son',
+    favorite: 'Favori',
+    help: 'Afficher cette aide',
+  },
   player: {
     nothingPlaying: 'Rien en lecture',
     pickSong: 'Choisis une chanson pour commencer',
