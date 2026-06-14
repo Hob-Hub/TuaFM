@@ -20,6 +20,9 @@ export const useUiStore = defineStore('ui', () => {
 
   // Modal: guardar una pista efímera (radio/recs) en una playlist destino
   const saveToPlaylistTrack = ref<Track | null>(null)
+  // …o un lote completo (un Top, una radio, unos resultados) con su etiqueta.
+  const saveToPlaylistTracks = ref<Track[] | null>(null)
+  const saveToPlaylistLabel = ref<string | null>(null)
 
   // Vista "Now Playing" a pantalla completa (principalmente móvil)
   const nowPlayingOpen = ref(false)
@@ -52,7 +55,15 @@ export const useUiStore = defineStore('ui', () => {
   function closeAddTrack() { addTrackPlaylistId.value = null }
 
   function openSaveToPlaylist(track: Track) { saveToPlaylistTrack.value = track }
-  function closeSaveToPlaylist() { saveToPlaylistTrack.value = null }
+  function openSaveTracksToPlaylist(tracks: Track[], label?: string) {
+    saveToPlaylistTracks.value = tracks
+    saveToPlaylistLabel.value = label ?? null
+  }
+  function closeSaveToPlaylist() {
+    saveToPlaylistTrack.value = null
+    saveToPlaylistTracks.value = null
+    saveToPlaylistLabel.value = null
+  }
 
   function showToast(message: string, kind: 'error' | 'info' | 'success' = 'info', ms = 4000) {
     toast.value = { message, kind }
@@ -62,14 +73,15 @@ export const useUiStore = defineStore('ui', () => {
 
   return {
     sidebarOpen, createPlaylistOpen, csvImportPlaylistId, addTrackPlaylistId,
-    saveToPlaylistTrack, toast, nowPlayingOpen, queueOpen,
+    saveToPlaylistTrack, saveToPlaylistTracks, saveToPlaylistLabel,
+    toast, nowPlayingOpen, queueOpen,
     openNowPlaying, closeNowPlaying,
     openQueue, closeQueue, toggleQueue,
     openSidebar, closeSidebar, toggleSidebar,
     openCreatePlaylist, closeCreatePlaylist,
     openCsvImport, closeCsvImport,
     openAddTrack, closeAddTrack,
-    openSaveToPlaylist, closeSaveToPlaylist,
+    openSaveToPlaylist, openSaveTracksToPlaylist, closeSaveToPlaylist,
     showToast
   }
 })

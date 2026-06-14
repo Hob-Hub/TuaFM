@@ -12,6 +12,7 @@ export default {
     generating: 'Generando…',
     showMore: 'Mostrar más',
     songs: '{n} canción | {n} canciones',
+    saveAll: 'Guardar todo',
   },
   nav: {
     home: 'Inicio',
@@ -263,6 +264,8 @@ export default {
     newNamePlaceholder: 'Nombre de la nueva playlist',
     newPlaylist: 'Nueva playlist',
     saved: 'Guardada en la playlist',
+    savedMany: '{n} canción añadida | {n} canciones añadidas',
+    batchFallback: 'Selección',
   },
   playback: {
     thisTrack: 'la pista',

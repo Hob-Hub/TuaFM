@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useUiStore } from '@/stores/ui.store'
@@ -8,11 +8,19 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 
 const ui = useUiStore()
 const { t } = useI18n()
-const { playlists, addTrack, createPlaylist } = usePlaylists()
+const { playlists, addTrack, addTracks, createPlaylist } = usePlaylists()
 const creating = ref(false)
 const newName = ref('')
 
+const batch = computed(() => ui.saveToPlaylistTracks)
+
 async function saveTo(playlistId: string): Promise<void> {
+  if (batch.value) {
+    await addTracks(playlistId, batch.value)
+    ui.showToast(t('saveToPlaylist.savedMany', batch.value.length), 'success')
+    ui.closeSaveToPlaylist()
+    return
+  }
   const track = ui.saveToPlaylistTrack
   if (!track) return
   await addTrack(playlistId, track)
@@ -31,7 +39,11 @@ async function createAndSave(): Promise<void> {
 
 <template>
   <BaseModal :title="$t('saveToPlaylist.title')" @close="ui.closeSaveToPlaylist()">
-    <p v-if="ui.saveToPlaylistTrack" class="text-sm text-muted mb-4 truncate">
+    <p v-if="batch" class="text-sm text-muted mb-4 truncate">
+      <span class="text-white">{{ ui.saveToPlaylistLabel || $t('saveToPlaylist.batchFallback') }}</span>
+      · {{ $t('common.songs', batch.length) }}
+    </p>
+    <p v-else-if="ui.saveToPlaylistTrack" class="text-sm text-muted mb-4 truncate">
       <span class="text-white">{{ ui.saveToPlaylistTrack.title }}</span>
       · {{ ui.saveToPlaylistTrack.artistDisplay ?? ui.saveToPlaylistTrack.artist }}
     </p>

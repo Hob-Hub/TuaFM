@@ -146,7 +146,7 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
     <CreatePlaylistModal v-if="ui.createPlaylistOpen" />
     <AddTrackModal v-if="ui.addTrackPlaylistId" />
     <CsvImportModal v-if="ui.csvImportPlaylistId" />
-    <SaveToPlaylistModal v-if="ui.saveToPlaylistTrack" />
+    <SaveToPlaylistModal v-if="ui.saveToPlaylistTrack || ui.saveToPlaylistTracks" />
 
     <!-- Toast -->
     <Transition name="toast">

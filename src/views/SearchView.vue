@@ -9,11 +9,14 @@ import {
   type ArtistSearchResult, type TrackSearchResult
 } from '@/services/lastfm.service'
 import { usePlayback } from '@/composables/usePlayback'
+import { useUiStore } from '@/stores/ui.store'
 import TrackCover from '@/components/ui/TrackCover.vue'
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 const route    = useRoute()
 const router   = useRouter()
 const playback = usePlayback()
+const ui       = useUiStore()
 const { t, n } = useI18n()
 
 const q       = ref(String(route.query.q ?? ''))
@@ -93,6 +96,12 @@ function playSong(s: TrackSearchResult): void {
   )
 }
 
+function saveAllSongs(): void {
+  if (!songs.value.length) return
+  const tracks = songs.value.map(s => makeTrack({ artist: s.artist, title: s.title, coverUrl: s.coverUrl }))
+  ui.openSaveTracksToPlaylist(tracks, q.value.trim())
+}
+
 // Búsqueda inicial si se llega con ?q= en la URL.
 if (q.value) void runSearch(q.value)
 </script>
@@ -142,7 +151,13 @@ if (q.value) void runSearch(q.value)
 
     <!-- Canciones -->
     <section v-if="songs.length">
-      <h2 class="font-display text-lg font-bold mb-3">{{ $t('search.songs') }}</h2>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-display text-lg font-bold">{{ $t('search.songs') }}</h2>
+        <BaseButton variant="ghost" size="sm" @click="saveAllSongs">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          {{ $t('common.saveAll') }}
+        </BaseButton>
+      </div>
       <ul class="flex flex-col">
         <li
           v-for="(s, i) in songs" :key="`${s.artist}-${s.title}-${i}`"

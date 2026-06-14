@@ -12,6 +12,7 @@ const en: typeof es = {
     generating: 'Generating…',
     showMore: 'Show more',
     songs: '{n} song | {n} songs',
+    saveAll: 'Save all',
   },
   nav: {
     home: 'Home',
@@ -263,6 +264,8 @@ const en: typeof es = {
     newNamePlaceholder: 'New playlist name',
     newPlaylist: 'New playlist',
     saved: 'Saved to the playlist',
+    savedMany: '{n} song added | {n} songs added',
+    batchFallback: 'Selection',
   },
   playback: {
     thisTrack: 'this track',
