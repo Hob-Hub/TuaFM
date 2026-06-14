@@ -278,6 +278,11 @@ const en: typeof es = {
     subtitle: 'App preferences.',
     language: 'Language',
     languageHint: "Your device's language is used by default. You can change it here.",
+    data: 'Data and cache',
+    dataHint: 'Playlists, favorites and history are untouched; only the metadata and cover cache is cleared.',
+    clearCache: 'Clear cache',
+    cacheCleared: 'Cache cleared · {n} entry | Cache cleared · {n} entries',
+    cacheClearError: 'Could not clear the cache',
   },
   country: {
     ES: 'Spain',

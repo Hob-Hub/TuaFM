@@ -278,6 +278,11 @@ const it: typeof es = {
     subtitle: 'Preferenze dell’applicazione.',
     language: 'Lingua',
     languageHint: 'Per impostazione predefinita si usa la lingua del dispositivo. Puoi cambiarla qui.',
+    data: 'Dati e cache',
+    dataHint: 'Playlist, preferiti e cronologia non vengono toccati; si svuota solo la cache di metadati e copertine.',
+    clearCache: 'Svuota la cache',
+    cacheCleared: 'Cache svuotata · {n} voce | Cache svuotata · {n} voci',
+    cacheClearError: 'Impossibile svuotare la cache',
   },
   country: {
     ES: 'Spagna',

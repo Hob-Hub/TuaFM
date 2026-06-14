@@ -278,6 +278,11 @@ const fr: typeof es = {
     subtitle: "Préférences de l'application.",
     language: 'Langue',
     languageHint: "La langue de ton appareil est utilisée par défaut. Tu peux la changer ici.",
+    data: 'Données et cache',
+    dataHint: 'Les playlists, favoris et historique ne sont pas touchés ; seul le cache des métadonnées et pochettes est vidé.',
+    clearCache: 'Vider le cache',
+    cacheCleared: 'Cache vidé · {n} entrée | Cache vidé · {n} entrées',
+    cacheClearError: 'Impossible de vider le cache',
   },
   country: {
     ES: 'Espagne',

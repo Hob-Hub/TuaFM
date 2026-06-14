@@ -27,3 +27,20 @@ export async function pruneExpiredCaches(now: number = Date.now()): Promise<numb
   ])
   return deleted.reduce((a, b) => a + b, 0)
 }
+
+/**
+ * Vacía por completo las cachés (tracks, artistas, carátulas, grafo Last.fm).
+ * NO toca los stores de usuario (playlists, favorites, history). Útil para
+ * forzar un refresco de metadatos/carátulas desde Ajustes.
+ *
+ * @returns nº total de entradas borradas
+ */
+export async function clearAllCaches(): Promise<number> {
+  const counts = await Promise.all([
+    db.tracks.count(), db.artists.count(), db.covers.count(), db.lastfmCache.count()
+  ])
+  await Promise.all([
+    db.tracks.clear(), db.artists.clear(), db.covers.clear(), db.lastfmCache.clear()
+  ])
+  return counts.reduce((a, b) => a + b, 0)
+}

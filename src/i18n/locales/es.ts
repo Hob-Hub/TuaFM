@@ -278,6 +278,11 @@ export default {
     subtitle: 'Preferencias de la aplicación.',
     language: 'Idioma',
     languageHint: 'Por defecto se usa el idioma de tu dispositivo. Puedes cambiarlo aquí.',
+    data: 'Datos y caché',
+    dataHint: 'Las playlists, favoritos e historial no se tocan; solo se vacía la caché de metadatos y carátulas.',
+    clearCache: 'Borrar caché',
+    cacheCleared: 'Caché vaciada · {n} entrada | Caché vaciada · {n} entradas',
+    cacheClearError: 'No se pudo borrar la caché',
   },
   // Nombres de país por código ISO 3166-1 alpha-2 (localiza ChartRegistry.name).
   country: {
