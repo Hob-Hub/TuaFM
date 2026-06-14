@@ -7,6 +7,7 @@ import { usePlayback } from '@/composables/usePlayback'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
 import NowPlaying from '@/components/player/NowPlaying.vue'
 import ProgressBar from '@/components/player/ProgressBar.vue'
+import SleepTimerButton from '@/components/player/SleepTimerButton.vue'
 import BaseSlider from '@/components/ui/BaseSlider.vue'
 import FavoriteButton from '@/components/ui/FavoriteButton.vue'
 
@@ -107,6 +108,7 @@ function onVolume(v: number): void { yt.setVolume(v) }
         </svg>
         <span v-if="player.clipMode" class="text-xs font-semibold tabular-nums">{{ player.clipSeconds }}s</span>
       </button>
+      <SleepTimerButton />
       <button class="p-2 rounded-lg hover:text-white" :class="ui.queueOpen ? 'text-brand' : 'text-muted'"
               :aria-label="$t('player.queueAria')" @click="ui.toggleQueue()">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h11M4 12h11M4 18h7M17 14v6M17 20l3-2-3-2"/></svg>

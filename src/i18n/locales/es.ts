@@ -146,6 +146,13 @@ export default {
     favorite: 'Favorito',
     help: 'Mostrar esta ayuda',
   },
+  sleep: {
+    title: 'Temporizador de apagado',
+    minutes: 'En {min} min',
+    off: 'Cancelar ({min} min)',
+    activeAria: 'Temporizador: {min} min restantes',
+    enableAria: 'Activar temporizador de apagado',
+  },
   player: {
     nothingPlaying: 'Nada sonando',
     pickSong: 'Elige una canción para empezar',

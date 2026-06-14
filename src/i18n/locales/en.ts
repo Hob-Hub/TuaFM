@@ -146,6 +146,13 @@ const en: typeof es = {
     favorite: 'Favorite',
     help: 'Show this help',
   },
+  sleep: {
+    title: 'Sleep timer',
+    minutes: 'In {min} min',
+    off: 'Cancel ({min} min)',
+    activeAria: 'Sleep timer: {min} min left',
+    enableAria: 'Set sleep timer',
+  },
   player: {
     nothingPlaying: 'Nothing playing',
     pickSong: 'Pick a song to start',

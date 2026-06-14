@@ -146,6 +146,13 @@ const it: typeof es = {
     favorite: 'Preferito',
     help: 'Mostra questo aiuto',
   },
+  sleep: {
+    title: 'Timer di spegnimento',
+    minutes: 'Tra {min} min',
+    off: 'Annulla ({min} min)',
+    activeAria: 'Timer: {min} min rimasti',
+    enableAria: 'Imposta il timer di spegnimento',
+  },
   player: {
     nothingPlaying: 'Niente in riproduzione',
     pickSong: 'Scegli una canzone per iniziare',

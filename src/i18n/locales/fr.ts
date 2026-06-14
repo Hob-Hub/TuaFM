@@ -146,6 +146,13 @@ const fr: typeof es = {
     favorite: 'Favori',
     help: 'Afficher cette aide',
   },
+  sleep: {
+    title: 'Minuteur de veille',
+    minutes: 'Dans {min} min',
+    off: 'Annuler ({min} min)',
+    activeAria: 'Minuteur : {min} min restantes',
+    enableAria: 'Activer le minuteur de veille',
+  },
   player: {
     nothingPlaying: 'Rien en lecture',
     pickSong: 'Choisis une chanson pour commencer',
