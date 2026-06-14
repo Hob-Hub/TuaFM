@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { usePlayerStore } from '@/stores/player.store'
+import { clipCentreStart } from '@/utils/clip'
 
 // ── Tipos mínimos de la IFrame Player API ────────────────────────────────────
 interface YTPlayer {
@@ -162,9 +163,6 @@ export function useYouTubePlayer() {
 
   // ── Helpers de modo clips ───────────────────────────────────────────────────
   function clipSecs(): number { return playerStore.clipMode ? playerStore.clipSeconds : 0 }
-  function centreStart(d: number, n: number): number {
-    return Math.min(Math.max(d / 2 - n / 2, 0), Math.max(0, d - n))
-  }
 
   /** Arranque de una pista en modo clips: muteamos y, en cuanto la duración esté
    *  disponible, saltamos al centro (todo en silencio). Se llama desde loadAndPlay. */
@@ -183,7 +181,7 @@ export function useYouTubePlayer() {
     try { p.mute() } catch { /* loadVideoById puede resetear el mute: lo reafirmamos */ }
     const d = p.getDuration() || 0
     if (d <= 0) return
-    clip.start = centreStart(d, n)
+    clip.start = clipCentreStart(d, n)
     try { p.seekTo(clip.start, true) } catch { /* noop */ }
     clip.seeked = true
   }
