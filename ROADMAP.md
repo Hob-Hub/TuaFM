@@ -193,44 +193,56 @@ son **producto**. Priorizadas por relación valor/esfuerzo.
 | Media | **Ficha de álbum** (`/artist/:name/:album`) | `album.getInfo` → tracklist reproducible reutilizando el `TrackItem` universal. Enlazar desde el buscador y desde la ficha de artista. Bruga la tenía; encaja sin fricción con la arquitectura actual |
 | Baja | **Descubrimiento en Home** | Sección de artistas/canciones destacadas. Oportunidad propia: servirlo **offline desde el catálogo** (top artistas/canciones de los charts, por país o década) en lugar de `geo.gettopartists` → cero coste de API y coherente con el alma "memoria histórica" de TuaFM |
 | Baja | **`document.title` dinámico** | "Título — Artista · TuaFM" mientras suena (Bruga lo hacía). Complementa la Media Session API ya integrada |
-| Media | **Modo clips (escucha rápida / skim)** | Botón en la barra que reproduce solo un trozo central de cada canción (15/30/45/60 s) y auto-avanza → muestrear muchas canciones en poco tiempo. Encaja con el alma "explorar charts". **Detallado abajo.** |
+| ✅ Hecho | **Modo clips (escucha rápida / skim)** | Botón en la barra que reproduce solo un trozo central de cada canción (15/40/90 s) y auto-avanza → muestrear muchas canciones en poco tiempo. Encaja con el alma "explorar charts". **Implementado — ver abajo.** |
 
-### Modo clips (escucha rápida) — diseño
+### Modo clips (escucha rápida) — implementado
 
-Idea: un botón en la barra que, al activarlo, reproduce solo **un fragmento del
-centro** de cada canción y **salta sola** a la siguiente. Útil para "escanear" un
-Top entero o una radio rápido (como pasar emisoras). Valor/esfuerzo alto; es un
-diferenciador con poco código nuevo.
+Un botón en la barra que reproduce solo **un fragmento del centro** de cada
+canción y **salta solo** a la siguiente. Útil para "escanear" un Top entero o una
+radio rápido (como pasar emisoras).
 
-**Estado (en `player.store.ts`, persistido):**
-- `clipSeconds: 0 | 15 | 30 | 45 | 60` — `0` = off (canción completa). Un único
-  botón **cicla** `0 → 15 → 30 → 45 → 60 → 0` (lo de "clicar mucho para cambiar").
+**Estado (en [`player.store.ts`](src/stores/player.store.ts), persistido):**
+- `clipSeconds: 0 | 15 | 40 | 90` — `0` = off (canción completa). Un único botón
+  **cicla** `0 → 15 → 40 → 90 → 0`.
 - Derivado `clipMode = clipSeconds > 0`.
 
-**Lógica (en `usePlayback.ts`), reusando lo que ya hay:**
-- **Inicio del clip:** la duración del vídeo no se sabe hasta que YouTube la
-  reporta. Ya hay un watcher de `player.duration` (`syncRealDuration`); añadir
-  ahí: cuando `clipMode` y duración conocida y aún no aplicado a esta pista →
-  `clipStart = clamp(duración/2 − clipSeconds/2, 0, …)` y `yt.seekTo(clipStart)`.
-  Flag `clipAppliedFor = track.id` para hacerlo una vez por pista.
-- **Fin del clip:** watcher de `player.currentTime`: si `clipMode` y
-  `currentTime ≥ clipStart + clipSeconds` → `next()`. (Basado en tiempo real, así
-  respeta pausas automáticamente — no usar `setTimeout`, que correría en pausa.)
-- **Centro** porque en pop suele caer el estribillo/gancho; configurable a futuro.
-- Reset de `clipAppliedFor` al cambiar de pista (lo hace el flujo de `playCurrent`).
+**Lógica (en [`useYouTubePlayer.ts`](src/composables/useYouTubePlayer.ts)):** toda
+la mecánica del clip vive aquí, donde hay acceso **síncrono** al player y a sus
+eventos de estado (antes estaba en un watcher de `usePlayback`, que llegaba tarde
+y dejaba oír ruido). El centro se calcula con `clipCentreStart()`
+([`utils/clip.ts`](src/utils/clip.ts)): `clamp(duración/2 − clip/2, 0, duración−clip)`.
 
-**UI:** botón en [`PlayerBar.vue`](src/components/layout/PlayerBar.vue) (cluster
-derecho en desktop; en móvil, acciones del `NowPlayingScreen`). Icono de "clip"/
-tijera + etiqueta del valor (`15s`/`30s`/…) o apagado; `aria-label` dinámico;
-resaltado en `brand` cuando activo. Click → cicla `clipSeconds`. Opcional: la
-barra de progreso podría sombrear la ventana del clip dentro de la canción.
+- **Arranque sin ruido:** el problema era que la pista sonaba desde el segundo 0
+  (la intro ya bufferizada) y solo *después* saltaba al centro → se oía un trozo
+  de intro + el *glitch* del seek en caliente. Solución: mientras se posiciona el
+  clip el player va **muteado** (`armed`); se salta al centro (`seeked`) y solo se
+  **desmutea** (`revealClip`) cuando ya suena en el centro, respetando el mute del
+  usuario. En el camino *gapless* el standby ya está cueado → la duración se conoce
+  al instante → salta **antes** de reproducir (sin intro, casi instantáneo).
+- **Fin del clip:** en el ticker, si `currentTime ≥ clipStart + clipSeconds` →
+  `onClipEnd` → `next()`. Basado en tiempo real, así respeta pausas.
+- **Atrás "rescata" la canción entera:** estando en modo clips, *anterior*
+  (`prev`) llama a `playCurrentFull()`: desactiva el recorte **solo para esa
+  pista** (`full`) y la reproduce desde el principio; al terminar, las siguientes
+  vuelven a sonar en clips. Importante: invalida el preload del standby, porque
+  tras una canción entera (minutos) el vídeo cueado está caduco y el swap gapless
+  no arrancaría (dejaba el reproductor parado al terminar).
 
-**Casos límite:**
-- Canción más corta que el clip → reproduce entera (clamp a `[0, duración]`).
-- Cambiar `clipSeconds` a mitad de pista → recalcular `clipStart` y re-seek.
-- `repeat-one` + clips → repetir el clip en bucle (decisión menor).
-- Seek manual del usuario → mantenerlo simple: el fin es absoluto (`clipStart +
-  N`); si lo pasa, avanza.
+**UI:** botón en [`PlayerBar.vue`](src/components/layout/PlayerBar.vue) (desktop) y
+en [`NowPlayingScreen.vue`](src/components/player/NowPlayingScreen.vue) (móvil).
+Icono de "clip" + etiqueta del valor (`15s`/`40s`/`90s`) o apagado; `aria-label`
+dinámico; resaltado en `brand` cuando activo. Click → cicla `clipSeconds`.
+
+**Casos límite cubiertos:**
+- Canción más corta que el clip → `clipCentreStart` satura a `0`; el umbral de
+  avance nunca se alcanza → suena entera y avanza por `ENDED`.
+- Activar el modo a mitad de pista → `repositionCurrentClip()` recoloca la pista
+  que ya suena (también muteando el salto).
+- Apagar el modo a mitad de clip → el ticker desmutea y deja terminar la canción.
+
+**Ideas futuras:** sombrear la ventana del clip en la barra de progreso; capturar
+**cuánto** se escucha de cada pista y la señal de "rescate" (atrás → entera) como
+feedback para las recomendaciones (ver §recomendaciones).
 
 **Sinergia/caveat:** cada salto sigue teniendo el **buffering del iframe** (§2).
 Como el modo clips cambia de pista constantemente, el corte se nota MÁS → este

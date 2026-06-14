@@ -208,6 +208,11 @@ export function useYouTubePlayer() {
     clip.full = true
     clip.armed = false
     clip.seeked = false
+    // Una canción entera dura varios minutos: para entonces el vídeo cueado en el
+    // standby está caduco y el swap gapless no arrancaría (el reproductor se queda
+    // parado al terminar). Invalidamos el preload para que la siguiente se cargue
+    // fresca con loadVideoById; prefetchNext volverá a precargar a partir de ahí.
+    standbyVideoId = null
     try { if (!playerStore.isMuted) active?.unMute() } catch { /* noop */ }
     try { active?.seekTo(0, true) } catch { /* noop */ }
     intendedPlaying = true
