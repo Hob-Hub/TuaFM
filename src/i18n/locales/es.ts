@@ -284,6 +284,15 @@ export default {
     clearCache: 'Borrar caché',
     cacheCleared: 'Caché vaciada · {n} entrada | Caché vaciada · {n} entradas',
     cacheClearError: 'No se pudo borrar la caché',
+    problems: 'Pistas con problemas',
+    problemsHint: 'Canciones que no se pudieron reproducir. Cópialas para compartirlas y arreglarlas.',
+    problemsEmpty: 'Ninguna de momento. ¡Todo suena bien!',
+    problemsCount: '{n} canción con problemas | {n} canciones con problemas',
+    problemsCopy: 'Copiar lista',
+    problemsClear: 'Vaciar',
+    problemsCopied: 'Lista copiada al portapapeles',
+    problemsNoVideo: 'sin vídeo',
+    problemsError: 'no se pudo reproducir',
   },
   // Nombres de país por código ISO 3166-1 alpha-2 (localiza ChartRegistry.name).
   country: {
