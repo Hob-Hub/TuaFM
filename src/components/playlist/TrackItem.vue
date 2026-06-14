@@ -50,7 +50,7 @@ function fmtDuration(ms?: number): string {
         <span class="group-hover:hidden">{{ (index ?? 0) + 1 }}</span>
         <button
           class="hidden group-hover:grid place-items-center text-white"
-          aria-label="Reproducir" @click.stop="emit('play')"
+          :aria-label="$t('track.playAria')" @click.stop="emit('play')"
         >
           <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         </button>
@@ -65,7 +65,7 @@ function fmtDuration(ms?: number): string {
     <div class="min-w-0 flex-1" @click="emit('play')">
       <div class="flex items-center gap-2">
         <p class="text-sm font-medium text-white truncate">{{ titleLabel }}</p>
-        <span v-if="track.enrichError" title="No se pudo enriquecer" class="text-amber-400 text-xs">⚠</span>
+        <span v-if="track.enrichError" :title="$t('track.enrichError')" class="text-amber-400 text-xs">⚠</span>
       </div>
       <template v-if="track.enriched || track.artist">
         <!-- En escritorio el artista es un enlace; en móvil (táctil, sin hover y
@@ -99,7 +99,7 @@ function fmtDuration(ms?: number): string {
       <button
         v-if="mode !== 'playlist'"
         class="p-1.5 rounded-lg text-muted hover:bg-white/10 opacity-0 group-hover:opacity-100 transition"
-        aria-label="Guardar en playlist"
+        :aria-label="$t('track.saveToPlaylist')"
         @click.stop="ui.openSaveToPlaylist(track)"
       >
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
@@ -108,7 +108,7 @@ function fmtDuration(ms?: number): string {
       <button
         v-if="removable"
         class="p-1.5 rounded-lg text-muted hover:bg-red-500/15 hover:text-red-400 opacity-0 group-hover:opacity-100 transition"
-        aria-label="Quitar de la playlist"
+        :aria-label="$t('track.removeFromPlaylist')"
         @click.stop="emit('remove')"
       >
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>

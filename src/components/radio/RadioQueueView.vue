@@ -30,10 +30,10 @@ watch(() => radio.currentIndex, async () => {
   <div v-if="radio.isActive">
     <div class="flex items-center justify-between mb-3">
       <div>
-        <h2 class="font-display text-lg font-bold">En cola</h2>
-        <p class="text-xs text-muted">{{ radio.sourceLabel }} · {{ radio.queue.length }} canciones</p>
+        <h2 class="font-display text-lg font-bold">{{ $t('radio.queueTitle') }}</h2>
+        <p class="text-xs text-muted">{{ radio.sourceLabel }} · {{ $t('common.songs', radio.queue.length) }}</p>
       </div>
-      <button class="text-sm text-muted hover:text-white" @click="radio.clear()">Limpiar</button>
+      <button class="text-sm text-muted hover:text-white" @click="radio.clear()">{{ $t('radio.clearQueue') }}</button>
     </div>
 
     <ul ref="listEl" class="flex flex-col">
@@ -52,13 +52,13 @@ watch(() => radio.currentIndex, async () => {
         class="text-sm text-muted hover:text-white disabled:opacity-50"
         :disabled="extending" @click="extend()"
       >
-        {{ extending ? 'Cargando…' : 'Cargar más' }}
+        {{ extending ? $t('common.loading') : $t('radio.loadMore') }}
       </button>
-      <p class="text-[11px] text-muted/80">La radio no se detiene: se amplía sola mientras escuchas.</p>
+      <p class="text-[11px] text-muted/80">{{ $t('radio.infiniteHint') }}</p>
     </div>
   </div>
 
   <div v-else class="rounded-2xl border border-dashed border-line p-10 text-center text-muted text-sm">
-    Genera una radio para empezar. Elige la lista y el año, y ajusta la nostalgia.
+    {{ $t('radio.emptyState') }}
   </div>
 </template>

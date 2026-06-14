@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { nanoid } from 'nanoid'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlayback } from '@/composables/usePlayback'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import type { PlayHistoryEntry } from '@/types/playlist.types'
 
+const { t, d } = useI18n()
 const { history, clearHistory } = usePlayHistory()
 const playback = usePlayback()
 
@@ -16,8 +18,8 @@ function playEntry(e: PlayHistoryEntry): void {
   )
 }
 
-const modeLabel: Record<string, string> = {
-  playlist: 'Playlist', radio: 'Radio', recommendations: 'Recs'
+function modeLabel(mode: string): string {
+  return t(`history.mode.${mode}`)
 }
 const modeCls: Record<string, string> = {
   playlist: 'bg-sky-500/15 text-sky-300',
@@ -26,15 +28,15 @@ const modeCls: Record<string, string> = {
 }
 
 function dayKey(ts: number): string {
-  const d = new Date(ts)
+  const date = new Date(ts)
   const today = new Date()
   const yest = new Date(); yest.setDate(today.getDate() - 1)
-  if (d.toDateString() === today.toDateString()) return 'Hoy'
-  if (d.toDateString() === yest.toDateString()) return 'Ayer'
-  return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  if (date.toDateString() === today.toDateString()) return t('history.today')
+  if (date.toDateString() === yest.toDateString()) return t('history.yesterday')
+  return d(date, 'dayHeading')
 }
 function fmtTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  return d(new Date(ts), 'time')
 }
 
 const grouped = computed(() => {
@@ -53,14 +55,14 @@ const grouped = computed(() => {
   <div class="p-5 sm:p-8 max-w-3xl mx-auto">
     <header class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="font-display text-2xl sm:text-3xl font-extrabold">Historial</h1>
-        <p class="text-muted text-sm mt-1">Tus últimas reproducciones.</p>
+        <h1 class="font-display text-2xl sm:text-3xl font-extrabold">{{ $t('history.title') }}</h1>
+        <p class="text-muted text-sm mt-1">{{ $t('history.subtitle') }}</p>
       </div>
-      <button v-if="history.length" class="text-sm text-muted hover:text-white" @click="clearHistory()">Vaciar</button>
+      <button v-if="history.length" class="text-sm text-muted hover:text-white" @click="clearHistory()">{{ $t('history.clear') }}</button>
     </header>
 
     <div v-if="history.length === 0" class="rounded-2xl border border-dashed border-line p-10 text-center text-muted text-sm">
-      Todavía no has reproducido nada.
+      {{ $t('history.empty') }}
     </div>
 
     <div v-for="group in grouped" :key="group.key" class="mb-6">
@@ -80,7 +82,7 @@ const grouped = computed(() => {
             <p class="text-xs text-muted truncate">{{ entry.artist }}</p>
           </div>
           <span class="text-[10px] px-2 py-0.5 rounded-full shrink-0" :class="modeCls[entry.queueMode]">
-            {{ modeLabel[entry.queueMode] }}
+            {{ modeLabel(entry.queueMode) }}
           </span>
           <span class="text-xs text-muted tabular-nums shrink-0 w-12 text-right">{{ fmtTime(entry.playedAt) }}</span>
         </li>

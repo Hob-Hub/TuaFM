@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { usePlayerStore } from '@/stores/player.store'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayback } from '@/composables/usePlayback'
@@ -13,6 +14,7 @@ const player = usePlayerStore()
 const ui = useUiStore()
 const yt = useYouTubePlayer()
 const playback = usePlayback()
+const { t } = useI18n()
 
 const current = playback.currentTrack
 
@@ -25,7 +27,7 @@ function expandNowPlaying(): void {
 }
 
 const repeatTitle = computed(() =>
-  player.repeatMode === 'one' ? 'Repetir una' : player.repeatMode === 'all' ? 'Repetir todo' : 'Sin repetición')
+  player.repeatMode === 'one' ? t('player.repeatOne') : player.repeatMode === 'all' ? t('player.repeatAll') : t('player.repeatNone'))
 
 function cycleRepeat(): void {
   player.repeatMode = player.repeatMode === 'none' ? 'all' : player.repeatMode === 'all' ? 'one' : 'none'
@@ -56,19 +58,19 @@ function onVolume(v: number): void { yt.setVolume(v) }
       <div class="flex items-center gap-1 sm:gap-2">
         <button class="hidden md:inline-flex p-2 rounded-lg text-muted hover:text-white transition"
                 :class="player.isShuffle && 'text-brand'"
-                aria-label="Aleatorio" @click="player.isShuffle = !player.isShuffle">
+                :aria-label="$t('player.shuffle')" @click="player.isShuffle = !player.isShuffle">
           <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
         </button>
 
         <button class="p-2 rounded-lg text-white/80 hover:text-white disabled:opacity-30"
-                :disabled="!playback.hasPrev.value" aria-label="Anterior" @click="playback.prev()">
+                :disabled="!playback.hasPrev.value" :aria-label="$t('player.prev')" @click="playback.prev()">
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12L9 12z"/></svg>
         </button>
 
         <button
           class="w-11 h-11 rounded-full bg-white text-surface grid place-items-center hover:scale-105 transition disabled:opacity-40"
           :disabled="!current"
-          :aria-label="player.isPlaying ? 'Pausa' : 'Reproducir'"
+          :aria-label="player.isPlaying ? $t('player.pause') : $t('player.play')"
           @click="playback.togglePlay()"
         >
           <svg v-if="player.isPlaying" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
@@ -76,7 +78,7 @@ function onVolume(v: number): void { yt.setVolume(v) }
         </button>
 
         <button class="p-2 rounded-lg text-white/80 hover:text-white disabled:opacity-30"
-                :disabled="!playback.hasNext.value" aria-label="Siguiente" @click="playback.next()">
+                :disabled="!playback.hasNext.value" :aria-label="$t('player.next')" @click="playback.next()">
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l11 6L4 18z"/></svg>
         </button>
 
@@ -96,8 +98,8 @@ function onVolume(v: number): void { yt.setVolume(v) }
       <button
         class="flex items-center gap-1 px-1.5 h-8 rounded-lg transition-colors"
         :class="player.clipMode ? 'text-brand' : 'text-muted hover:text-white'"
-        :title="player.clipMode ? `Clips de ${player.clipSeconds}s · clic para cambiar` : 'Modo clips: escucha solo el trozo central de cada canción'"
-        :aria-label="player.clipMode ? `Modo clips, ${player.clipSeconds} segundos` : 'Activar modo clips'"
+        :title="player.clipMode ? $t('player.clipsActive', { seconds: player.clipSeconds }) : $t('player.clipsHint')"
+        :aria-label="player.clipMode ? $t('player.clipsActiveAria', { seconds: player.clipSeconds }) : $t('player.clipsEnableAria')"
         @click="player.cycleClip()"
       >
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -106,10 +108,10 @@ function onVolume(v: number): void { yt.setVolume(v) }
         <span v-if="player.clipMode" class="text-xs font-semibold tabular-nums">{{ player.clipSeconds }}s</span>
       </button>
       <button class="p-2 rounded-lg hover:text-white" :class="ui.queueOpen ? 'text-brand' : 'text-muted'"
-              aria-label="Ver cola de reproducción" @click="ui.toggleQueue()">
+              :aria-label="$t('player.queueAria')" @click="ui.toggleQueue()">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h11M4 12h11M4 18h7M17 14v6M17 20l3-2-3-2"/></svg>
       </button>
-      <button class="p-2 rounded-lg text-muted hover:text-white" :aria-label="player.isMuted ? 'Activar sonido' : 'Silenciar'" @click="yt.toggleMute()">
+      <button class="p-2 rounded-lg text-muted hover:text-white" :aria-label="player.isMuted ? $t('player.unmute') : $t('player.mute')" @click="yt.toggleMute()">
         <svg v-if="player.isMuted || player.volume === 0" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm13.5 3 2.5 2.5-1.5 1.5-2.5-2.5L17 13l-2.5-2.5L16 9l2.5 2.5L21 9l1.5 1.5L20 13z"/></svg>
         <svg v-else viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 16 12z"/></svg>
       </button>
@@ -117,10 +119,10 @@ function onVolume(v: number): void { yt.setVolume(v) }
         class="w-24!"
         :model-value="player.isMuted ? 0 : player.volume"
         :min="0" :max="100"
-        aria-label="Volumen"
+        :aria-label="$t('player.volume')"
         @update:model-value="onVolume"
       />
-      <button class="p-2 rounded-lg text-muted hover:text-white" aria-label="Guardar pista en playlist"
+      <button class="p-2 rounded-lg text-muted hover:text-white" :aria-label="$t('player.saveToPlaylist')"
               :disabled="!current" @click="current && ui.openSaveToPlaylist(current)">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
       </button>

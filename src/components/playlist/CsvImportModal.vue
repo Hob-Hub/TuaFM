@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCsvImport } from '@/composables/useCsvImport'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useUiStore } from '@/stores/ui.store'
@@ -7,6 +8,7 @@ import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
 const ui = useUiStore()
+const { t } = useI18n()
 const { rows, parsing, parseFile, parseText, toTracks } = useCsvImport()
 const { addTracks } = usePlaylists()
 
@@ -37,27 +39,29 @@ async function confirm(): Promise<void> {
   importing.value = true
   await addTracks(pid, toTracks(rows.value))
   importing.value = false
-  ui.showToast(`${validCount.value} canciones importadas`, 'success')
+  ui.showToast(t('csvImport.imported', { count: validCount.value }), 'success')
   ui.closeCsvImport()
 }
 </script>
 
 <template>
-  <BaseModal title="Importar CSV" @close="ui.closeCsvImport()">
+  <BaseModal :title="$t('csvImport.title')" @close="ui.closeCsvImport()">
     <p class="text-sm text-muted mb-3 leading-relaxed">
-      Dos columnas: <span class="text-white/90">artista, título</span>. Sin cabecera obligatoria.
+      <i18n-t keypath="csvImport.columns" tag="span">
+        <template #cols><span class="text-white/90">{{ $t('csvImport.columnsValue') }}</span></template>
+      </i18n-t>
     </p>
 
     <label class="block mb-3">
       <span class="inline-flex items-center gap-2 px-4 h-10 rounded-xl bg-surface-2 border border-line text-sm cursor-pointer hover:bg-card-hover">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
-        {{ fileName || 'Elegir archivo .csv' }}
+        {{ fileName || $t('csvImport.chooseFile') }}
       </span>
       <input type="file" accept=".csv,text/csv" class="hidden" @change="onFile" />
     </label>
 
     <details class="mb-3">
-      <summary class="text-xs text-muted cursor-pointer hover:text-white/80">…o pegar texto directamente</summary>
+      <summary class="text-xs text-muted cursor-pointer hover:text-white/80">{{ $t('csvImport.orPaste') }}</summary>
       <textarea
         v-model="pasted"
         rows="5"
@@ -68,11 +72,11 @@ async function confirm(): Promise<void> {
       />
     </details>
 
-    <div v-if="parsing" class="text-sm text-muted py-3">Procesando…</div>
+    <div v-if="parsing" class="text-sm text-muted py-3">{{ $t('csvImport.processing') }}</div>
     <div v-else-if="rows.length" class="rounded-xl bg-surface-2 border border-line overflow-hidden">
       <div class="flex items-center justify-between px-3 py-2 text-xs border-b border-line">
-        <span class="text-emerald-400">{{ validCount }} válidas</span>
-        <span v-if="invalidCount" class="text-amber-400">{{ invalidCount }} ignoradas</span>
+        <span class="text-emerald-400">{{ $t('csvImport.valid', { count: validCount }) }}</span>
+        <span v-if="invalidCount" class="text-amber-400">{{ $t('csvImport.ignored', { count: invalidCount }) }}</span>
       </div>
       <ul class="max-h-44 overflow-y-auto divide-y divide-line/50">
         <li v-for="r in rows.slice(0, 100)" :key="r.line"
@@ -86,9 +90,9 @@ async function confirm(): Promise<void> {
     </div>
 
     <template #footer>
-      <BaseButton variant="ghost" @click="ui.closeCsvImport()">Cancelar</BaseButton>
+      <BaseButton variant="ghost" @click="ui.closeCsvImport()">{{ $t('common.cancel') }}</BaseButton>
       <BaseButton variant="brand" :disabled="validCount === 0 || importing" @click="confirm">
-        Importar {{ validCount || '' }}
+        {{ $t('csvImport.import', { count: validCount || '' }) }}
       </BaseButton>
     </template>
   </BaseModal>

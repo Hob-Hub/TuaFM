@@ -6,6 +6,7 @@ import { useChartRegistryStore } from '@/stores/chartRegistry.store'
 import { usePlayback } from '@/composables/usePlayback'
 import { usePlayerStore } from '@/stores/player.store'
 import { getYearTop } from '@/services/radio.service'
+import { chartCountryName } from '@/utils/chartLabels'
 import type { Track } from '@/types/track.types'
 import TrackItem from '@/components/playlist/TrackItem.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -58,26 +59,26 @@ function isActiveRow(i: number): boolean {
   <div class="p-5 sm:p-8 max-w-3xl mx-auto">
     <button class="text-sm text-muted hover:text-white mb-5 flex items-center gap-1" @click="router.back()">
       <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-      Volver
+      {{ $t('common.back') }}
     </button>
 
     <header class="flex items-end justify-between gap-4 mb-6 flex-wrap">
       <div class="min-w-0">
-        <p class="text-xs uppercase tracking-wider text-muted">{{ reg?.flag }} {{ reg?.name ?? 'Lista' }}</p>
-        <h1 class="font-display text-3xl sm:text-4xl font-extrabold">Top {{ year }}</h1>
-        <p class="text-sm text-muted mt-1">{{ tracks.length }} canciones · el Top real de ese año</p>
+        <p class="text-xs uppercase tracking-wider text-muted">{{ reg?.flag }} {{ chartCountryName(reg?.country, reg?.name ?? $t('chart.listFallback')) }}</p>
+        <h1 class="font-display text-3xl sm:text-4xl font-extrabold">{{ $t('chart.top', { year }) }}</h1>
+        <p class="text-sm text-muted mt-1">{{ $t('common.songs', tracks.length) }} · {{ $t('chart.realTop') }}</p>
       </div>
       <BaseButton variant="brand" size="lg" :disabled="!tracks.length" @click="playAll">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        Reproducir
+        {{ $t('common.play') }}
       </BaseButton>
     </header>
 
     <div v-if="loading" class="rounded-2xl border border-dashed border-line p-10 text-center text-muted text-sm">
-      Cargando el Top de {{ year }}…
+      {{ $t('chart.loading', { year }) }}
     </div>
     <div v-else-if="!tracks.length" class="rounded-2xl border border-dashed border-line p-10 text-center text-muted text-sm">
-      No hay datos para este año.
+      {{ $t('chart.noData') }}
     </div>
     <ul v-else class="flex flex-col">
       <TrackItem

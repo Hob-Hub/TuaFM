@@ -20,8 +20,8 @@ defineProps<{ track: Track | null }>()
       </RouterLink>
     </div>
     <div v-else class="min-w-0">
-      <p class="text-sm text-muted truncate">Nada sonando</p>
-      <p class="text-xs text-muted/80 truncate">Elige una canción para empezar</p>
+      <p class="text-sm text-muted truncate">{{ $t('player.nothingPlaying') }}</p>
+      <p class="text-xs text-muted/80 truncate">{{ $t('player.pickSong') }}</p>
     </div>
   </div>
 </template>

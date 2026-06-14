@@ -29,7 +29,7 @@ function toggle(e: Event): void {
     type="button"
     class="p-1.5 rounded-lg hover:bg-white/10 transition-colors shrink-0 grid place-items-center"
     :class="isFav ? 'text-brand' : revealOnHover ? 'text-muted opacity-0 group-hover:opacity-100' : 'text-muted'"
-    :aria-label="isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+    :aria-label="isFav ? $t('track.removeFromFavorites') : $t('track.addToFavorites')"
     :aria-pressed="isFav"
     @click="toggle"
   >

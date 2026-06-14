@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { i18n } from '@/i18n'
 import { buildRecommendations } from '@/services/recommendations.service'
 import { useRecommendationsStore } from '@/stores/recommendations.store'
 import { usePlayerStore } from '@/stores/player.store'
@@ -14,7 +15,7 @@ export function useRecommendations() {
 
   async function generate(outputSize = 25): Promise<boolean> {
     if (!favorites.value || favorites.value.length < 3) {
-      error.value = 'Necesitas al menos 3 favoritos para generar recomendaciones'
+      error.value = i18n.global.t('recs.needThreeError')
       return false
     }
     generating.value = true
@@ -22,7 +23,7 @@ export function useRecommendations() {
     try {
       const tracks = await buildRecommendations(favorites.value, outputSize)
       if (tracks.length === 0) {
-        error.value = 'No se encontraron recomendaciones. Prueba con más favoritos.'
+        error.value = i18n.global.t('recs.noneFound')
         return false
       }
       recStore.setQueue(tracks)

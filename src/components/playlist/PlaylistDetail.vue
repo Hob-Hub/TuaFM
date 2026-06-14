@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { usePlayback } from '@/composables/usePlayback'
@@ -18,6 +19,7 @@ const player = usePlayerStore()
 const pq = usePlaylistQueueStore()
 const ui = useUiStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const data = observePlaylistDetail(props.playlistId)
 const playlist = computed(() => data.value.playlist)
@@ -40,10 +42,10 @@ function playAll(): void {
 }
 
 async function confirmDelete(): Promise<void> {
-  const name = playlist.value?.name ?? 'esta playlist'
-  if (!window.confirm(`¿Eliminar «${name}»? Esta acción no se puede deshacer.`)) return
+  const name = playlist.value?.name ?? t('playlist.fallbackName')
+  if (!window.confirm(t('playlist.confirmDelete', { name }))) return
   await deletePlaylist(props.playlistId)
-  ui.showToast('Playlist eliminada', 'success')
+  ui.showToast(t('playlist.deleted'), 'success')
   router.push({ name: 'home' })
 }
 
@@ -63,9 +65,9 @@ function onDrop(index: number): void {
     <header class="flex items-end gap-5 mb-6">
       <TrackCover :src="playlist.coverUrl ?? coverFromTracks" :fallback-text="playlist.name" :size="160" rounded="rounded-2xl" />
       <div class="min-w-0 pb-1">
-        <p class="text-xs uppercase tracking-wider text-muted">Playlist</p>
+        <p class="text-xs uppercase tracking-wider text-muted">{{ $t('playlist.label') }}</p>
         <h1 class="font-display text-3xl sm:text-4xl font-extrabold truncate">{{ playlist.name }}</h1>
-        <p class="text-sm text-muted mt-2">{{ tracks.length }} canciones</p>
+        <p class="text-sm text-muted mt-2">{{ $t('common.songs', tracks.length) }}</p>
       </div>
     </header>
 
@@ -73,22 +75,22 @@ function onDrop(index: number): void {
     <div class="flex items-center gap-2 mb-6 flex-wrap">
       <BaseButton variant="brand" size="lg" :disabled="!tracks.length" @click="playAll">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        Reproducir
+        {{ $t('playlist.play') }}
       </BaseButton>
       <BaseButton variant="surface" @click="ui.openAddTrack(playlistId)">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-        Añadir
+        {{ $t('playlist.add') }}
       </BaseButton>
       <BaseButton variant="surface" @click="ui.openCsvImport(playlistId)">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
-        Importar CSV
+        {{ $t('playlist.importCsv') }}
       </BaseButton>
-      <BaseButton variant="danger" class="ml-auto" @click="confirmDelete">Eliminar</BaseButton>
+      <BaseButton variant="danger" class="ml-auto" @click="confirmDelete">{{ $t('playlist.delete') }}</BaseButton>
     </div>
 
     <!-- Lista -->
     <div v-if="tracks.length === 0" class="rounded-2xl border border-dashed border-line p-10 text-center text-muted text-sm">
-      Esta playlist está vacía. Añade canciones o importa un CSV.
+      {{ $t('playlist.empty') }}
     </div>
     <ul v-else class="flex flex-col">
       <li
@@ -113,6 +115,6 @@ function onDrop(index: number): void {
   </div>
 
   <div v-else class="grid place-items-center py-20 text-muted">
-    <p>Playlist no encontrada.</p>
+    <p>{{ $t('playlist.notFound') }}</p>
   </div>
 </template>

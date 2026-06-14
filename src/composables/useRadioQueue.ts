@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { i18n } from '@/i18n'
 import { generateRadioQueue, generateMoreRadioTracks } from '@/services/radio.service'
 import { useRadioStore } from '@/stores/radio.store'
 import { usePlayerStore } from '@/stores/player.store'
@@ -26,13 +27,14 @@ export function useRadioQueue() {
     try {
       const { tracks, resolvedLambda } = await generateRadioQueue(params)
       if (tracks.length === 0) {
-        error.value = 'No hay datos para ese año. Prueba con otro año.'
+        error.value = i18n.global.t('radio.noDataForYear')
         return false
       }
       const registry = registryStore.getById(params.chartId)
-      const label    = `${registry?.name ?? params.chartId} · ${params.refYear}`
-      radioStore.setQueue(tracks, label, {
+      radioStore.setQueue(tracks, {
         chartId: params.chartId,
+        country: registry?.country ?? '',
+        name:    registry?.name ?? params.chartId,
         year:    params.refYear,
         lambda:  resolvedLambda,
         window:  params.windowYears ?? 6
@@ -41,6 +43,7 @@ export function useRadioQueue() {
         chartId: params.chartId,
         year:    params.refYear,
         lambda:  resolvedLambda,
+        country: registry?.country ?? '',
         name:    registry?.name ?? params.chartId,
         flag:    registry?.flag ?? '🎵'
       })

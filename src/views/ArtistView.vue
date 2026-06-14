@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { watch, computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useArtist } from '@/composables/useArtist'
 import { usePlayback } from '@/composables/usePlayback'
@@ -11,6 +12,7 @@ const INITIAL_VISIBLE = 15
 
 const route = useRoute()
 const router = useRouter()
+const { n } = useI18n()
 const { info, loading, loadingMore, error, load, loadMore } = useArtist()
 const playback = usePlayback()
 
@@ -37,8 +39,8 @@ async function showMore(): Promise<void> {
   }
 }
 
-function fmtListeners(n: number): string {
-  return new Intl.NumberFormat('es-ES').format(n)
+function fmtListeners(value: number): string {
+  return n(value, 'decimal')
 }
 
 // Reproduce desde la canción pulsada y encadena el resto de las populares del
@@ -56,7 +58,7 @@ function playTrack(index: number): void {
   <div class="p-5 sm:p-8 max-w-3xl mx-auto">
     <button class="text-sm text-muted hover:text-white mb-5 flex items-center gap-1" @click="router.back()">
       <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-      Volver
+      {{ $t('common.back') }}
     </button>
 
     <div v-if="loading" class="animate-pulse space-y-4">
@@ -76,9 +78,9 @@ function playTrack(index: number): void {
         <TrackCover :src="info.imageUrl" :fallback-text="info.name" :size="160" rounded="rounded-2xl"
                     class="w-28! h-28! sm:w-40! sm:h-40! shrink-0" />
         <div class="min-w-0 flex-1 pb-1">
-          <p class="text-xs uppercase tracking-wider text-muted">Artista</p>
+          <p class="text-xs uppercase tracking-wider text-muted">{{ $t('artist.label') }}</p>
           <h1 class="font-display text-3xl sm:text-4xl font-extrabold truncate">{{ info.name }}</h1>
-          <p class="text-sm text-muted mt-2">{{ fmtListeners(info.listeners) }} oyentes en Last.fm</p>
+          <p class="text-sm text-muted mt-2">{{ $t('artist.listeners', { count: fmtListeners(info.listeners) }, { plural: info.listeners }) }}</p>
           <div v-if="info.tags.length" class="flex flex-wrap gap-1.5 mt-3">
             <span v-for="t in info.tags" :key="t" class="text-[11px] px-2 py-0.5 rounded-full bg-surface-2 text-muted">{{ t }}</span>
           </div>
@@ -88,7 +90,7 @@ function playTrack(index: number): void {
       <p v-if="info.bio" class="text-sm text-white/70 leading-relaxed mb-8 line-clamp-5">{{ info.bio }}</p>
 
       <section v-if="info.topTracks.length">
-        <h2 class="font-display text-lg font-bold mb-3">Canciones populares</h2>
+        <h2 class="font-display text-lg font-bold mb-3">{{ $t('artist.popularTracks') }}</h2>
         <ul class="flex flex-col">
           <li v-for="(t, i) in visibleTracks" :key="t.title"
               class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
@@ -105,7 +107,7 @@ function playTrack(index: number): void {
 
         <div v-if="canShowMore" class="mt-4 flex justify-center">
           <BaseButton variant="ghost" :disabled="loadingMore" @click="showMore">
-            {{ loadingMore ? 'Cargando…' : 'Mostrar más' }}
+            {{ loadingMore ? $t('common.loading') : $t('common.showMore') }}
           </BaseButton>
         </div>
       </section>

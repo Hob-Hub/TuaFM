@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { usePlayerStore } from '@/stores/player.store'
 import { useUiStore } from '@/stores/ui.store'
@@ -13,6 +14,7 @@ const player = usePlayerStore()
 const ui = useUiStore()
 const playback = usePlayback()
 const yt = useYouTubePlayer()
+const { t } = useI18n()
 
 const current = playback.currentTrack
 
@@ -21,7 +23,7 @@ const artist = computed(() => current.value?.artistDisplay ?? current.value?.art
 const silent = computed(() => player.isMuted || player.volume === 0)
 
 const repeatTitle = computed(() =>
-  player.repeatMode === 'one' ? 'Repetir una' : player.repeatMode === 'all' ? 'Repetir todo' : 'Sin repetición')
+  player.repeatMode === 'one' ? t('player.repeatOne') : player.repeatMode === 'all' ? t('player.repeatAll') : t('player.repeatNone'))
 
 function cycleRepeat(): void {
   player.repeatMode = player.repeatMode === 'none' ? 'all' : player.repeatMode === 'all' ? 'one' : 'none'
@@ -29,10 +31,10 @@ function cycleRepeat(): void {
 
 const modeLabel = computed(() => {
   switch (player.queueMode) {
-    case 'radio': return 'Sonando en Radio'
-    case 'recommendations': return 'Sonando en Recomendaciones'
-    case 'playlist': return 'Sonando desde tu playlist'
-    default: return 'Reproduciendo'
+    case 'radio': return t('nowPlaying.modeRadio')
+    case 'recommendations': return t('nowPlaying.modeRecs')
+    case 'playlist': return t('nowPlaying.modePlaylist')
+    default: return t('nowPlaying.modeDefault')
   }
 })
 </script>
@@ -42,7 +44,7 @@ const modeLabel = computed(() => {
               px-6 pt-5 pb-8" style="padding-bottom: max(2rem, env(safe-area-inset-bottom));">
     <!-- Cabecera -->
     <div class="flex items-center gap-3">
-      <button class="p-2 -ml-2 rounded-lg text-white" aria-label="Cerrar" @click="ui.closeNowPlaying()">
+      <button class="p-2 -ml-2 rounded-lg text-white" :aria-label="$t('nowPlaying.close')" @click="ui.closeNowPlaying()">
         <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <span class="flex-1 text-center text-xs uppercase tracking-wider text-muted truncate">{{ modeLabel }}</span>
@@ -60,7 +62,7 @@ const modeLabel = computed(() => {
 
     <!-- Título + artista -->
     <div class="min-w-0 mb-5">
-      <p class="font-display text-2xl font-extrabold leading-tight line-clamp-2">{{ title || 'Nada sonando' }}</p>
+      <p class="font-display text-2xl font-extrabold leading-tight line-clamp-2">{{ title || $t('nowPlaying.nothingPlaying') }}</p>
       <RouterLink
         v-if="current"
         :to="{ name: 'artist', params: { name: artist } }"
@@ -75,19 +77,19 @@ const modeLabel = computed(() => {
     <!-- Transporte -->
     <div class="flex items-center justify-between">
       <button class="p-2 rounded-lg text-muted hover:text-white" :class="player.isShuffle && 'text-brand'"
-              aria-label="Aleatorio" @click="player.isShuffle = !player.isShuffle">
+              :aria-label="$t('player.shuffle')" @click="player.isShuffle = !player.isShuffle">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
       </button>
 
       <button class="p-2 rounded-lg text-white/80 hover:text-white disabled:opacity-30"
-              :disabled="!playback.hasPrev.value" aria-label="Anterior" @click="playback.prev()">
+              :disabled="!playback.hasPrev.value" :aria-label="$t('player.prev')" @click="playback.prev()">
         <svg viewBox="0 0 24 24" class="w-8 h-8" fill="currentColor"><path d="M6 6h2v12H6zM20 6v12L9 12z"/></svg>
       </button>
 
       <button
         class="w-16 h-16 rounded-full bg-white text-surface grid place-items-center hover:scale-105 transition disabled:opacity-40"
         :disabled="!current"
-        :aria-label="player.isPlaying ? 'Pausa' : 'Reproducir'"
+        :aria-label="player.isPlaying ? $t('player.pause') : $t('player.play')"
         @click="playback.togglePlay()"
       >
         <svg v-if="player.isPlaying" viewBox="0 0 24 24" class="w-7 h-7" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
@@ -95,7 +97,7 @@ const modeLabel = computed(() => {
       </button>
 
       <button class="p-2 rounded-lg text-white/80 hover:text-white disabled:opacity-30"
-              :disabled="!playback.hasNext.value" aria-label="Siguiente" @click="playback.next()">
+              :disabled="!playback.hasNext.value" :aria-label="$t('player.next')" @click="playback.next()">
         <svg viewBox="0 0 24 24" class="w-8 h-8" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l11 6L4 18z"/></svg>
       </button>
 
@@ -113,26 +115,26 @@ const modeLabel = computed(() => {
               :disabled="!current" @click="current && yt.toggleMute()">
         <svg v-if="silent" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm13.5 3 2.5 2.5-1.5 1.5-2.5-2.5L17 13l-2.5-2.5L16 9l2.5 2.5L21 9l1.5 1.5L20 13z"/></svg>
         <svg v-else viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M5 9v6h4l5 5V4L9 9H5zm11 3a4 4 0 0 0-2-3.46v6.92A4 4 0 0 0 16 12z"/></svg>
-        {{ silent ? 'Silencio' : 'Sonido' }}
+        {{ silent ? $t('nowPlaying.silence') : $t('nowPlaying.sound') }}
       </button>
-      <button class="flex items-center gap-2 text-sm text-muted hover:text-white" aria-label="Ver cola"
+      <button class="flex items-center gap-2 text-sm text-muted hover:text-white" :aria-label="$t('queue.viewQueue')"
               @click="ui.openQueue()">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h11M4 12h11M4 18h7M17 14v6M17 20l3-2-3-2"/></svg>
-        Cola
+        {{ $t('nowPlaying.queue') }}
       </button>
       <button class="flex items-center gap-2 text-sm transition-colors"
               :class="player.clipMode ? 'text-brand' : 'text-muted hover:text-white'"
-              :aria-label="player.clipMode ? `Modo clips, ${player.clipSeconds} segundos` : 'Activar modo clips'"
+              :aria-label="player.clipMode ? $t('player.clipsActiveAria', { seconds: player.clipSeconds }) : $t('player.clipsEnableAria')"
               @click="player.cycleClip()">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="3" y1="12" x2="21" y2="12" /><rect x="8" y="7" width="8" height="10" rx="2" fill="currentColor" stroke="none" />
         </svg>
-        {{ player.clipMode ? `${player.clipSeconds}s` : 'Clips' }}
+        {{ player.clipMode ? `${player.clipSeconds}s` : $t('nowPlaying.clips') }}
       </button>
       <button class="flex items-center gap-2 text-sm text-muted hover:text-white"
               :disabled="!current" @click="current && ui.openSaveToPlaylist(current)">
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-        Guardar
+        {{ $t('nowPlaying.save') }}
       </button>
     </div>
   </div>

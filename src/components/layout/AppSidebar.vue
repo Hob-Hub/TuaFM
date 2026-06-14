@@ -16,11 +16,13 @@ function submitSearch(): void {
   ui.closeSidebar()
 }
 
+// label se localiza en plantilla con $t('nav.' + name).
 const nav = [
-  { name: 'home',    label: 'Inicio',          icon: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10' },
-  { name: 'radio',   label: 'Radio',           icon: 'M4 8h16v11H4zM8 4l8 3M12 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4z' },
-  { name: 'recs',    label: 'Recomendaciones', icon: 'M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6z' },
-  { name: 'history', label: 'Historial',       icon: 'M12 8v5l3 2M3 12a9 9 0 1 0 2-5.6M3 4v3h3' }
+  { name: 'home',     icon: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10' },
+  { name: 'radio',    icon: 'M4 8h16v11H4zM8 4l8 3M12 13a2 2 0 1 0 0 4 2 2 0 0 0 0-4z' },
+  { name: 'recs',     icon: 'M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6z' },
+  { name: 'history',  icon: 'M12 8v5l3 2M3 12a9 9 0 1 0 2-5.6M3 4v3h3' },
+  { name: 'settings', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 13a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 11 3.1V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 .3 1.9' }
 ]
 </script>
 
@@ -42,8 +44,8 @@ const nav = [
       <input
         v-model="searchTerm"
         type="search"
-        placeholder="Buscar…"
-        aria-label="Buscar artistas o canciones"
+        :placeholder="$t('sidebar.searchPlaceholder')"
+        :aria-label="$t('sidebar.searchAria')"
         class="w-full h-9 pl-9 pr-3 rounded-xl bg-surface-2 border border-line text-sm text-white/90
                placeholder:text-muted/60 focus:outline-none focus:border-brand/70 focus:ring-2 focus:ring-brand/30 transition-colors"
       />
@@ -59,14 +61,14 @@ const nav = [
         @click="ui.closeSidebar()"
       >
         <svg viewBox="0 0 24 24" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="item.icon"/></svg>
-        {{ item.label }}
+        {{ $t('nav.' + item.name) }}
       </RouterLink>
     </nav>
 
     <!-- Playlists -->
     <div class="flex items-center justify-between px-3 mt-2">
-      <span class="text-xs font-semibold uppercase tracking-wider text-muted">Tus playlists</span>
-      <button class="p-1 rounded-lg text-muted hover:text-white hover:bg-card" aria-label="Nueva playlist" @click="ui.openCreatePlaylist()">
+      <span class="text-xs font-semibold uppercase tracking-wider text-muted">{{ $t('sidebar.yourPlaylists') }}</span>
+      <button class="p-1 rounded-lg text-muted hover:text-white hover:bg-card" :aria-label="$t('sidebar.newPlaylist')" @click="ui.openCreatePlaylist()">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </div>
@@ -85,7 +87,7 @@ const nav = [
           </RouterLink>
         </li>
         <li v-if="playlists.length === 0" class="px-3 py-4 text-xs text-muted/80 leading-relaxed">
-          Aún no tienes playlists. Crea una con el botón <span class="text-brand">+</span> de arriba.
+          {{ $t('sidebar.empty') }}
         </li>
       </ul>
     </div>

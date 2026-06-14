@@ -8,6 +8,7 @@ import { useRadioQueue } from '@/composables/useRadioQueue'
 import { usePlayback } from '@/composables/usePlayback'
 import { getYearTop } from '@/services/radio.service'
 import { nostalgiaLabel } from '@/utils/radioLabels'
+import { chartCountryName } from '@/utils/chartLabels'
 import type { ChartPeriod, ChartRegistry, ChartSong } from '@/types/chart.types'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseSlider from '@/components/ui/BaseSlider.vue'
@@ -113,15 +114,15 @@ async function onGenerate(): Promise<void> {
 
 <template>
   <section class="rounded-2xl bg-card border border-line p-5 space-y-5">
-    <div v-if="registry.loading" class="text-sm text-muted">Cargando fuentes…</div>
+    <div v-if="registry.loading" class="text-sm text-muted">{{ $t('radio.loadingSources') }}</div>
     <div v-else-if="registry.registries.length === 0" class="text-sm text-amber-300">
-      No hay listas disponibles. Regenera el bundle de charts (chart-pipeline/build-charts.mjs).
+      {{ $t('radio.noLists') }}
     </div>
 
     <template v-else>
       <!-- País / lista: chips que envuelven (escala a más fuentes) -->
       <div>
-        <label class="block text-xs font-medium text-muted mb-2">Lista</label>
+        <label class="block text-xs font-medium text-muted mb-2">{{ $t('radio.list') }}</label>
         <div class="flex flex-wrap gap-2">
           <button
             v-for="r in registry.registries" :key="r.chartId"
@@ -130,7 +131,7 @@ async function onGenerate(): Promise<void> {
             @click="selectChart(r)"
           >
             <span class="text-lg leading-none">{{ r.flag }}</span>
-            <span class="text-sm font-semibold whitespace-nowrap">{{ r.name }}</span>
+            <span class="text-sm font-semibold whitespace-nowrap">{{ chartCountryName(r.country, r.name) }}</span>
             <span v-if="r.subtitle" class="text-[10px] text-muted/70 whitespace-nowrap">· {{ r.subtitle }}</span>
           </button>
         </div>
@@ -141,13 +142,13 @@ async function onGenerate(): Promise<void> {
         <!-- Año -->
         <div>
           <div class="flex items-baseline justify-between mb-2">
-            <span class="text-xs font-medium text-muted">Año</span>
+            <span class="text-xs font-medium text-muted">{{ $t('radio.year') }}</span>
             <span class="font-display text-2xl font-extrabold tabular-nums leading-none">{{ year }}</span>
           </div>
           <BaseSlider
             v-model="year" show-thumb
             :min="selected?.startYear" :max="selected?.endYear" :step="1"
-            aria-label="Año"
+            :aria-label="$t('radio.yearAria')"
           />
           <div v-if="selected" class="flex justify-between text-[10px] text-muted/80 mt-1 tabular-nums">
             <span>{{ selected.startYear }}</span><span>{{ selected.endYear }}</span>
@@ -157,23 +158,23 @@ async function onGenerate(): Promise<void> {
         <!-- Nostalgia: etiqueta humana en vez del λ crudo -->
         <div>
           <div class="flex items-baseline justify-between mb-2">
-            <span class="text-xs font-medium text-muted">Nostalgia</span>
+            <span class="text-xs font-medium text-muted">{{ $t('radio.nostalgiaLabel') }}</span>
             <span class="text-sm font-semibold text-white">{{ nostalgiaLabel(lambda) }}</span>
           </div>
           <BaseSlider
             v-model="lambda" show-thumb
             :min="0.1" :max="1" :step="0.05"
-            aria-label="Nivel de nostalgia"
+            :aria-label="$t('radio.nostalgiaAria')"
           />
           <div class="flex justify-between text-[10px] text-muted/80 mt-1">
-            <span>Mezcla épocas</span><span>Solo ese año</span>
+            <span>{{ $t('radio.mixEras') }}</span><span>{{ $t('radio.onlyThatYear') }}</span>
           </div>
         </div>
       </div>
 
       <BaseButton variant="brand" size="lg" class="w-full justify-center" :disabled="generating || !chartId" @click="onGenerate">
         <svg v-if="!generating" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        {{ generating ? 'Generando…' : 'Generar radio' }}
+        {{ generating ? $t('common.generating') : $t('radio.generate') }}
       </BaseButton>
 
       <p v-if="error" class="text-sm text-amber-300">{{ error }}</p>
@@ -188,13 +189,13 @@ async function onGenerate(): Promise<void> {
           <span class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
             <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 transition-transform" :class="previewOpen && 'rotate-90'"
                  fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-            Top {{ displaySize }} · {{ year }}
+            {{ $t('radio.previewTop', { count: displaySize, year }) }}
           </span>
-          <span class="text-[10px] text-muted/80">{{ selected.name }}</span>
+          <span class="text-[10px] text-muted/80">{{ chartCountryName(selected.country, selected.name) }}</span>
         </button>
 
         <div v-show="previewOpen" class="mt-2">
-          <div v-if="loadingTop" class="text-xs text-muted/80">Cargando…</div>
+          <div v-if="loadingTop" class="text-xs text-muted/80">{{ $t('common.loading') }}</div>
           <template v-else-if="allSongs.length">
             <ol class="space-y-0.5">
               <li v-for="s in visibleSongs" :key="s.rank">
@@ -218,11 +219,11 @@ async function onGenerate(): Promise<void> {
               class="mt-2 inline-flex items-center gap-1 text-xs text-brand hover:underline"
               @click="openFullChart"
             >
-              Ver el Top {{ displaySize }} completo
+              {{ $t('radio.seeFullTop', { count: displaySize }) }}
               <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
           </template>
-          <div v-else class="text-xs text-muted/80">Sin datos para este año.</div>
+          <div v-else class="text-xs text-muted/80">{{ $t('radio.noYearData') }}</div>
         </div>
       </div>
     </template>

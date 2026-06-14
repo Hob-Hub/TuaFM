@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { usePlayerStore } from '@/stores/player.store'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRecommendationsStore } from '@/stores/recommendations.store'
@@ -16,6 +17,7 @@ const rec = useRecommendationsStore()
 const pq = usePlaylistQueueStore()
 const ui = useUiStore()
 const playback = usePlayback()
+const { t } = useI18n()
 
 const tracks = computed<Track[]>(() => {
   switch (player.queueMode) {
@@ -37,9 +39,9 @@ const currentIndex = computed(() => {
 
 const sourceLabel = computed(() => {
   switch (player.queueMode) {
-    case 'radio':           return radio.sourceLabel || 'Radio'
-    case 'recommendations': return 'Recomendaciones'
-    case 'playlist':        return 'Tu playlist'
+    case 'radio':           return radio.sourceLabel || t('queue.radio')
+    case 'recommendations': return t('queue.recommendations')
+    case 'playlist':        return t('queue.playlist')
     default:                return ''
   }
 })
@@ -68,10 +70,10 @@ watch(currentIndex, followActive)          // y la sigue al cambiar de pista
     <aside class="queue-panel relative w-full sm:w-96 max-w-full h-full bg-surface border-l border-line flex flex-col shadow-2xl">
       <header class="flex items-center justify-between px-4 h-14 border-b border-line shrink-0">
         <div class="min-w-0">
-          <h2 class="font-display font-bold leading-tight">En cola</h2>
+          <h2 class="font-display font-bold leading-tight">{{ $t('queue.title') }}</h2>
           <p class="text-xs text-muted truncate">{{ sourceLabel }}</p>
         </div>
-        <button class="p-2 -mr-2 rounded-lg text-muted hover:text-white" aria-label="Cerrar cola" @click="ui.closeQueue()">
+        <button class="p-2 -mr-2 rounded-lg text-muted hover:text-white" :aria-label="$t('queue.close')" @click="ui.closeQueue()">
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </header>
@@ -87,7 +89,7 @@ watch(currentIndex, followActive)          // y la sigue al cambiar de pista
           />
         </ul>
         <div v-else class="grid place-items-center h-full text-sm text-muted px-6 text-center">
-          No hay nada en cola. Genera una radio o reproduce una playlist.
+          {{ $t('queue.empty') }}
         </div>
       </div>
     </aside>

@@ -1,4 +1,5 @@
 import { computed, watch } from 'vue'
+import { i18n } from '@/i18n'
 import type { Track } from '@/types/track.types'
 import { usePlayerStore } from '@/stores/player.store'
 import { useRadioStore } from '@/stores/radio.store'
@@ -236,8 +237,8 @@ export function usePlayback() {
       return
     }
     const t = currentTrack.value
-    const label = t ? `${t.artistDisplay ?? t.artist} - ${t.titleDisplay ?? t.title}` : 'la pista'
-    ui.showToast(`No se pudo reproducir "${label}"`, 'error')
+    const label = t ? `${t.artistDisplay ?? t.artist} - ${t.titleDisplay ?? t.title}` : i18n.global.t('playback.thisTrack')
+    ui.showToast(i18n.global.t('playback.cannotPlay', { label }), 'error')
     if (hasNext.value) await next()
     else player.state = 'error'
   }
@@ -291,7 +292,7 @@ export function usePlayback() {
       void prefetchNext()
     } else {
       player.state = 'error'
-      ui.showToast(`No se encontró vídeo para "${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}"`, 'error')
+      ui.showToast(i18n.global.t('playback.noVideo', { track: `${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}` }), 'error')
       // Intentar saltar a la siguiente automáticamente
       if (hasNext.value) await next()
     }
@@ -310,7 +311,7 @@ export function usePlayback() {
     const pl = await getPlaylist(playlistId)
     if (!pl) return
     const tracks = await getTracks(pl)
-    if (tracks.length === 0) { ui.showToast('La playlist está vacía', 'info'); return }
+    if (tracks.length === 0) { ui.showToast(i18n.global.t('playback.emptyPlaylist'), 'info'); return }
     startPlaylistQueue(tracks, startIndex, playlistId)
   }
 

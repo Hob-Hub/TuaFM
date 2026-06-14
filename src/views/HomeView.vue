@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlayback } from '@/composables/usePlayback'
 import { useRadioQueue } from '@/composables/useRadioQueue'
+import { chartCountryName } from '@/utils/chartLabels'
 import { useRecentRadiosStore, type RecentRadio } from '@/stores/recentRadios.store'
 import PlaylistList from '@/components/playlist/PlaylistList.vue'
 import TrackCover from '@/components/ui/TrackCover.vue'
@@ -22,10 +23,11 @@ async function playRadio(r: RecentRadio): Promise<void> {
   if (ok) { playback.playRadioIndex(0); router.push({ name: 'radio' }) }
 }
 
+// label/desc se localizan en plantilla con las claves home.*.
 const shortcuts = [
-  { name: 'radio', label: 'Radio', desc: 'La máquina del tiempo sonora', to: { name: 'radio' },
+  { name: 'radio', labelKey: 'home.radioCard', descKey: 'home.radioCardDesc', to: { name: 'radio' },
     cls: 'from-brand/40 to-surface-2', icon: 'M4 8h16v11H4zM8 4l8 3' },
-  { name: 'recs', label: 'Recomendaciones', desc: 'El oráculo de Last.fm', to: { name: 'recs' },
+  { name: 'recs', labelKey: 'home.recsCard', descKey: 'home.recsCardDesc', to: { name: 'recs' },
     cls: 'from-fuchsia-500/30 to-surface-2', icon: 'M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6z' }
 ]
 
@@ -53,8 +55,8 @@ function playEntry(e: PlayHistoryEntry): void {
 <template>
   <div class="p-5 sm:p-8 max-w-6xl mx-auto space-y-8">
     <header>
-      <h1 class="font-display text-2xl sm:text-3xl font-extrabold">Tu radio imaginaria</h1>
-      <p class="text-muted text-sm mt-1">Construida desde los charts reales. Explora, escucha, colecciona.</p>
+      <h1 class="font-display text-2xl sm:text-3xl font-extrabold">{{ $t('home.title') }}</h1>
+      <p class="text-muted text-sm mt-1">{{ $t('home.subtitle') }}</p>
     </header>
 
     <div class="grid sm:grid-cols-2 gap-3">
@@ -64,14 +66,14 @@ function playEntry(e: PlayHistoryEntry): void {
         :class="s.cls"
       >
         <svg viewBox="0 0 24 24" class="w-8 h-8 text-white/90 mb-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="s.icon"/></svg>
-        <p class="font-display text-xl font-bold">{{ s.label }}</p>
-        <p class="text-sm text-white/70">{{ s.desc }}</p>
+        <p class="font-display text-xl font-bold">{{ $t(s.labelKey) }}</p>
+        <p class="text-sm text-white/70">{{ $t(s.descKey) }}</p>
       </RouterLink>
     </div>
 
     <!-- Tus radios recientes: volver a escuchar con un clic -->
     <section v-if="recentRadios.items.length">
-      <h2 class="font-display text-lg font-bold mb-4">Tus radios recientes</h2>
+      <h2 class="font-display text-lg font-bold mb-4">{{ $t('home.recentRadios') }}</h2>
       <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
         <button
           v-for="r in recentRadios.items" :key="`${r.chartId}-${r.year}`"
@@ -87,15 +89,15 @@ function playEntry(e: PlayHistoryEntry): void {
             </span>
           </div>
           <p class="font-display text-2xl font-extrabold tabular-nums mt-3">{{ r.year }}</p>
-          <p class="text-sm text-white/90 truncate">{{ r.name }}</p>
-          <p class="text-[11px] text-muted/80 mt-1 tabular-nums">Nostalgia λ = {{ r.lambda.toFixed(2) }}</p>
+          <p class="text-sm text-white/90 truncate">{{ chartCountryName(r.country, r.name) }}</p>
+          <p class="text-[11px] text-muted/80 mt-1 tabular-nums">{{ $t('home.nostalgia', { value: r.lambda.toFixed(2) }) }}</p>
         </button>
       </div>
     </section>
 
     <!-- Reproducido recientemente -->
     <section v-if="recent.length">
-      <h2 class="font-display text-lg font-bold mb-4">Reproducido recientemente</h2>
+      <h2 class="font-display text-lg font-bold mb-4">{{ $t('home.recentlyPlayed') }}</h2>
       <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
         <button
           v-for="e in recent" :key="e.id"

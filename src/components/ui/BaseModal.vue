@@ -20,7 +20,7 @@ void props
         <h2 class="font-display text-lg font-bold">
           <slot name="header">{{ title }}</slot>
         </h2>
-        <button class="p-1.5 rounded-lg text-muted hover:text-white hover:bg-white/10" aria-label="Cerrar" @click="emit('close')">
+        <button class="p-1.5 rounded-lg text-muted hover:text-white hover:bg-white/10" :aria-label="$t('nowPlaying.close')" @click="emit('close')">
           <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </header>

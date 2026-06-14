@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import { nanoid } from 'nanoid'
@@ -13,6 +14,7 @@ import TrackCover from '@/components/ui/TrackCover.vue'
 const route    = useRoute()
 const router   = useRouter()
 const playback = usePlayback()
+const { t, n } = useI18n()
 
 const q       = ref(String(route.query.q ?? ''))
 const artists = ref<ArtistSearchResult[]>([])
@@ -20,8 +22,10 @@ const songs   = ref<TrackSearchResult[]>([])
 const loading = ref(false)
 const searched = ref(false)
 
-function fmtListeners(n: number): string {
-  return n > 0 ? `${new Intl.NumberFormat('es-ES').format(n)} oyentes` : ''
+function fmtListeners(value: number): string {
+  return value > 0
+    ? t('search.listeners', { count: n(value, 'decimal') }, { plural: value })
+    : ''
 }
 
 // Cancela la búsqueda en vuelo cuando el usuario sigue tecleando, para que una
@@ -104,25 +108,25 @@ if (q.value) void runSearch(q.value)
         v-model="q"
         type="search"
         autofocus
-        placeholder="Busca artistas o canciones…"
-        aria-label="Buscar artistas o canciones"
+        :placeholder="$t('search.placeholder')"
+        :aria-label="$t('search.aria')"
         class="w-full h-12 pl-11 pr-4 rounded-2xl bg-surface-2 border border-line text-white/90 text-base
                placeholder:text-muted/60 focus:outline-none focus:border-brand/70 focus:ring-2 focus:ring-brand/30 transition-colors"
       />
     </div>
 
     <!-- Estados -->
-    <p v-if="loading" class="text-sm text-muted">Buscando…</p>
+    <p v-if="loading" class="text-sm text-muted">{{ $t('search.searching') }}</p>
     <p v-else-if="searched && !artists.length && !songs.length" class="text-sm text-muted">
-      Sin resultados para «{{ q }}».
+      {{ $t('search.noResults', { query: q }) }}
     </p>
     <p v-else-if="!searched" class="text-sm text-muted">
-      Escribe al menos 2 letras para buscar.
+      {{ $t('search.hint') }}
     </p>
 
     <!-- Artistas -->
     <section v-if="artists.length">
-      <h2 class="font-display text-lg font-bold mb-3">Artistas</h2>
+      <h2 class="font-display text-lg font-bold mb-3">{{ $t('search.artists') }}</h2>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         <RouterLink
           v-for="a in artists" :key="a.name"
@@ -138,7 +142,7 @@ if (q.value) void runSearch(q.value)
 
     <!-- Canciones -->
     <section v-if="songs.length">
-      <h2 class="font-display text-lg font-bold mb-3">Canciones</h2>
+      <h2 class="font-display text-lg font-bold mb-3">{{ $t('search.songs') }}</h2>
       <ul class="flex flex-col">
         <li
           v-for="(s, i) in songs" :key="`${s.artist}-${s.title}-${i}`"
@@ -156,7 +160,7 @@ if (q.value) void runSearch(q.value)
           </div>
           <button
             class="p-2 rounded-lg text-muted hover:bg-white/10 hover:text-white opacity-0 group-hover:opacity-100 transition shrink-0"
-            aria-label="Reproducir" @click.stop="playSong(s)"
+            :aria-label="$t('common.play')" @click.stop="playSong(s)"
           >
             <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
           </button>

@@ -48,14 +48,16 @@ async function regenerate(): Promise<void> {
        demanda tocando la barra. -->
   <div class="p-5 sm:p-8 mx-auto" :class="radio.isActive ? 'max-w-3xl' : 'max-w-2xl'">
     <header class="mb-6">
-      <h1 class="font-display text-2xl sm:text-3xl font-extrabold">Radio</h1>
-      <p class="text-muted text-sm mt-1">La máquina del tiempo sonora — cómo habría sonado la radio ese año.</p>
+      <h1 class="font-display text-2xl sm:text-3xl font-extrabold">{{ $t('radio.title') }}</h1>
+      <p class="text-muted text-sm mt-1">{{ $t('radio.subtitle') }}</p>
     </header>
 
     <template v-if="!radio.isActive">
       <RadioControls />
       <p class="mt-4 text-center text-xs text-muted/70">
-        Elige la lista y el año, ajusta la nostalgia y pulsa <span class="text-white/80">Generar radio</span>.
+        <i18n-t keypath="radio.generateHint" tag="span">
+          <template #action><span class="text-white/80">{{ $t('radio.generateHintAction') }}</span></template>
+        </i18n-t>
       </p>
     </template>
 
@@ -69,7 +71,7 @@ async function regenerate(): Promise<void> {
         >
           <button
             class="absolute inset-0 rounded-2xl"
-            :aria-label="showControls ? 'Cerrar ajustes de la radio' : 'Cambiar lista, año y nostalgia'"
+            :aria-label="showControls ? $t('radio.closeSettings') : $t('radio.openSettings')"
             :aria-expanded="showControls"
             @click="toggleControls"
           />
@@ -79,7 +81,7 @@ async function regenerate(): Promise<void> {
           </span>
           <div class="min-w-0 pointer-events-none">
             <p class="text-sm font-semibold text-white truncate">{{ radio.sourceLabel }}</p>
-            <p class="text-xs text-muted truncate">{{ nostalgiaLabel(radio.activeLambda) }} · {{ radio.queue.length }} canciones</p>
+            <p class="text-xs text-muted truncate">{{ nostalgiaLabel(radio.activeLambda) }} · {{ $t('common.songs', radio.queue.length) }}</p>
           </div>
 
           <button
@@ -88,7 +90,7 @@ async function regenerate(): Promise<void> {
             @click="regenerate"
           >
             <svg viewBox="0 0 24 24" class="w-4 h-4" :class="generating && 'animate-spin'" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-            <span class="hidden sm:inline">{{ generating ? 'Generando…' : 'Regenerar' }}</span>
+            <span class="hidden sm:inline">{{ generating ? $t('common.generating') : $t('radio.regenerate') }}</span>
           </button>
 
           <svg viewBox="0 0 24 24" class="w-5 h-5 text-muted shrink-0 pointer-events-none transition-transform"

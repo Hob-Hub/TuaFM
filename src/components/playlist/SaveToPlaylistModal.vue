@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useUiStore } from '@/stores/ui.store'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
 const ui = useUiStore()
+const { t } = useI18n()
 const { playlists, addTrack, createPlaylist } = usePlaylists()
 const creating = ref(false)
 const newName = ref('')
@@ -14,7 +16,7 @@ async function saveTo(playlistId: string): Promise<void> {
   const track = ui.saveToPlaylistTrack
   if (!track) return
   await addTrack(playlistId, track)
-  ui.showToast('Guardada en la playlist', 'success')
+  ui.showToast(t('saveToPlaylist.saved'), 'success')
   ui.closeSaveToPlaylist()
 }
 
@@ -28,7 +30,7 @@ async function createAndSave(): Promise<void> {
 </script>
 
 <template>
-  <BaseModal title="Guardar en playlist" @close="ui.closeSaveToPlaylist()">
+  <BaseModal :title="$t('saveToPlaylist.title')" @close="ui.closeSaveToPlaylist()">
     <p v-if="ui.saveToPlaylistTrack" class="text-sm text-muted mb-4 truncate">
       <span class="text-white">{{ ui.saveToPlaylistTrack.title }}</span>
       · {{ ui.saveToPlaylistTrack.artistDisplay ?? ui.saveToPlaylistTrack.artist }}
@@ -46,22 +48,22 @@ async function createAndSave(): Promise<void> {
         </button>
       </li>
       <li v-if="playlists.length === 0" class="text-sm text-muted/70 px-3 py-2">
-        No tienes playlists todavía.
+        {{ $t('saveToPlaylist.empty') }}
       </li>
     </ul>
 
     <div class="mt-4 pt-4 border-t border-line">
       <div v-if="creating" class="flex gap-2">
         <input
-          v-model="newName" placeholder="Nombre de la nueva playlist"
+          v-model="newName" :placeholder="$t('saveToPlaylist.newNamePlaceholder')"
           class="flex-1 h-10 px-3 rounded-xl bg-surface-2 border border-line text-sm focus:outline-none focus:border-brand/70"
           @keyup.enter="createAndSave"
         />
-        <BaseButton variant="brand" size="sm" :disabled="!newName.trim()" @click="createAndSave">Crear</BaseButton>
+        <BaseButton variant="brand" size="sm" :disabled="!newName.trim()" @click="createAndSave">{{ $t('common.create') }}</BaseButton>
       </div>
       <BaseButton v-else variant="ghost" size="sm" @click="creating = true">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-        Nueva playlist
+        {{ $t('saveToPlaylist.newPlaylist') }}
       </BaseButton>
     </div>
   </BaseModal>

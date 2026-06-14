@@ -10,14 +10,14 @@ const ui = useUiStore()
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <h2 class="font-display text-lg font-bold">Tus playlists</h2>
-      <button class="text-sm text-brand hover:underline" @click="ui.openCreatePlaylist()">+ Nueva</button>
+      <h2 class="font-display text-lg font-bold">{{ $t('playlist.listTitle') }}</h2>
+      <button class="text-sm text-brand hover:underline" @click="ui.openCreatePlaylist()">{{ $t('playlist.newShort') }}</button>
     </div>
 
     <div v-if="playlists.length === 0" class="rounded-2xl border border-dashed border-line p-8 text-center">
-      <p class="text-muted text-sm">Crea tu primera playlist o importa un CSV de canciones.</p>
+      <p class="text-muted text-sm">{{ $t('playlist.emptyHint') }}</p>
       <button class="mt-3 text-brand text-sm font-medium hover:underline" @click="ui.openCreatePlaylist()">
-        Crear playlist
+        {{ $t('playlist.createCta') }}
       </button>
     </div>
 
@@ -32,7 +32,7 @@ const ui = useUiStore()
           <svg v-else viewBox="0 0 24 24" class="w-8 h-8 text-brand/60" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
         </div>
         <p class="font-medium text-sm truncate group-hover:text-white">{{ pl.name }}</p>
-        <p class="text-xs text-muted">{{ pl.trackIds.length }} canciones</p>
+        <p class="text-xs text-muted">{{ $t('common.songs', pl.trackIds.length) }}</p>
       </RouterLink>
     </div>
   </div>

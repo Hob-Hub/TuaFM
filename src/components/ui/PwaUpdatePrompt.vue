@@ -21,11 +21,11 @@ function reload(): void {
              px-4 py-2.5 rounded-xl text-sm shadow-xl border bg-card border-line text-white"
       role="status"
     >
-      <span>Nueva versión disponible.</span>
-      <BaseButton variant="brand" size="sm" @click="reload">Recargar</BaseButton>
+      <span>{{ $t('app.updateAvailable') }}</span>
+      <BaseButton variant="brand" size="sm" @click="reload">{{ $t('app.reload') }}</BaseButton>
       <button
         class="text-white/50 hover:text-white/80 transition-colors"
-        aria-label="Descartar"
+        :aria-label="$t('app.dismiss')"
         @click="needRefresh = false"
       >
         ✕

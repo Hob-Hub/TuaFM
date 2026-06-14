@@ -5,7 +5,8 @@ export interface RecentRadio {
   chartId: string
   year:    number
   lambda:  number
-  name:    string     // nombre de la lista (p. ej. "España")
+  country: string     // ISO del país: el nombre se localiza en runtime
+  name:    string     // nombre original de la lista (fallback si no hay país/clave)
   flag:    string     // emoji bandera
   at:      number     // timestamp de la última vez generada
 }

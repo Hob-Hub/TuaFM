@@ -78,18 +78,18 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
       <main class="min-w-0 min-h-0 overflow-y-auto">
         <!-- Topbar móvil -->
         <div class="md:hidden sticky top-0 z-10 h-14 flex items-center gap-3 px-4 bg-surface/90 backdrop-blur border-b border-line">
-          <button class="p-2 -ml-2 rounded-lg text-white" aria-label="Abrir menú" @click="ui.toggleSidebar()">
+          <button class="p-2 -ml-2 rounded-lg text-white" :aria-label="$t('app.openMenu')" @click="ui.toggleSidebar()">
             <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
           <span class="font-display font-extrabold">Tua<span class="text-brand">FM</span></span>
-          <RouterLink :to="{ name: 'search' }" class="ml-auto p-2 -mr-2 rounded-lg text-white" aria-label="Buscar">
+          <RouterLink :to="{ name: 'search' }" class="ml-auto p-2 -mr-2 rounded-lg text-white" :aria-label="$t('nav.search')">
             <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           </RouterLink>
         </div>
 
         <!-- Banner offline -->
         <div v-if="!online" class="bg-amber-500/15 text-amber-300 text-sm px-4 py-2 text-center border-b border-amber-500/20">
-          Sin conexión — tus playlists locales funcionan; radio y recomendaciones requieren internet.
+          {{ $t('app.offline') }}
         </div>
 
         <RouterView v-slot="{ Component }">

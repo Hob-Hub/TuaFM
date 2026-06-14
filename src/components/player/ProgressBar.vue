@@ -30,7 +30,7 @@ function onSeek(pct: number): void {
       class="flex-1"
       :model-value="progress"
       :min="0" :max="100" :step="0.1"
-      aria-label="Posición de reproducción"
+      :aria-label="$t('player.position')"
       @update:model-value="onSeek"
     />
     <span v-if="!compact" class="text-[11px] tabular-nums text-muted w-9">{{ fmt(player.duration) }}</span>

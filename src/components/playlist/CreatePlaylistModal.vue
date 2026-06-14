@@ -26,18 +26,18 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <BaseModal title="Nueva playlist" @close="ui.closeCreatePlaylist()">
+  <BaseModal :title="$t('createPlaylist.title')" @close="ui.closeCreatePlaylist()">
     <form @submit.prevent="submit">
       <BaseInput
         v-model="name"
-        label="Nombre"
-        placeholder="Ej. Veranos de los 2000"
-        aria-label="Nombre de la playlist"
+        :label="$t('createPlaylist.nameLabel')"
+        :placeholder="$t('createPlaylist.namePlaceholder')"
+        :aria-label="$t('createPlaylist.nameAria')"
       />
     </form>
     <template #footer>
-      <BaseButton variant="ghost" @click="ui.closeCreatePlaylist()">Cancelar</BaseButton>
-      <BaseButton variant="brand" :disabled="!name.trim() || busy" @click="submit">Crear</BaseButton>
+      <BaseButton variant="ghost" @click="ui.closeCreatePlaylist()">{{ $t('common.cancel') }}</BaseButton>
+      <BaseButton variant="brand" :disabled="!name.trim() || busy" @click="submit">{{ $t('common.create') }}</BaseButton>
     </template>
   </BaseModal>
 </template>
