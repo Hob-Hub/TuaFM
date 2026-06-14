@@ -18,9 +18,9 @@ export const useUiStore = defineStore('ui', () => {
   // Modal: añadir track (búsqueda Last.fm) a una playlist
   const addTrackPlaylistId = ref<string | null>(null)
 
-  // Modal: guardar una pista efímera (radio/recs) en una playlist destino
-  const saveToPlaylistTrack = ref<Track | null>(null)
-  // …o un lote completo (un Top, una radio, unos resultados) con su etiqueta.
+  // Modal: guardar pistas en una playlist destino. Siempre un lote (una pista
+  // suelta es un lote de 1); `saveToPlaylistLabel` describe el lote (un Top, una
+  // radio, unos resultados) o queda null para una sola pista (se muestra su ficha).
   const saveToPlaylistTracks = ref<Track[] | null>(null)
   const saveToPlaylistLabel = ref<string | null>(null)
 
@@ -54,13 +54,15 @@ export const useUiStore = defineStore('ui', () => {
   function openAddTrack(playlistId: string) { addTrackPlaylistId.value = playlistId }
   function closeAddTrack() { addTrackPlaylistId.value = null }
 
-  function openSaveToPlaylist(track: Track) { saveToPlaylistTrack.value = track }
+  function openSaveToPlaylist(track: Track) {
+    saveToPlaylistTracks.value = [track]
+    saveToPlaylistLabel.value = null
+  }
   function openSaveTracksToPlaylist(tracks: Track[], label?: string) {
     saveToPlaylistTracks.value = tracks
     saveToPlaylistLabel.value = label ?? null
   }
   function closeSaveToPlaylist() {
-    saveToPlaylistTrack.value = null
     saveToPlaylistTracks.value = null
     saveToPlaylistLabel.value = null
   }
@@ -73,7 +75,7 @@ export const useUiStore = defineStore('ui', () => {
 
   return {
     sidebarOpen, createPlaylistOpen, csvImportPlaylistId, addTrackPlaylistId,
-    saveToPlaylistTrack, saveToPlaylistTracks, saveToPlaylistLabel,
+    saveToPlaylistTracks, saveToPlaylistLabel,
     toast, nowPlayingOpen, queueOpen,
     openNowPlaying, closeNowPlaying,
     openQueue, closeQueue, toggleQueue,

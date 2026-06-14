@@ -8,23 +8,24 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 
 const ui = useUiStore()
 const { t } = useI18n()
-const { playlists, addTrack, addTracks, createPlaylist } = usePlaylists()
+const { playlists, addTracks, createPlaylist } = usePlaylists()
 const creating = ref(false)
 const newName = ref('')
 
-const batch = computed(() => ui.saveToPlaylistTracks)
+const tracks = computed(() => ui.saveToPlaylistTracks ?? [])
+// Una sola pista sin etiqueta de lote → mostramos su ficha (título · artista);
+// si no, la etiqueta del lote y el recuento.
+const single = computed(() => tracks.value.length === 1 && !ui.saveToPlaylistLabel)
 
 async function saveTo(playlistId: string): Promise<void> {
-  if (batch.value) {
-    await addTracks(playlistId, batch.value)
-    ui.showToast(t('saveToPlaylist.savedMany', batch.value.length), 'success')
-    ui.closeSaveToPlaylist()
-    return
-  }
-  const track = ui.saveToPlaylistTrack
-  if (!track) return
-  await addTrack(playlistId, track)
-  ui.showToast(t('saveToPlaylist.saved'), 'success')
+  if (!tracks.value.length) return
+  await addTracks(playlistId, tracks.value)
+  ui.showToast(
+    tracks.value.length === 1
+      ? t('saveToPlaylist.saved')
+      : t('saveToPlaylist.savedMany', tracks.value.length),
+    'success',
+  )
   ui.closeSaveToPlaylist()
 }
 
@@ -39,13 +40,13 @@ async function createAndSave(): Promise<void> {
 
 <template>
   <BaseModal :title="$t('saveToPlaylist.title')" @close="ui.closeSaveToPlaylist()">
-    <p v-if="batch" class="text-sm text-muted mb-4 truncate">
-      <span class="text-white">{{ ui.saveToPlaylistLabel || $t('saveToPlaylist.batchFallback') }}</span>
-      · {{ $t('common.songs', batch.length) }}
+    <p v-if="single" class="text-sm text-muted mb-4 truncate">
+      <span class="text-white">{{ tracks[0].titleDisplay ?? tracks[0].title }}</span>
+      · {{ tracks[0].artistDisplay ?? tracks[0].artist }}
     </p>
-    <p v-else-if="ui.saveToPlaylistTrack" class="text-sm text-muted mb-4 truncate">
-      <span class="text-white">{{ ui.saveToPlaylistTrack.title }}</span>
-      · {{ ui.saveToPlaylistTrack.artistDisplay ?? ui.saveToPlaylistTrack.artist }}
+    <p v-else class="text-sm text-muted mb-4 truncate">
+      <span class="text-white">{{ ui.saveToPlaylistLabel || $t('saveToPlaylist.batchFallback') }}</span>
+      · {{ $t('common.songs', tracks.length) }}
     </p>
 
     <ul class="flex flex-col gap-1 max-h-64 overflow-y-auto -mx-1 px-1">

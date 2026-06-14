@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+import { onMounted, watch } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import { routeTitle } from '@/router/index'
 import { useOnline, useMediaQuery } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayerStore } from '@/stores/player.store'
-import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
-import { useFavorites } from '@/composables/useFavorites'
 import ShortcutsHelp from '@/components/ui/ShortcutsHelp.vue'
 import { usePlayback } from '@/composables/usePlayback'
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import PlayerBar from '@/components/layout/PlayerBar.vue'
 import YouTubeFrame from '@/components/player/YouTubeFrame.vue'
@@ -25,28 +24,10 @@ const online = useOnline()
 const player = usePlayerStore()
 const playback = usePlayback()
 
-const yt = useYouTubePlayer()
-const { toggleFavorite } = useFavorites()
-const showShortcuts = ref(false)
+// Atajos de teclado globales (incluye el overlay de ayuda).
+const { showShortcuts } = useKeyboardShortcuts()
 
-// Atajos de teclado globales. Espacio = play/pausa; ←/→ = seek ±5s; Shift+←/→ =
-// pista anterior/siguiente; M = silenciar; F = favorito; ? = esta ayuda.
-function onKey(e: KeyboardEvent): void {
-  const tag = (e.target as HTMLElement)?.tagName
-  if (tag === 'INPUT' || tag === 'TEXTAREA') return
-  // Con la ayuda abierta, solo permitimos cerrarla (Escape lo gestiona el modal).
-  if (showShortcuts.value && e.key !== '?') return
-  if (e.key === '?') { e.preventDefault(); showShortcuts.value = !showShortcuts.value; return }
-  switch (e.code) {
-    case 'Space':      e.preventDefault(); playback.togglePlay(); break
-    case 'ArrowRight': e.preventDefault(); if (e.shiftKey) playback.next(); else yt.seekTo(player.currentTime + 5); break
-    case 'ArrowLeft':  e.preventDefault(); if (e.shiftKey) playback.prev(); else yt.seekTo(Math.max(0, player.currentTime - 5)); break
-    case 'KeyM':       yt.toggleMute(); break
-    case 'KeyF':       { const t = playback.currentTrack.value; if (t) void toggleFavorite(t); break }
-  }
-}
 onMounted(() => {
-  document.addEventListener('keydown', onKey)
   // Reanuda la cola persistida que quedó activa: playback.currentTrack ya resuelve
   // la pista del modo activo (radio/recs/playlist). El reproductor la muestra lista
   // para play, sin auto-reproducir (los navegadores bloquean el autoplay al cargar).
@@ -54,7 +35,6 @@ onMounted(() => {
   if (resumeTrack) player.currentTrackId = resumeTrack.id
   else player.queueMode = 'idle'   // nada persistido que reanudar
 })
-onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
 
 // Título de pestaña "ahora sonando": mientras hay una pista cargada gana
 // "Título — Artista · TuaFM"; al vaciarse, vuelve el título de la ruta.
@@ -136,7 +116,7 @@ watch(desktop, (isDesktop) => { if (isDesktop) ui.closeNowPlaying() })
     <CreatePlaylistModal v-if="ui.createPlaylistOpen" />
     <AddTrackModal v-if="ui.addTrackPlaylistId" />
     <CsvImportModal v-if="ui.csvImportPlaylistId" />
-    <SaveToPlaylistModal v-if="ui.saveToPlaylistTrack || ui.saveToPlaylistTracks" />
+    <SaveToPlaylistModal v-if="ui.saveToPlaylistTracks" />
 
     <!-- Toast -->
     <Transition name="toast">
