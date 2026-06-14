@@ -3,6 +3,7 @@ import { getArtistInfo, pickImage, getTrackCover } from '@/services/lastfm.servi
 import { getArtistTopTracks } from '@/services/lastfm.similarity.service'
 import { getArtistByKey, getTrackByKey } from '@/services/catalog/static.source'
 import { normalizeStr, makeCacheKey } from '@/utils/normalize'
+import { toInt } from '@/utils/number'
 import { db } from '@/db/local.db'
 import { isExpired, TTL_ARTIST_DAYS } from '@/db/cache.helpers'
 import type { LocalArtist } from '@/db/local.db'
@@ -75,13 +76,13 @@ export function useArtist() {
       }
       const a = infoRes.value.artist
       const top: ArtistTopTrack[] = topRes.status === 'fulfilled'
-        ? topRes.value.toptracks.track.map(t => ({ title: t.name, listeners: parseInt(t.listeners, 10) || 0 }))
+        ? topRes.value.toptracks.track.map(t => ({ title: t.name, listeners: toInt(t.listeners) ?? 0 }))
         : []
 
       info.value = {
         name:              a.name,
         bio:               stripLinks(a.bio?.summary ?? ''),
-        listeners:         parseInt(a.stats?.listeners ?? '0', 10) || 0,
+        listeners:         toInt(a.stats?.listeners) ?? 0,
         imageUrl:          pickImage(a.image),
         tags:              (a.tags?.tag ?? []).map(t => t.name).slice(0, 6),
         topTracks:         top,
@@ -107,7 +108,7 @@ export function useArtist() {
     try {
       const res = await getArtistTopTracks(info.value.name, FULL_TOP)
       const full: ArtistTopTrack[] = res.toptracks.track.map(
-        t => ({ title: t.name, listeners: parseInt(t.listeners, 10) || 0 })
+        t => ({ title: t.name, listeners: toInt(t.listeners) ?? 0 })
       )
       // Conserva las carátulas ya resueltas de las primeras filas.
       const coverByTitle = new Map(info.value.topTracks.map(t => [t.title, t.coverUrl]))

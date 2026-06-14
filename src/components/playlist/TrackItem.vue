@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import type { Track } from '@/types/track.types'
 import type { QueueMode } from '@/types/queue.types'
 import { useUiStore } from '@/stores/ui.store'
+import { formatDurationMs } from '@/utils/formatTime'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import FavoriteButton from '@/components/ui/FavoriteButton.vue'
 
@@ -25,14 +26,6 @@ const titleLabel  = computed(() => props.track.titleDisplay  ?? props.track.titl
 // Año a mostrar: el de debut en el Top (de los charts, ~100% en catálogo) y, si
 // no, el de edición. Reemplaza a los tags (que solo cubrían ~1 de cada 5 pistas).
 const yearLabel   = computed(() => props.track.chartYear ?? props.track.year)
-
-function fmtDuration(ms?: number): string {
-  if (!ms) return ''
-  const total = Math.round(ms / 1000)
-  const m = Math.floor(total / 60)
-  const s = total % 60
-  return `${m}:${String(s).padStart(2, '0')}`
-}
 </script>
 
 <template>
@@ -89,7 +82,7 @@ function fmtDuration(ms?: number): string {
 
     <!-- Duración -->
     <span class="text-xs text-muted tabular-nums w-10 text-right hidden sm:block">
-      {{ fmtDuration(track.duration) }}
+      {{ formatDurationMs(track.duration) }}
     </span>
 
     <!-- Acciones -->

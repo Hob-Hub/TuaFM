@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlayback } from '@/composables/usePlayback'
 import TrackCover from '@/components/ui/TrackCover.vue'
@@ -13,7 +13,7 @@ const playback = usePlayback()
 
 function playEntry(e: PlayHistoryEntry): void {
   playback.startPlaylistQueue(
-    [{ id: nanoid(), artist: e.artist, title: e.title, coverUrl: e.coverUrl, enriched: false }],
+    [makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl })],
     0, null
   )
 }

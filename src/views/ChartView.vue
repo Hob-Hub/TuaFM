@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import { useChartRegistryStore } from '@/stores/chartRegistry.store'
 import { usePlayback } from '@/composables/usePlayback'
 import { usePlayerStore } from '@/stores/player.store'
@@ -31,11 +31,11 @@ async function load(): Promise<void> {
   try {
     await registry.load()
     const top = await getYearTop(chartId.value, year.value)
-    tracks.value = (top?.songs ?? []).map(s => ({
-      id: nanoid(), artist: s.artist, title: s.title,
+    tracks.value = (top?.songs ?? []).map(s => makeTrack({
+      artist: s.artist, title: s.title,
       artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
       youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl,
-      chartYear: s.chartYear, duration: s.duration, enriched: false
+      chartYear: s.chartYear, duration: s.duration
     }))
   } finally {
     loading.value = false

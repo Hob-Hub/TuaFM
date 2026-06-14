@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { searchTrack, type TrackSearchResult } from '@/services/lastfm.service'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useUiStore } from '@/stores/ui.store'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import BaseModal from '@/components/ui/BaseModal.vue'
 import TrackCover from '@/components/ui/TrackCover.vue'
 
@@ -43,10 +43,9 @@ async function runSearch(): Promise<void> {
 async function add(r: TrackSearchResult): Promise<void> {
   const pid = ui.addTrackPlaylistId
   if (!pid) return
-  await addTrack(pid, {
-    id: nanoid(), artist: r.artist, title: r.title,
-    coverUrl: r.coverUrl, enriched: false
-  })
+  await addTrack(pid, makeTrack({
+    artist: r.artist, title: r.title, coverUrl: r.coverUrl
+  }))
   added.value.add(`${r.artist}::${r.title}`)
   ui.showToast(t('addTrack.added'), 'success')
 }

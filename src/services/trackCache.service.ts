@@ -8,6 +8,7 @@ import type { LastfmTrackResponse } from '@/types/api.types'
 import type { CatalogTrack } from '@/types/chart.types'
 import type { LocalTrack } from '@/db/local.db'
 import { isExpired, TTL_TRACK_DAYS } from '@/db/cache.helpers'
+import { toInt } from '@/utils/number'
 
 /** Resultado de enriquecimiento: nunca lleva `id` para no contaminar el
  *  nanoid de las pistas en las colas al hacer merge (bug C1). */
@@ -110,9 +111,9 @@ async function fetchExternal(
     result.title     = t.name
     result.artist    = t.artist?.name ?? artist
     result.album     = t.album?.title
-    result.duration  = t.duration ? parseInt(t.duration, 10) || undefined : undefined
+    result.duration  = toInt(t.duration)
     result.tags      = t.toptags?.tag.slice(0, 5).map(tag => tag.name) ?? []
-    result.listeners = t.listeners ? parseInt(t.listeners, 10) || undefined : undefined
+    result.listeners = toInt(t.listeners)
     result.lastfmUrl = t.url
     result.coverUrl  = pickImage(t.album?.image)
   } else {

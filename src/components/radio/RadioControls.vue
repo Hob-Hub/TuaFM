@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import { useChartRegistryStore } from '@/stores/chartRegistry.store'
 import { useRadioStore } from '@/stores/radio.store'
 import { useRadioQueue } from '@/composables/useRadioQueue'
@@ -91,11 +91,11 @@ const displaySize = computed(() =>
 /** Reproduce una canción del Top como pista única (efímera), como en Buscar. */
 function playSong(s: ChartSong): void {
   playback.startPlaylistQueue(
-    [{
-      id: nanoid(), artist: s.artist, title: s.title,
+    [makeTrack({
+      artist: s.artist, title: s.title,
       artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
-      youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl, enriched: false
-    }],
+      youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl
+    })],
     0, null
   )
 }

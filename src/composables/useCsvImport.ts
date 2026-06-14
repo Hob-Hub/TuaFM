@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import Papa from 'papaparse'
-import { nanoid } from 'nanoid'
 import type { Track } from '@/types/track.types'
+import { makeTrack } from '@/utils/track'
 import { mapCsvRows, type CsvRow } from '@/utils/csv'
 
 export type { CsvRow }
@@ -47,9 +47,7 @@ export function useCsvImport() {
   function toTracks(validRows: CsvRow[]): Track[] {
     return validRows
       .filter(r => r.valid)
-      .map(r => ({
-        id: nanoid(), artist: r.artist, title: r.title, enriched: false
-      }))
+      .map(r => makeTrack({ artist: r.artist, title: r.title }))
   }
 
   return { rows, parsing, error, parseFile, parseText, toTracks }

@@ -2,19 +2,13 @@
 import { computed } from 'vue'
 import { usePlayerStore } from '@/stores/player.store'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
+import { formatSeconds as fmt } from '@/utils/formatTime'
 import BaseSlider from '@/components/ui/BaseSlider.vue'
 
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
 
 const player = usePlayerStore()
 const yt = useYouTubePlayer()
-
-function fmt(sec: number): string {
-  if (!Number.isFinite(sec) || sec < 0) return '0:00'
-  const m = Math.floor(sec / 60)
-  const s = Math.floor(sec % 60)
-  return `${m}:${String(s).padStart(2, '0')}`
-}
 
 const progress = computed(() => player.progress)
 

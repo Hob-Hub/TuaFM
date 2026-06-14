@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import {
   searchArtists, searchTrack, getTrackCover,
   type ArtistSearchResult, type TrackSearchResult
@@ -88,7 +88,7 @@ watch(() => route.query.q, (val) => {
 
 function playSong(s: TrackSearchResult): void {
   playback.startPlaylistQueue(
-    [{ id: nanoid(), artist: s.artist, title: s.title, coverUrl: s.coverUrl, enriched: false }],
+    [makeTrack({ artist: s.artist, title: s.title, coverUrl: s.coverUrl })],
     0, null
   )
 }

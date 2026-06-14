@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlayback } from '@/composables/usePlayback'
 import { useRadioQueue } from '@/composables/useRadioQueue'
@@ -46,7 +46,7 @@ const recent = computed(() => {
 
 function playEntry(e: PlayHistoryEntry): void {
   playback.startPlaylistQueue(
-    [{ id: nanoid(), artist: e.artist, title: e.title, coverUrl: e.coverUrl, enriched: false }],
+    [makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl })],
     0, null
   )
 }

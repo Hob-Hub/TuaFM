@@ -5,6 +5,7 @@ import type {
 import { getCoverUrl } from '@/services/coverart.service'
 import { getArtistByKey } from '@/services/catalog/static.source'
 import { makeCacheKey, normalizeStr } from '@/utils/normalize'
+import { toInt } from '@/utils/number'
 import { db } from '@/db/local.db'
 import { isExpired, TTL_COVER_DAYS } from '@/db/cache.helpers'
 
@@ -75,7 +76,7 @@ export async function searchTrack(
   return matches.map(m => ({
     artist:    m.artist,
     title:     m.name,
-    listeners: m.listeners ? parseInt(m.listeners, 10) : 0,
+    listeners: toInt(m.listeners) ?? 0,
     coverUrl:  pickImage(m.image)
   }))
 }
@@ -98,7 +99,7 @@ export async function searchArtists(
   // descarta). Preferimos la imagen del catálogo (Deezer) cuando el artista existe.
   return Promise.all(matches.map(async m => ({
     name:      m.name,
-    listeners: m.listeners ? parseInt(m.listeners, 10) : 0,
+    listeners: toInt(m.listeners) ?? 0,
     imageUrl:  (await getArtistByKey(normalizeStr(m.name)))?.imageUrl ?? pickImage(m.image)
   })))
 }

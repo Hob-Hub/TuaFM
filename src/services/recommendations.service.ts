@@ -5,7 +5,7 @@ import {
 import type { RecommendCandidate } from '@/types/queue.types'
 import type { FavoriteTrack } from '@/types/playlist.types'
 import type { Track } from '@/types/track.types'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import { makeCacheKey } from '@/db/local.db'
 
 const WEIGHT_A = 0.50
@@ -105,9 +105,9 @@ export async function buildRecommendations(
     .sort((a, b) => b.totalScore - a.totalScore)
     .slice(0, 60)
 
-  return weightedSampleCandidates(pool, outputSize).map(c => ({
-    id: nanoid(), artist: c.artist, title: c.title, enriched: false
-  }))
+  return weightedSampleCandidates(pool, outputSize).map(c =>
+    makeTrack({ artist: c.artist, title: c.title })
+  )
 }
 
 function weightedSampleCandidates(pool: RecommendCandidate[], n: number): RecommendCandidate[] {

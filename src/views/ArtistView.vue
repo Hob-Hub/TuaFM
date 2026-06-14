@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useArtist } from '@/composables/useArtist'
 import { usePlayback } from '@/composables/usePlayback'
-import { nanoid } from 'nanoid'
+import { makeTrack } from '@/utils/track'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
@@ -47,9 +47,9 @@ function fmtListeners(value: number): string {
 // artista en una cola de playlist (no una sola pista): así suenan una tras otra.
 function playTrack(index: number): void {
   if (!info.value) return
-  const queue = info.value.topTracks.map(t => ({
-    id: nanoid(), artist: info.value!.name, title: t.title, coverUrl: t.coverUrl, enriched: false
-  }))
+  const queue = info.value.topTracks.map(t =>
+    makeTrack({ artist: info.value!.name, title: t.title, coverUrl: t.coverUrl })
+  )
   playback.startPlaylistQueue(queue, index, null)
 }
 </script>

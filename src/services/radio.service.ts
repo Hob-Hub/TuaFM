@@ -2,9 +2,7 @@ import type { ChartPeriod, ChartRegistry, RadioCandidate } from '@/types/chart.t
 import type { Track } from '@/types/track.types'
 import { aggregateCandidates, weightedSample } from '@/services/radio.scoring'
 import { chartData } from '@/services/chartData'
-import { nanoid } from 'nanoid'
-
-export { weightedSample }
+import { makeTrack } from '@/utils/track'
 
 export async function getChartRegistry(chartId: string): Promise<ChartRegistry | null> {
   return chartData.getRegistry(chartId)
@@ -25,13 +23,12 @@ export async function buildRadioCandidates(
 
 /** Convierte un candidato consolidado en un Track reproducible. */
 function candidateToTrack(c: RadioCandidate): Track {
-  return {
-    id: nanoid(), artist: c.artist, artistDisplay: c.artistDisplay,
+  return makeTrack({
+    artist: c.artist, artistDisplay: c.artistDisplay,
     title: c.title, titleDisplay: c.titleDisplay,
     youtubeVideoId: c.youtubeVideoId, coverUrl: c.coverUrl,
-    chartYear: c.chartYear, duration: c.duration,
-    enriched: false
-  }
+    chartYear: c.chartYear, duration: c.duration
+  })
 }
 
 /** Devuelve también el lambda resuelto para que el store lo guarde correctamente. */
