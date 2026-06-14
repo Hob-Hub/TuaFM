@@ -7,6 +7,7 @@ import { usePlayback } from '@/composables/usePlayback'
 import { usePlayerStore } from '@/stores/player.store'
 import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { useUiStore } from '@/stores/ui.store'
+import { tracksToCsv, downloadTextFile, safeFilename } from '@/utils/csv'
 import TrackItem from '@/components/playlist/TrackItem.vue'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -39,6 +40,14 @@ function play(index: number): void {
 }
 function playAll(): void {
   if (tracks.value.length) play(0)
+}
+
+function exportCsv(): void {
+  if (!playlist.value || !tracks.value.length) return
+  const csv = tracksToCsv(
+    tracks.value.map(t => ({ artist: t.artistDisplay ?? t.artist, title: t.titleDisplay ?? t.title })),
+  )
+  downloadTextFile(safeFilename(playlist.value.name, 'csv'), csv)
 }
 
 async function confirmDelete(): Promise<void> {
@@ -84,6 +93,10 @@ function onDrop(index: number): void {
       <BaseButton variant="surface" @click="ui.openCsvImport(playlistId)">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>
         {{ $t('playlist.importCsv') }}
+      </BaseButton>
+      <BaseButton variant="surface" :disabled="!tracks.length" @click="exportCsv">
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v12M6 10l6 6 6-6M4 20h16"/></svg>
+        {{ $t('playlist.exportCsv') }}
       </BaseButton>
       <BaseButton variant="danger" class="ml-auto" @click="confirmDelete">{{ $t('playlist.delete') }}</BaseButton>
     </div>

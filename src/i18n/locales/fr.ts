@@ -194,6 +194,7 @@ const fr: typeof es = {
     play: 'Lecture',
     add: 'Ajouter',
     importCsv: 'Importer un CSV',
+    exportCsv: 'Exporter en CSV',
     delete: 'Supprimer',
     empty: 'Cette playlist est vide. Ajoute des chansons ou importe un CSV.',
     notFound: 'Playlist introuvable.',

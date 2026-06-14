@@ -194,6 +194,7 @@ export default {
     play: 'Reproducir',
     add: 'Añadir',
     importCsv: 'Importar CSV',
+    exportCsv: 'Exportar CSV',
     delete: 'Eliminar',
     empty: 'Esta playlist está vacía. Añade canciones o importa un CSV.',
     notFound: 'Playlist no encontrada.',

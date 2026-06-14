@@ -194,6 +194,7 @@ const it: typeof es = {
     play: 'Riproduci',
     add: 'Aggiungi',
     importCsv: 'Importa CSV',
+    exportCsv: 'Esporta CSV',
     delete: 'Elimina',
     empty: 'Questa playlist è vuota. Aggiungi canzoni o importa un CSV.',
     notFound: 'Playlist non trovata.',

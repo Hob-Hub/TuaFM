@@ -194,6 +194,7 @@ const en: typeof es = {
     play: 'Play',
     add: 'Add',
     importCsv: 'Import CSV',
+    exportCsv: 'Export CSV',
     delete: 'Delete',
     empty: 'This playlist is empty. Add songs or import a CSV.',
     notFound: 'Playlist not found.',
