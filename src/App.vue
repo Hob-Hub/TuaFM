@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, watch } from 'vue'
-import { RouterView, RouterLink } from 'vue-router'
+import { RouterView, RouterLink, useRoute } from 'vue-router'
+import { routeTitle } from '@/router/index'
 import { useOnline, useMediaQuery } from '@vueuse/core'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayerStore } from '@/stores/player.store'
@@ -49,6 +50,18 @@ onMounted(() => {
   else player.queueMode = 'idle'   // nada persistido que reanudar
 })
 onBeforeUnmount(() => document.removeEventListener('keydown', onKey))
+
+// Título de pestaña "ahora sonando": mientras hay una pista cargada gana
+// "Título — Artista · TuaFM"; al vaciarse, vuelve el título de la ruta.
+const route = useRoute()
+watch(
+  () => {
+    const t = playback.currentTrack.value
+    return t ? `${t.titleDisplay ?? t.title} — ${t.artistDisplay ?? t.artist} · TuaFM` : null
+  },
+  (nowPlaying) => { document.title = nowPlaying ?? routeTitle(route) },
+  { immediate: true },
+)
 
 // La vista a pantalla completa es solo móvil: si se ensancha a escritorio, ciérrala.
 const desktop = useMediaQuery('(min-width: 768px)')

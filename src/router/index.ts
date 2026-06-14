@@ -1,5 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import { i18n } from '@/i18n'
+import { usePlayerStore } from '@/stores/player.store'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -23,13 +24,22 @@ const router = createRouter({
 // Título de la pestaña por ruta. Las vistas con datos asíncronos (artista,
 // chart, playlist) pueden refinarlo en su onMounted; este hook fija un valor
 // sensato de inmediato a partir de la URL.
-const BASE = 'TuaFM'
-router.afterEach((to) => {
+export const BASE_TITLE = 'TuaFM'
+
+/** Título de pestaña derivado de la ruta (sin tener en cuenta la reproducción). */
+export function routeTitle(to: RouteLocationNormalized): string {
   const key = to.meta.titleKey as string | undefined
   let title = key ? i18n.global.t(key) : undefined
   if (to.name === 'artist') title = decodeURIComponent(String(to.params.name))
   else if (to.name === 'chart') title = i18n.global.t('chart.top', { year: to.params.year })
-  document.title = title ? `${title} · ${BASE}` : BASE
+  return title ? `${title} · ${BASE_TITLE}` : BASE_TITLE
+}
+
+router.afterEach((to) => {
+  // Si hay una pista cargada, el título de "ahora sonando" lo gobierna App.vue;
+  // no lo pisamos al navegar.
+  if (usePlayerStore().currentTrackId) return
+  document.title = routeTitle(to)
 })
 
 export default router
