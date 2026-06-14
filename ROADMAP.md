@@ -19,17 +19,17 @@ aquí, integrada y re-priorizada.
 El catálogo (`public/catalog/{tracks,artists}.json`) ya guarda datos que la UI
 **todavía no surfacea**. Por orden de valor:
 
-- **Multi-artista seleccionable.** Hoy [`TrackItem.vue`](src/components/playlist/TrackItem.vue)
-  enlaza el string completo (`artistDisplay`, p. ej. "David Guetta, Akon") a una
-  única ficha de artista → para colaboraciones el enlace no resuelve. El catálogo ya
-  tiene `track.artistIds[]` y cada colaborador su entrada. **Falta:** llevar la lista
-  de artistas hasta `Track` (vía hidratación + `candidateToTrack`) y que `TrackItem`
-  pinte un enlace por artista. Habilita navegar a cada feat.
-- **Sección "Artistas similares" en [`ArtistView`](src/views/ArtistView.vue).** El
-  catálogo guarda `artist.similar[]`, pero `useArtist` no lo expone ni se muestra.
-  Además, las **recomendaciones** ([`recommendations.service.ts`](src/services/recommendations.service.ts))
-  pegan a Last.fm en runtime: podrían sembrarse desde `similar`/`topTracks` del
-  catálogo y reducir llamadas (caer a la API solo si falta).
+- ~~**Multi-artista seleccionable.**~~ ✓ — [`TrackItem.vue`](src/components/playlist/TrackItem.vue)
+  pinta un enlace por artista en colaboraciones. Resuelto por separación del string
+  mostrado (helper puro [`splitArtists`](src/utils/artists.ts), con tests), no por
+  `artistIds[]`: navega a cada feat. sin tocar la hidratación. **Pendiente opcional:**
+  la versión "correcta" vía `track.artistIds[]` del catálogo (más precisa con nombres
+  ambiguos), si algún día compensa el plumbing.
+- ~~**Sección "Artistas similares" en [`ArtistView`](src/views/ArtistView.vue).**~~ ✓ —
+  `useArtist` expone `similar`: primero desde el catálogo (`artist.similar[]`, offline)
+  y, si falta o el artista viene de Dexie/Last.fm, vía `getSimilarArtists` (cacheado).
+  La ficha pinta chips que enlazan a cada ficha. **Pendiente:** sembrar también las
+  **recomendaciones** desde el catálogo para reducir llamadas a Last.fm.
 - ~~**Carátulas del top-50 del artista.**~~ ✓ — resuelto cambiando el enfoque. El
   catálogo guarda solo el **top-15** (en vez de 50: `artists.json` 6,1→3,0 MB) y la
   ficha carga el resto **bajo demanda** ("Mostrar más" → Last.fm una vez), cacheando
@@ -176,9 +176,9 @@ momento, dejar YouTube.
 | Baja | **TTLs de caché diferenciados** | Hoy la caché de tracks en Dexie usa un TTL plano de 30 días. Info de track casi no cambia (1 año), búsquedas sí (días). El predecesor ya tenía TTLs por tipo de dato |
 | Baja | **Cabeceras de seguridad** (`public/_headers`) | `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, y CSP si se publica. Portable a Vercel/Netlify con variantes |
 | Baja | **tsconfig más estricto** | `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`: muy útiles con APIs irregulares |
-| Baja | **CI** (GitHub Actions) | `build` + `test` (+ `lint`) en cada push. Ahora que hay lint, blinda el refactor en curso |
+| ~~Baja~~ ✓ | ~~**CI** (GitHub Actions)~~ | Hecho: [`.github/workflows/ci.yml`](.github/workflows/ci.yml) corre audit (prod) + lint + typecheck + test + build en cada push/PR, con `concurrency` que cancela ejecuciones viejas |
 | Media | **Completar el catálogo** (tags/duración/oyentes) | Muchos `CatalogTrack` no traen `tags`/`durationMs`/`listeners`. Como el catálogo es **caché terminal** (acierto → `enriched:true` y no vuelve a Last.fm), esas pistas no los obtienen nunca: se ven sin duración ni tags. Enriquecer en [`chart-pipeline/lib/catalog.mjs`](chart-pipeline/lib/catalog.mjs) o no marcarlas como totalmente enriquecidas. Fuente: revisión del estado actual |
-| Baja | **i18n / textos centralizados** | Hoy en español hardcodeado |
+| ~~Baja~~ ✓ | ~~**i18n / textos centralizados**~~ | Hecho: `vue-i18n` con 4 locales ([`src/i18n/locales/`](src/i18n/locales/)) es/en/it/fr; idioma del dispositivo por defecto, elección persistida. Todo texto nuevo va a los 4 |
 
 > **Remate de ESLint/Prettier:** la config está puesta pero **no se ha aplicado
 > al código existente**. Pendiente: (a) `npm run lint:fix` para la deuda
@@ -195,10 +195,10 @@ son **producto**. Priorizadas por relación valor/esfuerzo.
 
 | Prioridad | Funcionalidad | Notas |
 |-----------|---------------|-------|
-| Media | **Ficha de artista más rica** | Hoy: bio + top tracks. Añadir **artistas similares** (ya existe `getSimilarArtists` en [`lastfm.similarity.service.ts`](src/services/lastfm.similarity.service.ts) → coste casi nulo) y **álbumes** del artista (`artist.getTopAlbums`). Los similares enlazan la exploración con el modo Recomendaciones |
+| Media (parcial) | **Ficha de artista más rica** | ~~**artistas similares**~~ ✓ (chips que enlazan a cada ficha, desde catálogo→Last.fm, [`useArtist.ts`](src/composables/useArtist.ts)). **Falta:** **álbumes** del artista (`artist.getTopAlbums`) |
 | Media | **Ficha de álbum** (`/artist/:name/:album`) | `album.getInfo` → tracklist reproducible reutilizando el `TrackItem` universal. Enlazar desde el buscador y desde la ficha de artista. Bruga la tenía; encaja sin fricción con la arquitectura actual |
-| Baja | **Descubrimiento en Home** | Sección de artistas/canciones destacadas. Oportunidad propia: servirlo **offline desde el catálogo** (top artistas/canciones de los charts, por país o década) en lugar de `geo.gettopartists` → cero coste de API y coherente con el alma "memoria histórica" de TuaFM |
-| Baja | **`document.title` dinámico** | "Título — Artista · TuaFM" mientras suena (Bruga lo hacía). Complementa la Media Session API ya integrada |
+| ~~Baja~~ ✓ | ~~**Descubrimiento en Home**~~ | Hecho: estantería "Descubre" en [`HomeView.vue`](src/views/HomeView.vue) con muestra notable del catálogo (`getDiscoveryTracks`, con carátula+oyentes, barajada en cada carga), 100% offline. **Pendiente opcional:** afinar por país/década |
+| ~~Baja~~ ✓ | ~~**`document.title` dinámico**~~ | Hecho: "Título — Artista · TuaFM" mientras hay pista cargada; al vaciarse vuelve el título de la ruta ([`App.vue`](src/App.vue) + `routeTitle`) |
 | ✅ Hecho | **Modo clips (escucha rápida / skim)** | Botón en la barra que reproduce solo un trozo central de cada canción (15/40/90 s) y auto-avanza → muestrear muchas canciones en poco tiempo. Encaja con el alma "explorar charts". **Implementado — ver abajo.** |
 
 ### Modo clips (escucha rápida) — implementado
