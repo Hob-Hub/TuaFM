@@ -90,10 +90,7 @@ watch(() => route.query.q, (val) => {
 })
 
 function playSong(s: TrackSearchResult): void {
-  playback.startPlaylistQueue(
-    [makeTrack({ artist: s.artist, title: s.title, coverUrl: s.coverUrl })],
-    0, null
-  )
+  playback.playSingle(makeTrack({ artist: s.artist, title: s.title, coverUrl: s.coverUrl }))
 }
 
 function saveAllSongs(): void {

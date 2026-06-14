@@ -8,9 +8,6 @@ import { usePlayerStore } from '@/stores/player.store'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
 import { useFavorites } from '@/composables/useFavorites'
 import ShortcutsHelp from '@/components/ui/ShortcutsHelp.vue'
-import { useRadioStore } from '@/stores/radio.store'
-import { useRecommendationsStore } from '@/stores/recommendations.store'
-import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { usePlayback } from '@/composables/usePlayback'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import PlayerBar from '@/components/layout/PlayerBar.vue'
@@ -26,9 +23,6 @@ import PwaUpdatePrompt from '@/components/ui/PwaUpdatePrompt.vue'
 const ui = useUiStore()
 const online = useOnline()
 const player = usePlayerStore()
-const radio = useRadioStore()
-const rec = useRecommendationsStore()
-const pq = usePlaylistQueueStore()
 const playback = usePlayback()
 
 const yt = useYouTubePlayer()
@@ -53,14 +47,10 @@ function onKey(e: KeyboardEvent): void {
 }
 onMounted(() => {
   document.addEventListener('keydown', onKey)
-  // Reanuda la cola persistida según el modo que quedó activo (radio,
-  // recomendaciones o playlist): el reproductor muestra la pista lista para play,
-  // sin auto-reproducir (los navegadores bloquean el autoplay al cargar).
-  const resumeTrack =
-    player.queueMode === 'radio'           && radio.isActive ? radio.currentTrack
-  : player.queueMode === 'recommendations' && rec.isActive   ? rec.currentTrack
-  : player.queueMode === 'playlist'        && pq.isActive     ? pq.currentTrack
-  : null
+  // Reanuda la cola persistida que quedó activa: playback.currentTrack ya resuelve
+  // la pista del modo activo (radio/recs/playlist). El reproductor la muestra lista
+  // para play, sin auto-reproducir (los navegadores bloquean el autoplay al cargar).
+  const resumeTrack = playback.currentTrack.value
   if (resumeTrack) player.currentTrackId = resumeTrack.id
   else player.queueMode = 'idle'   // nada persistido que reanudar
 })

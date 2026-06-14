@@ -12,10 +12,7 @@ const { history, clearHistory } = usePlayHistory()
 const playback = usePlayback()
 
 function playEntry(e: PlayHistoryEntry): void {
-  playback.startPlaylistQueue(
-    [makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl })],
-    0, null
-  )
+  playback.playSingle(makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl }))
 }
 
 function modeLabel(mode: string): string {

@@ -9,6 +9,7 @@ import { useUiStore } from '@/stores/ui.store'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
 import { useTrackEnrich } from '@/composables/useTrackEnrich'
 import { usePlayHistory } from '@/composables/usePlayHistory'
+import { useFailedTracks } from '@/composables/useFailedTracks'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useRadioQueue } from '@/composables/useRadioQueue'
 import { usePlaybackRecovery, buildCandidates } from '@/composables/usePlaybackRecovery'
@@ -21,6 +22,12 @@ let enrichInFlight = false
 // Modo clips: la mecánica (salto al centro sin ruido + avance) vive en
 // useYouTubePlayer; aquí solo reaccionamos a activarlo a media canción.
 let clipWatcherSet = false
+
+// Sesión de escucha en curso: id de la entrada de historial a completar al SALIR
+// de la pista (con las señales de engagement), y si el usuario la "rescató"
+// (atrás en modo clips para oírla entera). Singleton como el resto del estado.
+let playSessionId: number | null = null
+let playSessionRescued = false
 
 /**
  * Orquestador central de reproducción. Unifica los tres modos (playlist, radio,
@@ -248,6 +255,11 @@ export function usePlayback() {
     void playCurrent()
   }
 
+  /** Reproduce una sola pista efímera (Buscar, Top, historial, artista…). */
+  function playSingle(track: Track): void {
+    startPlaylistQueue([track], 0, null)
+  }
+
   /** Carga la playlist desde Dexie y la reproduce desde un índice dado. */
   async function playPlaylistById(playlistId: string, startIndex = 0): Promise<void> {
     const { getPlaylist } = usePlaylists()
@@ -359,7 +371,7 @@ export function usePlayback() {
     currentTrack, hasNext, hasPrev,
     queueTracks, queueIndex, queueSourceLabel, playIndex,
     playCurrent, startPlaylistQueue, playPlaylistById,
-    playRadioIndex, playRecIndex,
+    playRadioIndex, playRecIndex, playSingle,
     next, prev, togglePlay
   }
 }

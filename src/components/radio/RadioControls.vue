@@ -90,14 +90,11 @@ const displaySize = computed(() =>
 
 /** Reproduce una canción del Top como pista única (efímera), como en Buscar. */
 function playSong(s: ChartSong): void {
-  playback.startPlaylistQueue(
-    [makeTrack({
-      artist: s.artist, title: s.title,
-      artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
-      youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl
-    })],
-    0, null
-  )
+  playback.playSingle(makeTrack({
+    artist: s.artist, title: s.title,
+    artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
+    youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl
+  }))
 }
 
 /** Abre la vista con el Top completo del año. */
