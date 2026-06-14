@@ -17,6 +17,7 @@ const en: typeof es = {
     home: 'Home',
     radio: 'Radio',
     recs: 'Recommendations',
+    favorites: 'Favorites',
     history: 'History',
     search: 'Search',
     settings: 'Settings',
@@ -128,6 +129,13 @@ const en: typeof es = {
     empty: 'No recommendations yet. Generate a queue from your favorites.',
     needThreeError: 'You need at least 3 favorites to generate recommendations',
     noneFound: 'No recommendations found. Try with more favorites.',
+  },
+  favorites: {
+    title: 'Favorites',
+    subtitle: 'The songs you have hearted.',
+    count: '{n} favorite | {n} favorites',
+    empty: 'You don\'t have any favorites yet.',
+    emptyHint: 'Search for songs and heart them.',
   },
   player: {
     nothingPlaying: 'Nothing playing',

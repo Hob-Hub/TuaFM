@@ -17,6 +17,7 @@ const it: typeof es = {
     home: 'Home',
     radio: 'Radio',
     recs: 'Consigli',
+    favorites: 'Preferiti',
     history: 'Cronologia',
     search: 'Cerca',
     settings: 'Impostazioni',
@@ -128,6 +129,13 @@ const it: typeof es = {
     empty: 'Ancora nessun consiglio. Genera una coda dai tuoi preferiti.',
     needThreeError: 'Servono almeno 3 preferiti per generare consigli',
     noneFound: 'Nessun consiglio trovato. Prova con più preferiti.',
+  },
+  favorites: {
+    title: 'Preferiti',
+    subtitle: 'I brani a cui hai messo un cuore.',
+    count: '{n} preferito | {n} preferiti',
+    empty: 'Non hai ancora preferiti.',
+    emptyHint: 'Cerca brani e mettici un cuore.',
   },
   player: {
     nothingPlaying: 'Niente in riproduzione',

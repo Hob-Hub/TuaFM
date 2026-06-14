@@ -17,6 +17,7 @@ export default {
     home: 'Inicio',
     radio: 'Radio',
     recs: 'Recomendaciones',
+    favorites: 'Favoritos',
     history: 'Historial',
     search: 'Buscar',
     settings: 'Ajustes',
@@ -128,6 +129,13 @@ export default {
     empty: 'Aún no hay recomendaciones. Genera una cola desde tus favoritos.',
     needThreeError: 'Necesitas al menos 3 favoritos para generar recomendaciones',
     noneFound: 'No se encontraron recomendaciones. Prueba con más favoritos.',
+  },
+  favorites: {
+    title: 'Favoritos',
+    subtitle: 'Las canciones que has marcado con un corazón.',
+    count: '{n} favorito | {n} favoritos',
+    empty: 'Aún no tienes favoritos.',
+    emptyHint: 'Busca canciones y márcalas con un corazón.',
   },
   player: {
     nothingPlaying: 'Nada sonando',

@@ -17,6 +17,7 @@ const fr: typeof es = {
     home: 'Accueil',
     radio: 'Radio',
     recs: 'Recommandations',
+    favorites: 'Favoris',
     history: 'Historique',
     search: 'Rechercher',
     settings: 'Paramètres',
@@ -128,6 +129,13 @@ const fr: typeof es = {
     empty: 'Pas encore de recommandations. Génère une file à partir de tes favoris.',
     needThreeError: 'Il te faut au moins 3 favoris pour générer des recommandations',
     noneFound: 'Aucune recommandation trouvée. Essaie avec plus de favoris.',
+  },
+  favorites: {
+    title: 'Favoris',
+    subtitle: 'Les morceaux que vous avez aimés.',
+    count: '{n} favori | {n} favoris',
+    empty: 'Vous n\'avez pas encore de favoris.',
+    emptyHint: 'Cherchez des morceaux et ajoutez-les en favori.',
   },
   player: {
     nothingPlaying: 'Rien en lecture',

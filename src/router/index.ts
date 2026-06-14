@@ -13,6 +13,7 @@ const router = createRouter({
     { path: '/radio',            name: 'radio',    component: () => import('@/views/RadioView.vue'),           meta: { titleKey: 'nav.radio' } },
     { path: '/chart/:chartId/:year', name: 'chart', component: () => import('@/views/ChartView.vue') },
     { path: '/recommendations',  name: 'recs',     component: () => import('@/views/RecommendationsView.vue'), meta: { titleKey: 'nav.recs' } },
+    { path: '/favorites',        name: 'favorites', component: () => import('@/views/FavoritesView.vue'),       meta: { titleKey: 'nav.favorites' } },
     { path: '/history',          name: 'history',  component: () => import('@/views/HistoryView.vue'),         meta: { titleKey: 'nav.history' } },
     { path: '/settings',         name: 'settings', component: () => import('@/views/SettingsView.vue'),        meta: { titleKey: 'nav.settings' } },
     { path: '/artist/:name',     name: 'artist',   component: () => import('@/views/ArtistView.vue') }
