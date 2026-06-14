@@ -33,42 +33,36 @@ export function usePlaylists() {
     await db.playlists.delete(id)
   }
 
-  /** Persiste un track en Dexie (si hace falta) y lo añade a la playlist. */
-  async function addTrack(playlistId: string, track: Track): Promise<void> {
-    const pl = await db.playlists.get(playlistId)
-    if (!pl) return
-
-    const id = track.id || nanoid()
-    const local: LocalTrack = {
+  /** Normaliza un Track a su forma persistible en Dexie (PK + cacheKey + sello). */
+  function toLocalTrack(track: Track): LocalTrack {
+    return {
       ...track,
-      id,
+      id:            track.id || nanoid(),
       cacheKey:      makeCacheKey(track.artist, track.title),
       enriched:      track.enriched ?? false,
       localCachedAt: Date.now()
     }
-    await db.tracks.put(local)
-
-    if (!pl.trackIds.includes(id)) {
-      pl.trackIds.push(id)
-      await db.playlists.update(playlistId, { trackIds: pl.trackIds, updatedAt: Date.now() })
-    }
   }
 
+  /** Persiste tracks en Dexie y los añade a la playlist (los repetidos no se duplican). */
   async function addTracks(playlistId: string, tracks: Track[]): Promise<void> {
     const pl = await db.playlists.get(playlistId)
     if (!pl) return
     const ids = [...pl.trackIds]
     for (const track of tracks) {
-      const id = track.id || nanoid()
-      await db.tracks.put({
-        ...track, id,
-        cacheKey:      makeCacheKey(track.artist, track.title),
-        enriched:      track.enriched ?? false,
-        localCachedAt: Date.now()
-      })
-      if (!ids.includes(id)) ids.push(id)
+      const local = toLocalTrack(track)
+      await db.tracks.put(local)
+      if (!ids.includes(local.id)) ids.push(local.id)
     }
-    await db.playlists.update(playlistId, { trackIds: ids, updatedAt: Date.now() })
+    // Refrescamos siempre el track; la lista de la playlist solo si cambió.
+    if (ids.length !== pl.trackIds.length) {
+      await db.playlists.update(playlistId, { trackIds: ids, updatedAt: Date.now() })
+    }
+  }
+
+  /** Persiste un track en Dexie (si hace falta) y lo añade a la playlist. */
+  async function addTrack(playlistId: string, track: Track): Promise<void> {
+    await addTracks(playlistId, [track])
   }
 
   async function removeTrackAt(playlistId: string, index: number): Promise<void> {
