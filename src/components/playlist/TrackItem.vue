@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import type { Track } from '@/types/track.types'
 import type { QueueMode } from '@/types/queue.types'
 import { useUiStore } from '@/stores/ui.store'
+import { splitArtists } from '@/utils/artists'
 import { formatDurationMs } from '@/utils/formatTime'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import FavoriteButton from '@/components/ui/FavoriteButton.vue'
@@ -22,6 +23,8 @@ const emit = defineEmits<{ play: []; remove: [] }>()
 const ui = useUiStore()
 
 const artistLabel = computed(() => props.track.artistDisplay ?? props.track.artist)
+// Colaboraciones → un enlace por artista (navega a cada feat.).
+const artistList  = computed(() => splitArtists(artistLabel.value))
 const titleLabel  = computed(() => props.track.titleDisplay  ?? props.track.title)
 // Año a mostrar: el de debut en el Top (de los charts, ~100% en catálogo) y, si
 // no, el de edición. Reemplaza a los tags (que solo cubrían ~1 de cada 5 pistas).
@@ -65,11 +68,15 @@ const yearLabel   = computed(() => props.track.chartYear ?? props.track.year)
              con poco sitio) un toque bajo caía en el enlace y navegaba en vez de
              reproducir, así que ahí va como texto y el toque cae en la fila. El
              artista sigue accesible desde la pantalla de canción. -->
-        <RouterLink
-          :to="{ name: 'artist', params: { name: artistLabel } }"
-          class="hidden sm:inline-block max-w-full text-xs text-muted truncate hover:text-white/80 hover:underline"
-          @click.stop
-        >{{ artistLabel }}</RouterLink>
+        <span class="hidden sm:block max-w-full text-xs text-muted truncate">
+          <template v-for="(name, idx) in artistList" :key="name">
+            <RouterLink
+              :to="{ name: 'artist', params: { name } }"
+              class="hover:text-white/80 hover:underline"
+              @click.stop
+            >{{ name }}</RouterLink><span v-if="idx < artistList.length - 1">, </span>
+          </template>
+        </span>
         <span class="sm:hidden block text-xs text-muted truncate">{{ artistLabel }}</span>
       </template>
       <div v-else class="h-3 w-24 mt-1 rounded bg-surface-2 animate-pulse" />
