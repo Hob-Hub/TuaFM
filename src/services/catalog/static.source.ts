@@ -49,6 +49,29 @@ export async function getTracksById(): Promise<Map<number, CatalogTrack>> {
   return (await loadTracks()).byId
 }
 
+/**
+ * Muestra de descubrimiento para Home: pistas notables del catálogo (con
+ * carátula y oyentes) barajadas, para una estantería "Descubre" que cambia en
+ * cada carga. 100% offline (catálogo estático), sin pegar a ninguna API.
+ */
+export async function getDiscoveryTracks(limit = 12): Promise<CatalogTrack[]> {
+  try {
+    const { byId } = await loadTracks()
+    const pool = [...byId.values()]
+      .filter(t => t.coverUrl && (t.listeners ?? 0) > 0)
+      .sort((a, b) => (b.listeners ?? 0) - (a.listeners ?? 0))
+      .slice(0, 400)   // techo "notable" para no mostrar la cola de poca escucha
+    // Fisher–Yates parcial: baraja y devuelve los primeros `limit`.
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[pool[i], pool[j]] = [pool[j]!, pool[i]!]
+    }
+    return pool.slice(0, limit)
+  } catch {
+    return []   // sin catálogo → Home omite la sección
+  }
+}
+
 export async function getTrackByKey(cacheKey: string): Promise<CatalogTrack | null> {
   try {
     return (await loadTracks()).byKey.get(cacheKey) ?? null

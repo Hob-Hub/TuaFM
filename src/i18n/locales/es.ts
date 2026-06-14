@@ -48,6 +48,7 @@ export default {
     recentRadios: 'Tus radios recientes',
     nostalgia: 'Nostalgia λ = {value}',
     recentlyPlayed: 'Reproducido recientemente',
+    discover: 'Descubre',
   },
   chart: {
     listFallback: 'Lista',

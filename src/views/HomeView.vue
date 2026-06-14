@@ -1,21 +1,38 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { makeTrack } from '@/utils/track'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlayback } from '@/composables/usePlayback'
 import { useRadioQueue } from '@/composables/useRadioQueue'
 import { chartCountryName } from '@/utils/chartLabels'
+import { getDiscoveryTracks } from '@/services/catalog/static.source'
 import { useRecentRadiosStore, type RecentRadio } from '@/stores/recentRadios.store'
 import PlaylistList from '@/components/playlist/PlaylistList.vue'
 import TrackCover from '@/components/ui/TrackCover.vue'
 import type { PlayHistoryEntry } from '@/types/playlist.types'
+import type { Track } from '@/types/track.types'
 
 const { history } = usePlayHistory()
 const playback = usePlayback()
 const router = useRouter()
 const recentRadios = useRecentRadiosStore()
 const { generate } = useRadioQueue()
+
+// Descubre: muestra notable del catálogo (offline, coste cero), barajada en cada
+// carga y reproducible como lista efímera.
+const discovery = ref<Track[]>([])
+onMounted(async () => {
+  const tracks = await getDiscoveryTracks(12)
+  discovery.value = tracks.map(t => makeTrack({
+    artist: t.artist, title: t.title,
+    coverUrl: t.coverUrl, youtubeVideoId: t.youtubeVideoId,
+    chartYear: t.chartYear, duration: t.durationMs
+  }))
+})
+function playDiscovery(i: number): void {
+  playback.startPlaylistQueue([...discovery.value], i, null)
+}
 
 // Volver a escuchar una radio: regenera con los mismos ajustes y la reproduce.
 async function playRadio(r: RecentRadio): Promise<void> {
@@ -45,10 +62,7 @@ const recent = computed(() => {
 })
 
 function playEntry(e: PlayHistoryEntry): void {
-  playback.startPlaylistQueue(
-    [makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl })],
-    0, null
-  )
+  playback.playSingle(makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl }))
 }
 </script>
 
@@ -113,6 +127,28 @@ function playEntry(e: PlayHistoryEntry): void {
           </div>
           <p class="text-sm font-medium text-white truncate">{{ e.title }}</p>
           <p class="text-xs text-muted truncate">{{ e.artist }}</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- Descubre: muestra notable del catálogo (offline) -->
+    <section v-if="discovery.length">
+      <h2 class="font-display text-lg font-bold mb-4">{{ $t('home.discover') }}</h2>
+      <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+        <button
+          v-for="(track, i) in discovery" :key="track.id"
+          class="group w-36 shrink-0 snap-start text-left rounded-2xl bg-card hover:bg-card-hover border border-line p-3 transition-colors"
+          @click="playDiscovery(i)"
+        >
+          <div class="relative mb-3">
+            <TrackCover :src="track.coverUrl" :fallback-text="track.title" :size="120" rounded="rounded-xl" class="w-full! h-auto! aspect-square" />
+            <span class="absolute bottom-2 right-2 grid place-items-center w-9 h-9 rounded-full bg-brand text-white shadow-lg
+                         opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition">
+              <svg viewBox="0 0 24 24" class="w-4 h-4 ml-0.5" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </div>
+          <p class="text-sm font-medium text-white truncate">{{ track.title }}</p>
+          <p class="text-xs text-muted truncate">{{ track.artist }}</p>
         </button>
       </div>
     </section>

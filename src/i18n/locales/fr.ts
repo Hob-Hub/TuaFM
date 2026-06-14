@@ -48,6 +48,7 @@ const fr: typeof es = {
     recentRadios: 'Tes radios récentes',
     nostalgia: 'Nostalgie λ = {value}',
     recentlyPlayed: 'Écouté récemment',
+    discover: 'Découvrir',
   },
   chart: {
     listFallback: 'Liste',
