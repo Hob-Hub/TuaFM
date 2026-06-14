@@ -45,8 +45,8 @@ function onKey(e: KeyboardEvent): void {
   if (e.key === '?') { e.preventDefault(); showShortcuts.value = !showShortcuts.value; return }
   switch (e.code) {
     case 'Space':      e.preventDefault(); playback.togglePlay(); break
-    case 'ArrowRight': e.preventDefault(); e.shiftKey ? playback.next() : yt.seekTo(player.currentTime + 5); break
-    case 'ArrowLeft':  e.preventDefault(); e.shiftKey ? playback.prev() : yt.seekTo(Math.max(0, player.currentTime - 5)); break
+    case 'ArrowRight': e.preventDefault(); if (e.shiftKey) playback.next(); else yt.seekTo(player.currentTime + 5); break
+    case 'ArrowLeft':  e.preventDefault(); if (e.shiftKey) playback.prev(); else yt.seekTo(Math.max(0, player.currentTime - 5)); break
     case 'KeyM':       yt.toggleMute(); break
     case 'KeyF':       { const t = playback.currentTrack.value; if (t) void toggleFavorite(t); break }
   }
