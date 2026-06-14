@@ -82,6 +82,7 @@ const fr: typeof es = {
     label: 'Artiste',
     listeners: '{count} auditeur sur Last.fm | {count} auditeurs sur Last.fm',
     popularTracks: 'Chansons populaires',
+    similar: 'Artistes similaires',
   },
   radio: {
     title: 'Radio',

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { getArtistInfo, pickImage, getTrackCover } from '@/services/lastfm.service'
-import { getArtistTopTracks } from '@/services/lastfm.similarity.service'
+import { getArtistTopTracks, getSimilarArtists } from '@/services/lastfm.similarity.service'
 import { getArtistByKey, getTrackByKey } from '@/services/catalog/static.source'
 import { normalizeStr, makeCacheKey } from '@/utils/normalize'
 import { toInt } from '@/utils/number'
@@ -25,7 +25,10 @@ export interface ArtistInfo {
   tags:              string[]
   topTracks:         ArtistTopTrack[]
   topTracksComplete: boolean   // ¿ya tenemos el top-50 (no solo el top-15)?
+  similar:           string[]  // nombres de artistas similares (catálogo o Last.fm)
 }
+
+const SIMILAR_LIMIT = 8
 
 export function useArtist() {
   const info       = ref<ArtistInfo | null>(null)
@@ -51,9 +54,11 @@ export function useArtist() {
           tags:              cat.tags ?? [],
           topTracks:         (cat.topTracks ?? []).slice(0, INITIAL_TOP)
                                .map(t => ({ title: t.title, listeners: t.listeners ?? 0 })),
-          topTracksComplete: false
+          topTracksComplete: false,
+          similar:           (cat.similar ?? []).slice(0, SIMILAR_LIMIT)
         }
         void resolveCovers(cat.name, info.value.topTracks)
+        if (!info.value.similar.length) void fillSimilar(cat.name)
         return
       }
 
@@ -62,14 +67,16 @@ export function useArtist() {
       if (cached) {
         info.value = cached
         void resolveCovers(cached.name, info.value.topTracks)
+        void fillSimilar(cached.name)   // similar no se persiste; getSimilarArtists ya cachea
         return
       }
 
       // 3 — Last.fm. Pedimos el top-50 de una vez (mismo coste que pedir 15) y
       //     guardamos completo; la UI muestra 15 y revela el resto sin más red.
-      const [infoRes, topRes] = await Promise.allSettled([
+      const [infoRes, topRes, simRes] = await Promise.allSettled([
         getArtistInfo(artist),
-        getArtistTopTracks(artist, FULL_TOP)
+        getArtistTopTracks(artist, FULL_TOP),
+        getSimilarArtists(artist, SIMILAR_LIMIT)
       ])
       if (infoRes.status !== 'fulfilled') {
         throw new Error('No se encontró información del artista')
@@ -77,6 +84,9 @@ export function useArtist() {
       const a = infoRes.value.artist
       const top: ArtistTopTrack[] = topRes.status === 'fulfilled'
         ? topRes.value.toptracks.track.map(t => ({ title: t.name, listeners: toInt(t.listeners) ?? 0 }))
+        : []
+      const similar: string[] = simRes.status === 'fulfilled'
+        ? simRes.value.similarartists.artist.map(s => s.name).filter(Boolean)
         : []
 
       info.value = {
@@ -86,7 +96,8 @@ export function useArtist() {
         imageUrl:          pickImage(a.image),
         tags:              (a.tags?.tag ?? []).map(t => t.name).slice(0, 6),
         topTracks:         top,
-        topTracksComplete: topRes.status === 'fulfilled'
+        topTracksComplete: topRes.status === 'fulfilled',
+        similar
       }
       await persistArtistCache(key, info.value)
       void resolveCovers(a.name, info.value.topTracks)
@@ -125,6 +136,18 @@ export function useArtist() {
     }
   }
 
+  // Rellena los similares desde Last.fm (cacheado) cuando el catálogo no los trae
+  // o el artista viene de Dexie. Best-effort: no bloquea ni rompe la ficha.
+  async function fillSimilar(name: string): Promise<void> {
+    try {
+      const res = await getSimilarArtists(name, SIMILAR_LIMIT)
+      const names = res.similarartists.artist.map(s => s.name).filter(Boolean)
+      if (names.length && info.value && info.value.name === name) info.value.similar = names
+    } catch {
+      /* best-effort */
+    }
+  }
+
   // Resuelve carátulas con concurrencia limitada para no saturar Last.fm. Cada
   // una persiste en Dexie (getTrackCover) → en visitas siguientes no se re-piden.
   async function resolveCovers(artistName: string, tracks: ArtistTopTrack[]): Promise<void> {
@@ -156,7 +179,8 @@ async function readArtistCache(key: string): Promise<ArtistInfo | null> {
       imageUrl:          row.imageUrl,
       tags:              row.tags,
       topTracks:         row.topTracks.map(t => ({ ...t })),
-      topTracksComplete: row.topTracksComplete
+      topTracksComplete: row.topTracksComplete,
+      similar:           []   // no se persiste; se rellena lazy con fillSimilar
     }
   } catch {
     return null

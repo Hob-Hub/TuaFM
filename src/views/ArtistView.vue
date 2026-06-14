@@ -111,6 +111,18 @@ function playTrack(index: number): void {
           </BaseButton>
         </div>
       </section>
+
+      <!-- Artistas similares: navegación entre fichas (catálogo offline o Last.fm) -->
+      <section v-if="info.similar.length" class="mt-8">
+        <h2 class="font-display text-lg font-bold mb-3">{{ $t('artist.similar') }}</h2>
+        <div class="flex flex-wrap gap-2">
+          <RouterLink
+            v-for="name in info.similar" :key="name"
+            :to="{ name: 'artist', params: { name } }"
+            class="px-3 py-1.5 rounded-full bg-surface-2 border border-line text-sm text-white/90 hover:bg-card-hover hover:border-brand/50 transition-colors"
+          >{{ name }}</RouterLink>
+        </div>
+      </section>
     </template>
   </div>
 </template>

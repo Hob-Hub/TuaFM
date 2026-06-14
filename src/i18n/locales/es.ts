@@ -82,6 +82,7 @@ export default {
     label: 'Artista',
     listeners: '{count} oyente en Last.fm | {count} oyentes en Last.fm',
     popularTracks: 'Canciones populares',
+    similar: 'Artistas similares',
   },
   radio: {
     title: 'Radio',

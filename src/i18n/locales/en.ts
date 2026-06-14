@@ -82,6 +82,7 @@ const en: typeof es = {
     label: 'Artist',
     listeners: '{count} listener on Last.fm | {count} listeners on Last.fm',
     popularTracks: 'Popular songs',
+    similar: 'Similar artists',
   },
   radio: {
     title: 'Radio',
