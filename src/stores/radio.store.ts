@@ -2,10 +2,12 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Track } from '@/types/track.types'
 import { radioSourceLabel } from '@/utils/chartLabels'
+import { createQueueState } from '@/stores/queueState'
 
 export const useRadioStore = defineStore('radio', () => {
-  const queue        = ref<Track[]>([])
-  const currentIndex = ref(0)
+  const base = createQueueState()
+  const { queue, currentIndex } = base
+
   const activeChartId = ref('')
   const activeCountry = ref('')   // ISO del país: el nombre se localiza en runtime
   const activeName    = ref('')   // nombre original (fallback si no hay país/clave)
@@ -19,12 +21,6 @@ export const useRadioStore = defineStore('radio', () => {
       ? radioSourceLabel(activeCountry.value, activeYear.value, activeName.value)
       : '',
   )
-
-  const isActive     = computed(() => queue.value.length > 0)
-  const currentTrack = computed(() => queue.value[currentIndex.value] ?? null)
-  const nextTrack    = computed(() => queue.value[currentIndex.value + 1] ?? null)
-  const hasNext      = computed(() => currentIndex.value < queue.value.length - 1)
-  const hasPrev      = computed(() => currentIndex.value > 0)
 
   function setQueue(tracks: Track[], params: {
     chartId: string; country: string; name: string
@@ -45,21 +41,13 @@ export const useRadioStore = defineStore('radio', () => {
     if (tracks.length) queue.value.push(...tracks)
   }
 
-  function next():           void { if (hasNext.value) currentIndex.value++ }
-  function prev():           void { if (hasPrev.value) currentIndex.value-- }
-  function skipTo(i: number): void { currentIndex.value = Math.max(0, Math.min(i, queue.value.length - 1)) }
-  function clear():          void { queue.value = []; currentIndex.value = 0; activeChartId.value = '' }
-
-  function updateTrack(id: string, data: Partial<Track>): void {
-    const idx = queue.value.findIndex(t => t.id === id)
-    if (idx >= 0) queue.value[idx] = { ...queue.value[idx], ...data }
-  }
+  function clear(): void { queue.value = []; currentIndex.value = 0; activeChartId.value = '' }
 
   return {
-    queue, currentIndex, isActive, sourceLabel,
+    ...base,
     activeChartId, activeCountry, activeName, activeYear, activeLambda, activeWindow,
-    currentTrack, nextTrack, hasNext, hasPrev,
-    setQueue, appendQueue, next, prev, skipTo, clear, updateTrack
+    sourceLabel,
+    setQueue, appendQueue, clear,
   }
 }, {
   // Persistimos la cola y los parámetros para reanudar la radio al volver.

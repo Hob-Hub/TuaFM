@@ -1,58 +1,20 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, nextTick } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { usePlayerStore } from '@/stores/player.store'
-import { useRadioStore } from '@/stores/radio.store'
-import { useRecommendationsStore } from '@/stores/recommendations.store'
-import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { useUiStore } from '@/stores/ui.store'
 import { usePlayback } from '@/composables/usePlayback'
 import { scrollActiveIntoView } from '@/utils/scrollActive'
-import type { Track } from '@/types/track.types'
 import TrackItem from '@/components/playlist/TrackItem.vue'
 
 const player = usePlayerStore()
-const radio = useRadioStore()
-const rec = useRecommendationsStore()
-const pq = usePlaylistQueueStore()
 const ui = useUiStore()
 const playback = usePlayback()
-const { t } = useI18n()
 
-const tracks = computed<Track[]>(() => {
-  switch (player.queueMode) {
-    case 'radio':           return radio.queue
-    case 'recommendations': return rec.queue
-    case 'playlist':        return pq.queue
-    default:                return []
-  }
-})
-
-const currentIndex = computed(() => {
-  switch (player.queueMode) {
-    case 'radio':           return radio.currentIndex
-    case 'recommendations': return rec.currentIndex
-    case 'playlist':        return pq.currentIndex
-    default:                return -1
-  }
-})
-
-const sourceLabel = computed(() => {
-  switch (player.queueMode) {
-    case 'radio':           return radio.sourceLabel || t('queue.radio')
-    case 'recommendations': return t('queue.recommendations')
-    case 'playlist':        return t('queue.playlist')
-    default:                return ''
-  }
-})
-
-function jump(i: number): void {
-  switch (player.queueMode) {
-    case 'radio':           playback.playRadioIndex(i); break
-    case 'recommendations': playback.playRecIndex(i); break
-    case 'playlist':        playback.playPlaylistIndex(i); break
-  }
-}
+// La cola activa (pistas, índice, etiqueta de fuente) la resuelve usePlayback;
+// el panel solo la renderiza.
+const tracks       = playback.queueTracks
+const currentIndex = playback.queueIndex
+const sourceLabel  = playback.queueSourceLabel
 
 const listEl = ref<HTMLElement | null>(null)
 async function followActive(): Promise<void> {
@@ -85,7 +47,7 @@ watch(currentIndex, followActive)          // y la sigue al cambiar de pista
             :track="track" :mode="player.queueMode" :index="i"
             :is-active="i === currentIndex"
             :is-playing="i === currentIndex && player.isPlaying"
-            @play="jump(i)"
+            @play="playback.playIndex(i)"
           />
         </ul>
         <div v-else class="grid place-items-center h-full text-sm text-muted px-6 text-center">

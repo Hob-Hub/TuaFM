@@ -125,32 +125,49 @@ export function usePlayback() {
     }
   }
 
-  const currentTrack = computed<Track | null>(() => {
+  // La cola activa según el modo. Las tres comparten interfaz (queueState), así
+  // que casi todo el orquestador opera sobre `activeQueue` sin volver a abrir un
+  // switch por modo; solo las reglas propias de un modo (repeat/shuffle de la
+  // playlist, extensión de la radio) se tratan aparte.
+  const activeQueue = computed(() => {
     switch (player.queueMode) {
-      case 'radio':           return radio.currentTrack
-      case 'recommendations': return rec.currentTrack
-      case 'playlist':        return pq.currentTrack
+      case 'radio':           return radio
+      case 'recommendations': return rec
+      case 'playlist':        return pq
       default:                return null
     }
   })
 
+  const currentTrack = computed<Track | null>(() => activeQueue.value?.currentTrack ?? null)
+
   const hasNext = computed(() => {
+    if (!activeQueue.value) return false
+    if (player.queueMode === 'playlist') return player.repeatMode === 'all' || pq.hasNext
+    return activeQueue.value.hasNext
+  })
+
+  const hasPrev = computed(() => activeQueue.value?.hasPrev ?? false)
+
+  // Derivados de la cola activa para el panel de cola (antes QueuePanel.vue
+  // reabría su propio switch por modo para obtener lo mismo).
+  const queueTracks = computed<Track[]>(() => activeQueue.value?.queue ?? [])
+  const queueIndex  = computed(() => activeQueue.value?.currentIndex ?? -1)
+  const queueSourceLabel = computed(() => {
     switch (player.queueMode) {
-      case 'radio':           return radio.hasNext
-      case 'recommendations': return rec.hasNext
-      case 'playlist':        return player.repeatMode === 'all' || pq.hasNext
-      default:                return false
+      case 'radio':           return radio.sourceLabel || i18n.global.t('queue.radio')
+      case 'recommendations': return i18n.global.t('queue.recommendations')
+      case 'playlist':        return i18n.global.t('queue.playlist')
+      default:                return ''
     }
   })
 
-  const hasPrev = computed(() => {
-    switch (player.queueMode) {
-      case 'radio':           return radio.hasPrev
-      case 'recommendations': return rec.hasPrev
-      case 'playlist':        return pq.hasPrev
-      default:                return false
-    }
-  })
+  /** Salta a un índice de la cola activa (el modo ya es el activo: panel de cola). */
+  function playIndex(i: number): void {
+    const q = activeQueue.value
+    if (!q || i < 0 || i >= q.queue.length) return
+    q.skipTo(i)
+    void playCurrent()
+  }
 
   /** Engancha los callbacks del reproductor una sola vez. */
   function bindHandlers(): void {
@@ -163,18 +180,27 @@ export function usePlayback() {
     handlersBound = true
   }
 
-  /** Actualiza datos de la pista en curso (sea cual sea el modo de cola). */
+  /**
+   * Aplica cambios a una pista (por id) en la cola activa. Si es la playlist,
+   * además los persiste en Dexie. Única vía para mutar una pista en curso, sea
+   * cual sea el modo (antes había tres copias casi idénticas de este switch).
+   */
+  function patchTrack(id: string, data: Partial<Track>): void {
+    const q = activeQueue.value
+    if (!q) return
+    q.updateTrack(id, data)
+    if (player.queueMode === 'playlist') void persistPlaylistTrack(id, data)
+  }
+
+  /** Aplica cambios a la pista en curso (sea cual sea el modo de cola). */
   function updateCurrentTrack(data: Partial<Track>): void {
     const t = currentTrack.value
-    if (!t) return
-    switch (player.queueMode) {
-      case 'radio':           radio.updateTrack(t.id, data); break
-      case 'recommendations': rec.updateTrack(t.id, data); break
-      case 'playlist':
-        pq.updateTrack(t.id, data)
-        void persistPlaylistTrack(t.id, data)
-        break
-    }
+    if (t) patchTrack(t.id, data)
+  }
+
+  /** Marca una pista como enriquecida y guarda sus metadatos resueltos. */
+  function applyEnrichment(track: Track, data: Partial<Track>): void {
+    patchTrack(track.id, { ...data, enriched: true })
   }
 
   /**
@@ -243,18 +269,6 @@ export function usePlayback() {
     else player.state = 'error'
   }
 
-  function applyEnrichment(track: Track, data: Partial<Track>): void {
-    const merged = { ...data, enriched: true }
-    switch (player.queueMode) {
-      case 'radio':           radio.updateTrack(track.id, merged); break
-      case 'recommendations': rec.updateTrack(track.id, merged); break
-      case 'playlist':
-        pq.updateTrack(track.id, merged)
-        void persistPlaylistTrack(track.id, merged)
-        break
-    }
-  }
-
   /** Actualiza los metadatos del SO (título, artista, carátula) de la pista. */
   function updateMediaSession(track: Track): void {
     if (!('mediaSession' in navigator)) return
@@ -315,16 +329,10 @@ export function usePlayback() {
     startPlaylistQueue(tracks, startIndex, playlistId)
   }
 
-  function playRadioIndex(i: number): void   { radio.skipTo(i); player.queueMode = 'radio'; void playCurrent() }
-  function playRecIndex(i: number): void      { rec.skipTo(i);   player.queueMode = 'recommendations'; void playCurrent() }
-
-  /** Salta a un índice de la cola de playlist efímera ya en curso. */
-  function playPlaylistIndex(i: number): void {
-    if (i < 0 || i >= pq.queue.length) return
-    pq.skipTo(i)
-    player.queueMode = 'playlist'
-    void playCurrent()
-  }
+  // Puntos de entrada que fijan el modo y arrancan (desde Inicio, Radio, Recs).
+  // Para saltar dentro de la cola ya activa está playIndex (panel de cola).
+  function playRadioIndex(i: number): void { radio.skipTo(i); player.queueMode = 'radio'; void playCurrent() }
+  function playRecIndex(i: number): void   { rec.skipTo(i);   player.queueMode = 'recommendations'; void playCurrent() }
 
   /** Radio infinita: si quedan pocas pistas por delante, precarga más en 2º plano. */
   function maybePrefetchRadio(): void {
@@ -335,27 +343,9 @@ export function usePlayback() {
 
   /** Pista que sonaría al pulsar "siguiente" (no predecible en aleatorio). */
   function peekNextTrack(): Track | null {
-    switch (player.queueMode) {
-      case 'radio':           return radio.queue[radio.currentIndex + 1] ?? null
-      case 'recommendations': return rec.queue[rec.currentIndex + 1] ?? null
-      case 'playlist':
-        if (player.isShuffle) return null
-        return pq.queue[pq.currentIndex + 1] ?? null
-      default:                return null
-    }
-  }
-
-  /** Aplica enriquecimiento a una pista concreta (por id) en su cola. */
-  function applyEnrichmentToTrack(track: Track, data: Partial<Track>): void {
-    const merged = { ...data, enriched: true }
-    switch (player.queueMode) {
-      case 'radio':           radio.updateTrack(track.id, merged); break
-      case 'recommendations': rec.updateTrack(track.id, merged); break
-      case 'playlist':
-        pq.updateTrack(track.id, merged)
-        void persistPlaylistTrack(track.id, merged)
-        break
-    }
+    if (player.queueMode === 'playlist' && player.isShuffle) return null
+    const q = activeQueue.value
+    return q ? q.queue[q.currentIndex + 1] ?? null : null
   }
 
   /**
@@ -369,7 +359,7 @@ export function usePlayback() {
     if (!t.youtubeVideoId || !t.enriched) {
       const data = await enrich(t).catch(() => null)
       if (!data) return
-      applyEnrichmentToTrack(t, data)
+      applyEnrichment(t, data)
       t = peekNextTrack()
       if (!t) return
     }
@@ -379,24 +369,20 @@ export function usePlayback() {
 
   // ── Navegación ──────────────────────────────────────────────────────────────
   async function next(): Promise<void> {
-    switch (player.queueMode) {
-      case 'radio':
-        if (radio.hasNext) { radio.next(); await playCurrent() }
-        else {
-          // Fin de la cola: intenta extender la radio antes de darla por acabada.
-          const added = await extendRadio()
-          if (added && radio.hasNext) { radio.next(); await playCurrent() }
-          else player.state = 'ended'
-        }
-        return
-      case 'recommendations':
-        if (rec.hasNext) { rec.next(); await playCurrent() }
-        else player.state = 'ended'
-        return
-      case 'playlist':
-        await playlistNext()
-        return
+    // La playlist tiene reglas propias (shuffle/repeat); radio y recomendaciones
+    // avanzan genéricamente, y solo la radio intenta extenderse al agotarse.
+    if (player.queueMode === 'playlist') { await playlistNext(); return }
+
+    const q = activeQueue.value
+    if (!q) return
+    if (q.hasNext) { q.next(); await playCurrent(); return }
+
+    if (player.queueMode === 'radio') {
+      // Fin de la cola: intenta extender la radio antes de darla por acabada.
+      const added = await extendRadio()
+      if (added && radio.hasNext) { radio.next(); await playCurrent(); return }
     }
+    player.state = 'ended'
   }
 
   async function playlistNext(): Promise<void> {
@@ -424,14 +410,10 @@ export function usePlayback() {
     if (player.clipMode) { yt.playCurrentFull(); return }
     // Si llevamos >3s, reiniciar la pista en lugar de ir a la anterior
     if (player.currentTime > 3) { yt.seekTo(0); return }
-    switch (player.queueMode) {
-      case 'radio':           if (radio.hasPrev) { radio.prev(); await playCurrent() } return
-      case 'recommendations': if (rec.hasPrev)   { rec.prev();   await playCurrent() } return
-      case 'playlist':
-        if (pq.hasPrev) { pq.skipTo(pq.currentIndex - 1); await playCurrent() }
-        else yt.seekTo(0)
-        return
-    }
+    const q = activeQueue.value
+    if (!q) return
+    if (q.hasPrev) { q.prev(); await playCurrent() }
+    else yt.seekTo(0)   // ya en la primera: reinicia desde el principio
   }
 
   function togglePlay(): void {
@@ -446,8 +428,9 @@ export function usePlayback() {
 
   return {
     currentTrack, hasNext, hasPrev,
+    queueTracks, queueIndex, queueSourceLabel, playIndex,
     playCurrent, startPlaylistQueue, playPlaylistById,
-    playRadioIndex, playRecIndex, playPlaylistIndex,
+    playRadioIndex, playRecIndex,
     next, prev, togglePlay
   }
 }
