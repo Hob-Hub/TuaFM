@@ -29,10 +29,8 @@ export function usePlaylists() {
   }
 
   async function deletePlaylist(id: string): Promise<void> {
-    const pl = await db.playlists.get(id)
-    await db.playlists.delete(id)
     // No borramos los tracks: la tabla tracks es también caché compartida.
-    void pl
+    await db.playlists.delete(id)
   }
 
   /** Persiste un track en Dexie (si hace falta) y lo añade a la playlist. */

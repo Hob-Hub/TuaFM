@@ -27,13 +27,8 @@ export const usePlayerStore = defineStore('player', () => {
   const progress  = computed(() => duration.value > 0 ? (currentTime.value / duration.value) * 100 : 0)
   const isPlaying = computed(() => state.value === 'playing')
 
-  // Resuelve el modo de cola activo. Las colas efímeras (radio, recommendations)
-  // se verifican en sus stores desde PlayerBar.vue con imports dinámicos para
-  // evitar dependencias circulares.
-  const effectiveQueueMode = computed<QueueMode>(() => queueMode.value)
-
   return {
-    currentTrackId, queueMode, effectiveQueueMode,
+    currentTrackId, queueMode,
     state, currentTime, duration, volume, isMuted, repeatMode, isShuffle,
     clipSeconds, clipMode, cycleClip,
     progress, isPlaying
