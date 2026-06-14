@@ -5,6 +5,7 @@ import { db, makeCacheKey } from '@/db/local.db'
 import type { Track } from '@/types/track.types'
 import type { QueueMode } from '@/types/queue.types'
 import type { PlayHistoryEntry } from '@/types/playlist.types'
+import { aggregateTasteSeeds } from '@/utils/engagement'
 
 export function usePlayHistory() {
   // Últimas 200 reproducciones, más recientes primero
@@ -37,9 +38,19 @@ export function usePlayHistory() {
     await db.history.update(id, data)
   }
 
+  /**
+   * Canciones más escuchadas (por engagement) para sembrar las recomendaciones
+   * con el comportamiento real, no solo con los favoritos. `exclude` evita repetir
+   * las que ya son semilla. Mira un histórico amplio, no solo las 200 visibles.
+   */
+  async function getEngagementSeeds(limit = 8, exclude?: Set<string>): Promise<{ artist: string; title: string }[]> {
+    const recent = await db.history.orderBy('playedAt').reverse().limit(500).toArray()
+    return aggregateTasteSeeds(recent, { exclude, limit }).map(t => ({ artist: t.artist, title: t.title }))
+  }
+
   async function clearHistory(): Promise<void> {
     await db.history.clear()
   }
 
-  return { history, recordPlay, updateEngagement, clearHistory }
+  return { history, recordPlay, updateEngagement, getEngagementSeeds, clearHistory }
 }

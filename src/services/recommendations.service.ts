@@ -3,10 +3,12 @@ import {
   getTrackTopTags, getTagTopTracks
 } from '@/services/lastfm.similarity.service'
 import type { RecommendCandidate } from '@/types/queue.types'
-import type { FavoriteTrack } from '@/types/playlist.types'
 import type { Track } from '@/types/track.types'
 import { makeTrack } from '@/utils/track'
 import { makeCacheKey } from '@/db/local.db'
+
+/** Semilla de recomendación: favorito explícito o canción muy escuchada. */
+export interface SeedTrack { artist: string; title: string }
 
 const WEIGHT_A = 0.50
 const WEIGHT_B = 0.30
@@ -30,16 +32,18 @@ async function batchedAllSettled<T>(
 }
 
 export async function buildRecommendations(
-  favorites:  FavoriteTrack[],
+  seedTracks: SeedTrack[],
   outputSize  = 25
 ): Promise<Track[]> {
-  const seeds        = favorites.slice(0, MAX_SEEDS)
+  // Las primeras semillas pesan más (solo entran las MAX_SEEDS primeras): el
+  // llamador pone los favoritos delante y detrás las canciones más escuchadas.
+  const seeds        = seedTracks.slice(0, MAX_SEEDS)
   const candidateMap = new Map<string, RecommendCandidate>()
-  const favKeys      = new Set(favorites.map(f => makeCacheKey(f.artist, f.title)))
+  const seedKeys     = new Set(seedTracks.map(s => makeCacheKey(s.artist, s.title)))
 
   function upsert(artist: string, title: string, dA: number, dB: number, dC: number): void {
     const key = makeCacheKey(artist, title)
-    if (favKeys.has(key)) return   // no recomendar lo ya favorito
+    if (seedKeys.has(key)) return   // no recomendar lo que ya es semilla (fav o muy escuchado)
     const c = candidateMap.get(key)
     if (c) {
       c.scoreA += dA; c.scoreB += dB; c.scoreC += dC
