@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type { Track } from '@/types/track.types'
-import type { Playlist, FavoriteTrack, PlayHistoryEntry } from '@/types/playlist.types'
+import type { Playlist, FavoriteTrack, PlayHistoryEntry, FailedTrack } from '@/types/playlist.types'
 
 export interface LocalTrack extends Track {
   cacheKey:      string
@@ -49,13 +49,14 @@ export interface LocalLastfmCache {
 }
 
 const db = new Dexie('TuaFMDB') as Dexie & {
-  tracks:      EntityTable<LocalTrack,       'id'>
-  playlists:   EntityTable<Playlist,         'id'>
-  favorites:   EntityTable<FavoriteTrack,    'cacheKey'>
-  history:     EntityTable<PlayHistoryEntry, 'id'>
-  artists:     EntityTable<LocalArtist,      'key'>
-  covers:      EntityTable<LocalCover,       'cacheKey'>
-  lastfmCache: EntityTable<LocalLastfmCache, 'key'>
+  tracks:       EntityTable<LocalTrack,       'id'>
+  playlists:    EntityTable<Playlist,         'id'>
+  favorites:    EntityTable<FavoriteTrack,    'cacheKey'>
+  history:      EntityTable<PlayHistoryEntry, 'id'>
+  artists:      EntityTable<LocalArtist,      'key'>
+  covers:       EntityTable<LocalCover,       'cacheKey'>
+  lastfmCache:  EntityTable<LocalLastfmCache, 'key'>
+  failedTracks: EntityTable<FailedTrack,      'cacheKey'>
 }
 
 db.version(1).stores({
@@ -76,6 +77,19 @@ db.version(2).stores({
   artists:     'key, name, localCachedAt',
   covers:      'cacheKey, localCachedAt',
   lastfmCache: 'key, localCachedAt'
+})
+
+// v3 — registro de pistas no reproducibles (para revisarlas y arreglarlas luego).
+// Migración aditiva: solo añade una tabla nueva; el resto se conserva.
+db.version(3).stores({
+  tracks:       'id, cacheKey, artist, localCachedAt',
+  playlists:    'id, name, updatedAt',
+  favorites:    'cacheKey, artist, addedAt',
+  history:      '++id, cacheKey, playedAt, queueMode',
+  artists:      'key, name, localCachedAt',
+  covers:       'cacheKey, localCachedAt',
+  lastfmCache:  'key, localCachedAt',
+  failedTracks: 'cacheKey, lastFailedAt, reason'
 })
 
 // Normalización pura reexportada para conveniencia (definida en utils/normalize).

@@ -42,7 +42,8 @@ export function usePlayback() {
   const ui     = useUiStore()
   const yt     = useYouTubePlayer()
   const { enrich } = useTrackEnrich()
-  const { recordPlay } = usePlayHistory()
+  const { recordPlay, updateEngagement } = usePlayHistory()
+  const { recordFailure } = useFailedTracks()
   const { updateTrack: persistPlaylistTrack, getTracks } = usePlaylists()
   const { extend: extendRadio } = useRadioQueue()
 
@@ -218,9 +219,30 @@ export function usePlayback() {
     })
   }
 
+  /**
+   * Cierra la sesión de escucha de la pista que SALE: completa su entrada de
+   * historial con cuánto se escuchó de verdad (y si se rescató en clips). Se lee
+   * justo antes de cargar la siguiente, cuando `playedMs`/`duration` aún son los
+   * de la pista saliente (loadAndPlay los reinicia después).
+   */
+  function finalizePlaySession(): void {
+    const id = playSessionId
+    if (id == null) { playSessionRescued = false; return }
+    playSessionId = null
+    const rescued = playSessionRescued
+    playSessionRescued = false
+    void updateEngagement(id, {
+      listenedMs:  yt.getPlayedMs(),
+      durationMs:  player.duration > 0 ? Math.round(player.duration * 1000) : undefined,
+      clipSeconds: player.clipSeconds || undefined,   // 0 = se escuchó entera
+      rescued:     rescued || undefined
+    })
+  }
+
   /** Carga y reproduce la pista activa, enriqueciéndola lazy si hace falta. */
   async function playCurrent(): Promise<void> {
     bindHandlers()
+    finalizePlaySession()         // cierra la escucha de la pista anterior
     let track = currentTrack.value
     if (!track) return
 
@@ -237,12 +259,13 @@ export function usePlayback() {
       recovery.startTrack(candidates, track.id)
       player.currentTrackId = track.id
       updateMediaSession(track)
-      void recordPlay(track, player.queueMode)
+      void recordPlay(track, player.queueMode).then(id => { playSessionId = id ?? null })
       maybePrefetchRadio()
       void prefetchNext()
     } else {
       player.state = 'error'
       ui.showToast(i18n.global.t('playback.noVideo', { track: `${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}` }), 'error')
+      void recordFailure(track, 'no-video', [], player.queueMode)   // sin vídeo: a revisar
       // Intentar saltar a la siguiente automáticamente
       if (hasNext.value) await next()
     }
@@ -347,8 +370,9 @@ export function usePlayback() {
 
   async function prev(): Promise<void> {
     // En modo clips, "atrás" rescata la pista actual para oírla ENTERA (desde el
-    // principio); las siguientes vuelven a sonar en clips.
-    if (player.clipMode) { yt.playCurrentFull(); return }
+    // principio); las siguientes vuelven a sonar en clips. Marcamos la sesión como
+    // "rescatada": señal fuerte de gusto para las recomendaciones a futuro.
+    if (player.clipMode) { playSessionRescued = true; yt.playCurrentFull(); return }
     // Si llevamos >3s, reiniciar la pista en lugar de ir a la anterior
     if (player.currentTime > 3) { yt.seekTo(0); return }
     const q = activeQueue.value

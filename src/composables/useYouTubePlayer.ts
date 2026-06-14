@@ -44,6 +44,7 @@ let standbyVideoId: string | null = null   // qué vídeo tiene cargado el stand
 let readyCount = 0
 
 let apiPromise: Promise<void> | null = null
+const TICK_MS = 500
 let ticker: ReturnType<typeof setInterval> | null = null
 let onEndedCb: (() => void) | null = null
 let onErrorCb: ((code: number) => void) | null = null
@@ -60,6 +61,11 @@ let onClipEndCb: (() => void) | null = null
 //   seeked → ya saltó al centro
 //   full   → reproducir ESTA pista entera (atrás en modo clips la "rescata")
 let clip = { id: null as string | null, armed: false, seeked: false, start: 0, full: false }
+
+// Tiempo REAL escuchado de la pista en curso (acumulado en el ticker mientras
+// suena, así ignora pausas y los saltos del modo clips). Se lee al salir de la
+// pista para guardar la señal de engagement; se reinicia al cargar otra.
+let playedMs = 0
 
 // ── Ancla de sesión multimedia ───────────────────────────────────────────────
 // El vídeo se reproduce dentro de un <iframe> cross-origin de YouTube, y el SO
@@ -285,6 +291,7 @@ export function useYouTubePlayer() {
       try {
         playerStore.currentTime = active.getCurrentTime() || 0
         const d = active.getDuration() || 0
+        if (playerStore.state === 'playing') playedMs += TICK_MS   // tiempo escuchado real
 
         // ── Modo clips (backstop del flujo de estados) ─────────────────────────
         const n = clipSecs()
@@ -314,7 +321,7 @@ export function useYouTubePlayer() {
           }
         }
       } catch { /* player no listo */ }
-    }, 500)
+    }, TICK_MS)
   }
 
   /**
@@ -327,6 +334,7 @@ export function useYouTubePlayer() {
     intendedPlaying = true
     playerStore.state = 'loading'
     playerStore.currentTime = 0
+    playedMs = 0                  // nueva pista → reinicia el contador de escucha
     anchorPlay()
 
     if (standby && standbyVideoId === videoId) {
@@ -376,9 +384,12 @@ export function useYouTubePlayer() {
   function onError(cb: (code: number) => void): void { onErrorCb = cb }
   function onClipEnd(cb: () => void): void { onClipEndCb = cb }
 
+  /** Tiempo real escuchado de la pista en curso (ms), para la señal de engagement. */
+  function getPlayedMs(): number { return playedMs }
+
   return {
     ready, init, loadAndPlay, preload, play, pause, toggle, seekTo,
     setVolume, mute, unmute, toggleMute, onEnded, onError,
-    onClipEnd, repositionCurrentClip, playCurrentFull
+    onClipEnd, repositionCurrentClip, playCurrentFull, getPlayedMs
   }
 }

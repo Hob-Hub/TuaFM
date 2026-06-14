@@ -155,6 +155,12 @@ momento, dejar YouTube.
     Wake Lock que mantenga la pantalla encendida (gasta batería, no es "apagada").
     Descartado para uso personal. Reintentar `playVideo()` en background lo bloquea
     el navegador sin gesto.
+- **Registro de pistas no reproducibles** — ✓ *Hecho.* Cuando ningún candidato de
+  YouTube arranca (o no hay vídeo), se guarda la pista en la tabla `failedTracks`
+  ([`useFailedTracks.ts`](src/composables/useFailedTracks.ts), Dexie v3) con motivo,
+  candidatos probados y contador (dedup por `cacheKey`). Así se pueden revisar y
+  arreglar después (mejor scoring de candidatos, IDs manuales). `exportFailures()`
+  vuelca el registro como JSON para compartirlo.
 
 ---
 
@@ -240,9 +246,15 @@ dinámico; resaltado en `brand` cuando activo. Click → cicla `clipSeconds`.
   que ya suena (también muteando el salto).
 - Apagar el modo a mitad de clip → el ticker desmutea y deja terminar la canción.
 
-**Ideas futuras:** sombrear la ventana del clip en la barra de progreso; capturar
-**cuánto** se escucha de cada pista y la señal de "rescate" (atrás → entera) como
-feedback para las recomendaciones (ver §recomendaciones).
+**Señales de escucha (engagement) — ✓ capturadas:** al SALIR de cada pista se
+completa su entrada de historial ([`usePlayHistory.ts`](src/composables/usePlayHistory.ts)
+→ `updateEngagement`) con `listenedMs` (tiempo real sonando, acumulado en el ticker,
+ignora pausas y los saltos del clip), `durationMs`, `clipSeconds` y `rescued` (atrás
+→ entera, señal fuerte de gusto). Aún **no** alimentan las recomendaciones: el
+siguiente paso es agregar por artista/tag y ponderar los seeds en
+[`recommendations.service.ts`](src/services/recommendations.service.ts).
+
+**Ideas futuras:** sombrear la ventana del clip en la barra de progreso.
 
 **Sinergia/caveat:** cada salto sigue teniendo el **buffering del iframe** (§2).
 Como el modo clips cambia de pista constantemente, el corte se nota MÁS → este
