@@ -2,7 +2,7 @@ import type { CatalogTrack, CatalogArtist } from '@/types/chart.types'
 
 /**
  * Catálogo estático (public/catalog/{tracks,artists}.json): tracks y artistas
- * deduplicados y ya enriquecidos en build (Last.fm + Deezer + datos de la DB). Es
+ * deduplicados y ya enriquecidos en build (Last.fm + datos de la DB). Es
  * la PRIMERA capa de caché en runtime:
  *   · hidrata los charts compactos (join por trackId),
  *   · siembra el enriquecimiento de pistas (trackCache) sin pegar a APIs,

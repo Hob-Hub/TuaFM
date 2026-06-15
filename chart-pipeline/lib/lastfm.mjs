@@ -88,13 +88,39 @@ const LASTFM_PLACEHOLDERS = [
 ]
 const isPlaceholder = u => LASTFM_PLACEHOLDERS.some(h => u.includes(h))
 
+export function isLastfmImageUrl(url) {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'lastfm.freetls.fastly.net'
+      || host === 'lastfm-img2.akamaized.net'
+      || host.endsWith('.last.fm')
+  } catch {
+    return false
+  }
+}
+
+export function isDeezerImageUrl(url) {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'cdn-images.dzcdn.net' || host.endsWith('.dzcdn.net')
+  } catch {
+    return false
+  }
+}
+
+export function isTrustedArtworkUrl(url) {
+  return isLastfmImageUrl(url) || isDeezerImageUrl(url)
+}
+
 export function pickImage(images) {
   if (!images?.length) return undefined
   for (const size of ['mega', 'extralarge', 'large', 'medium', 'small']) {
-    const hit = images.find(i => i.size === size && i['#text'] && !isPlaceholder(i['#text']))
+    const hit = images.find(i => i.size === size && i['#text'] && !isPlaceholder(i['#text']) && isLastfmImageUrl(i['#text']))
     if (hit) return hit['#text']
   }
-  const any = images.find(i => i['#text'] && !isPlaceholder(i['#text']))
+  const any = images.find(i => i['#text'] && !isPlaceholder(i['#text']) && isLastfmImageUrl(i['#text']))
   return any?.['#text']
 }
 

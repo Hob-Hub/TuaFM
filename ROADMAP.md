@@ -15,11 +15,8 @@ Origen: revisión del estado actual + documentos del predecesor
 No son tareas: son elecciones que conviene dejar registradas para no reabrir el
 debate. Ninguna bloquea el uso personal.
 
-- **Carátulas vía MusicBrainz desde el navegador.** El navegador no deja fijar
-  `User-Agent` y MusicBrainz puede limitar por ello. Hoy funciona a bajo volumen
-  (memoizado, último recurso). *Opciones:* (a) dejarlo así (degrada a icono);
-  (b) proxy ligero (Cloudflare Worker) con el UA correcto; (c) solo carátulas de
-  álbum de Last.fm. → *Recomendación: (a) para uso personal; (b) si se publica.*
+- **Artwork Last.fm/Deezer.** Las carátulas y fotos de artista priorizan Last.fm
+  y usan Deezer como fallback; si no hay imagen fiable, la UI degrada a placeholder.
 - **Protección de claves en app pública.** Las `VITE_*` viajan en el bundle. Para
   producción: restringir la YouTube key por *HTTP referer* en Google Cloud; si
   fuese problema, proxy serverless. No bloqueante para uso personal.
@@ -78,10 +75,10 @@ reanudación al volver, modo clips, registro de fallos) ya está hecho. Queda:
   - **Implica:** enriquecer en
     [`chart-pipeline/lib/catalog.mjs`](chart-pipeline/lib/catalog.mjs) o no
     marcarlas como totalmente enriquecidas.
-- **`mbid` para carátulas robustas.** Se guarda `track.mbid`/`artist.mbid` pero
-  [`coverart.service.ts`](src/services/coverart.service.ts) busca por texto en
-  MusicBrainz (causa de los matches erróneos que se limpiaron a mano).
-  - **Implica:** buscar por mbid directo en Cover Art Archive; evita ambigüedades.
+- **Validación de hosts de artwork.** La política actual es Last.fm + Deezer para
+  `coverUrl`/`imageUrl`; conviene mantener tests o checks de build que impidan
+  reintroducir Prisa/FIMI/SNEP/Cover Art Archive en catálogo, overrides o cachés.
+  - **Implica:** test del normalizador y una aserción sobre `public/catalog/*.json`.
 - **Tests del pipeline.** [`catalog.mjs`](chart-pipeline/lib/catalog.mjs) (dedup,
   alias, `applyOverrides` con null y aliases) es lógica crítica y hoy **sin tests**;
   un fallo ahí corrompe el catálogo en silencio.
@@ -130,11 +127,10 @@ Registrado para no reabrir debates cerrados.
   prefetch, reanudación, modo clips, registro de fallos), PWA instalable, CI,
   ESLint/Prettier (config), i18n (es/en/it/fr), AbortController, descubrimiento en
   Home, `document.title` dinámico, multi-artista navegable, artistas similares,
-  carátulas del top vía Deezer, dedup del catálogo, `artistIds[]` al 100%.
+  artwork Last.fm/Deezer, dedup del catálogo, `artistIds[]` al 100%.
 - **Patrones ya aplicados:** IDs estables (`nanoid`+`cacheKey`) en vez de índices;
-  `URL`/`URLSearchParams`; loader oficial del iframe API; MusicBrainz + Cover Art
-  Archive para carátulas; imágenes de artista vía Deezer en el build; caché con
-  TTL + `try/catch`; TypeScript strict + tests de lógica pura.
+  `URL`/`URLSearchParams`; loader oficial del iframe API; sanitización de hosts
+  de artwork; caché con TTL + `try/catch`; TypeScript strict + tests de lógica pura.
 - **NO adoptar:** TanStack Query (la caché propia Dexie→catálogo→API es más
   deliberada; duplicaría responsabilidades) ni idb-keyval (Dexie es superior para
   este modelo de datos).

@@ -1,7 +1,7 @@
 import { db, makeCacheKey } from '@/db/local.db'
-import { getTrackInfo, pickImage } from '@/services/lastfm.service'
+import { getTrackInfo, isTrustedArtworkUrl, pickImage } from '@/services/lastfm.service'
 import { searchVideoCandidates } from '@/services/youtube.service'
-import { getCoverUrl } from '@/services/coverart.service'
+import { getDeezerTrackCover } from '@/services/deezer.service'
 import { getTrackByKey } from '@/services/catalog/static.source'
 import type { Track } from '@/types/track.types'
 import type { LastfmTrackResponse } from '@/types/api.types'
@@ -17,6 +17,7 @@ export type EnrichResult = Omit<Partial<Track>, 'id'>
 function stripId(t: Partial<Track>): EnrichResult {
   const { id: _ignored, ...rest } = t
   void _ignored
+  if (rest.coverUrl && !isTrustedArtworkUrl(rest.coverUrl)) delete rest.coverUrl
   return rest
 }
 
@@ -73,7 +74,7 @@ async function fromCatalog(
     year:      cat.year,
     chartYear: cat.chartYear,
     duration:  cat.durationMs,
-    coverUrl:  cat.coverUrl,
+    coverUrl:  isTrustedArtworkUrl(cat.coverUrl) ? cat.coverUrl : undefined,
     tags:      cat.tags ?? [],
     listeners: cat.listeners,
     lastfmUrl: cat.lastfmUrl,
@@ -127,10 +128,8 @@ async function fetchExternal(
     if (yt.value.length > 1) result.youtubeCandidates = yt.value
   }
 
-  // Fallback de carátula vía MusicBrainz + Cover Art Archive
-  if (!result.coverUrl && result.album) {
-    const fallback = await getCoverUrl(result.artist!, result.album).catch(() => null)
-    if (fallback) result.coverUrl = fallback
+  if (!result.coverUrl) {
+    result.coverUrl = await getDeezerTrackCover(queryArtist, title).catch(() => undefined)
   }
 
   return result
@@ -138,11 +137,13 @@ async function fetchExternal(
 
 async function persistToLocal(data: Partial<Track>, cacheKey: string): Promise<void> {
   try {
+    const clean = { ...data }
+    if (clean.coverUrl && !isTrustedArtworkUrl(clean.coverUrl)) delete clean.coverUrl
     await db.tracks.put({
-      ...data,
+      ...clean,
       id:            cacheKey,
-      title:         data.title  ?? '',
-      artist:        data.artist ?? '',
+      title:         clean.title  ?? '',
+      artist:        clean.artist ?? '',
       cacheKey,
       enriched:      true,
       localCachedAt: Date.now()

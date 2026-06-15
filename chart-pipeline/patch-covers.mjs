@@ -1,11 +1,8 @@
-// Parche puntual del catálogo: re-resuelve con Deezer las carátulas sembradas
-// desde prisaradio (recursosweb.prisaradio.com), que el navegador bloquea por ORB
-// (responden sin content-type/CORS válidos → el <img> nunca pinta y cae al
-// placeholder de inicial). Deezer es CORS-friendly y sus URLs sí se pintan.
+// Parche puntual del catálogo: elimina URLs de imagen que no vengan de Last.fm o Deezer.
 //
-// NO regenera los charts: solo reescribe `coverUrl` en public/catalog/tracks.json
-// para las pistas afectadas. Reanudable (cachea en .deezer-cache.db); las que
-// Deezer no encuentre se dejan como están (seguirán mostrando la inicial).
+// NO regenera los charts: solo normaliza `coverUrl` en public/catalog/tracks.json
+// e `imageUrl` en public/catalog/artists.json. Si una pista/artista no tiene
+// imagen de Last.fm/Deezer, se deja sin URL para que la UI use su fallback visual.
 //
 //   node chart-pipeline/patch-covers.mjs           # aplica
 //   node chart-pipeline/patch-covers.mjs --dry-run # solo informa, no escribe
@@ -13,36 +10,51 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { trackCover, stats, closeCache } from './lib/deezer.mjs'
 
 const __dir = dirname(fileURLToPath(import.meta.url))
-const FILE = resolve(__dir, '..', 'public', 'catalog', 'tracks.json')
-const BLOCKED = 'recursosweb.prisaradio.com'
+const TRACKS_FILE = resolve(__dir, '..', 'public', 'catalog', 'tracks.json')
+const ARTISTS_FILE = resolve(__dir, '..', 'public', 'catalog', 'artists.json')
 const dryRun = process.argv.includes('--dry-run')
 
-const data = JSON.parse(readFileSync(FILE, 'utf8'))
-const tracks = data.tracks ?? []
-const targets = tracks.filter(t => typeof t.coverUrl === 'string' && t.coverUrl.includes(BLOCKED))
-
-console.log(`Pistas con carátula de prisaradio: ${targets.length} / ${tracks.length}`)
-if (!targets.length) { closeCache(); process.exit(0) }
-
-let resolved = 0, unresolved = 0
-for (let i = 0; i < targets.length; i++) {
-  const t = targets[i]
-  const cover = await trackCover(t.artist, t.title)
-  if (cover) { t.coverUrl = cover; resolved++ }
-  else { unresolved++ }
-  if ((i + 1) % 100 === 0 || i === targets.length - 1) {
-    process.stdout.write(`\r  ${i + 1}/${targets.length} · resueltas ${resolved} · sin Deezer ${unresolved} · API ${stats.apiCalls}   `)
+function isTrustedArtworkUrl(url) {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'lastfm.freetls.fastly.net'
+      || host === 'lastfm-img2.akamaized.net'
+      || host.endsWith('.last.fm')
+      || host === 'cdn-images.dzcdn.net'
+      || host.endsWith('.dzcdn.net')
+  } catch {
+    return false
   }
 }
-process.stdout.write('\n')
+
+function stripUntrustedArtwork(rows, field) {
+  let removed = 0
+  for (const row of rows) {
+    if (row[field] && !isTrustedArtworkUrl(row[field])) {
+      delete row[field]
+      removed++
+    }
+  }
+  return removed
+}
+
+const tracksData = JSON.parse(readFileSync(TRACKS_FILE, 'utf8'))
+const artistsData = JSON.parse(readFileSync(ARTISTS_FILE, 'utf8'))
+
+const removedCovers = stripUntrustedArtwork(tracksData.tracks ?? [], 'coverUrl')
+const removedArtistImages = stripUntrustedArtwork(artistsData.artists ?? [], 'imageUrl')
+
+console.log(`Carátulas fuera de Last.fm/Deezer eliminadas: ${removedCovers}`)
+console.log(`Fotos de artista fuera de Last.fm/Deezer eliminadas: ${removedArtistImages}`)
 
 if (dryRun) {
   console.log('(dry-run) no se escribe nada.')
 } else {
-  writeFileSync(FILE, JSON.stringify(data))
-  console.log(`Escrito ${FILE} · ${resolved} carátulas reemplazadas, ${unresolved} sin coincidencia en Deezer.`)
+  writeFileSync(TRACKS_FILE, JSON.stringify(tracksData))
+  writeFileSync(ARTISTS_FILE, JSON.stringify(artistsData))
+  console.log(`Escrito ${TRACKS_FILE}`)
+  console.log(`Escrito ${ARTISTS_FILE}`)
 }
-closeCache()

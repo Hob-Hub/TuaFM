@@ -2,8 +2,8 @@ import type {
   LastfmTrackResponse, LastfmArtistResponse, LastfmSearchResponse,
   LastfmArtistSearchResponse
 } from '@/types/api.types'
-import { getCoverUrl } from '@/services/coverart.service'
 import { getArtistByKey } from '@/services/catalog/static.source'
+import { getDeezerArtistImage, getDeezerTrackCover, isDeezerImageUrl } from '@/services/deezer.service'
 import { makeCacheKey, normalizeStr } from '@/utils/normalize'
 import { toInt } from '@/utils/number'
 import { db } from '@/db/local.db'
@@ -95,20 +95,22 @@ export async function searchArtists(
     artist: query, limit
   }, signal)
   const matches = data.results?.artistmatches?.artist ?? []
-  // Last.fm no sirve fotos de artista (devuelve un placeholder que pickImage
-  // descarta). Preferimos la imagen del catálogo (Deezer) cuando el artista existe.
-  return Promise.all(matches.map(async m => ({
-    name:      m.name,
-    listeners: toInt(m.listeners) ?? 0,
-    imageUrl:  (await getArtistByKey(normalizeStr(m.name)))?.imageUrl ?? pickImage(m.image)
-  })))
+  return Promise.all(matches.map(async m => {
+    const fromLastfm = pickImage(m.image)
+    const fromCatalog = (await getArtistByKey(normalizeStr(m.name)))?.imageUrl
+    return {
+      name:      m.name,
+      listeners: toInt(m.listeners) ?? 0,
+      imageUrl:  fromLastfm
+        ?? (isTrustedArtworkUrl(fromCatalog) ? fromCatalog : undefined)
+        ?? await getDeezerArtistImage(m.name, signal)
+    }
+  }))
 }
 
 // Carátula real por canción, SIN tocar YouTube (no gasta cuota): álbum de
-// Last.fm y, si falta, MusicBrainz + Cover Art Archive. Doble caché: un Map en
-// memoria deduplica peticiones en vuelo dentro de la sesión, y Dexie las
-// persiste entre sesiones (antes el Map se perdía en cada recarga → se re-pedían
-// todas las carátulas cada vez).
+// Last.fm exclusivamente. Doble caché: un Map en memoria deduplica peticiones
+// en vuelo dentro de la sesión, y Dexie las persiste entre sesiones.
 const coverCache = new Map<string, Promise<string | undefined>>()
 
 export function getTrackCover(
@@ -128,7 +130,7 @@ async function resolveCoverCached(
 ): Promise<string | undefined> {
   try {
     const hit = await db.covers.get(key)
-    if (hit && !isExpired(hit.localCachedAt, TTL_COVER_DAYS)) return hit.coverUrl
+    if (hit && !isExpired(hit.localCachedAt, TTL_COVER_DAYS) && isTrustedArtworkUrl(hit.coverUrl)) return hit.coverUrl
   } catch { /* Dexie no disponible → resolvemos por red */ }
 
   const cover = await resolveTrackCover(artist, title, signal).catch(() => undefined)
@@ -143,15 +145,15 @@ async function resolveCoverCached(
 async function resolveTrackCover(
   artist: string, title: string, signal?: AbortSignal
 ): Promise<string | undefined> {
-  const info  = await getTrackInfo(artist, title, signal)
-  const album = info.track.album
-  const fromLastfm = pickImage(album?.image)
-  if (fromLastfm) return fromLastfm
-  if (album?.title) {
-    const fallback = await getCoverUrl(artist, album.title, signal)
-    if (fallback) return fallback
+  try {
+    const info  = await getTrackInfo(artist, title, signal)
+    const album = info.track.album
+    const fromLastfm = pickImage(album?.image)
+    if (fromLastfm) return fromLastfm
+  } catch {
+    /* Deezer fallback below */
   }
-  return undefined
+  return getDeezerTrackCover(artist, title, signal)
 }
 
 // Last.fm restringió las imágenes de artista y devuelve un placeholder "estrella"
@@ -166,14 +168,30 @@ function isPlaceholder(url: string): boolean {
   return LASTFM_PLACEHOLDERS.some(h => url.includes(h))
 }
 
+export function isLastfmImageUrl(url?: string): boolean {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'lastfm.freetls.fastly.net'
+      || host === 'lastfm-img2.akamaized.net'
+      || host.endsWith('.last.fm')
+  } catch {
+    return false
+  }
+}
+
+export function isTrustedArtworkUrl(url?: string): boolean {
+  return isLastfmImageUrl(url) || isDeezerImageUrl(url)
+}
+
 /** Selecciona la imagen de mayor tamaño no vacía (ignorando placeholders). */
 export function pickImage(images?: Array<{ '#text': string; size: string }>): string | undefined {
   if (!images?.length) return undefined
   const order = ['mega', 'extralarge', 'large', 'medium', 'small']
   for (const size of order) {
-    const hit = images.find(i => i.size === size && i['#text'] && !isPlaceholder(i['#text']))
+    const hit = images.find(i => i.size === size && i['#text'] && !isPlaceholder(i['#text']) && isLastfmImageUrl(i['#text']))
     if (hit) return hit['#text']
   }
-  const any = images.find(i => i['#text'] && !isPlaceholder(i['#text']))
+  const any = images.find(i => i['#text'] && !isPlaceholder(i['#text']) && isLastfmImageUrl(i['#text']))
   return any?.['#text']
 }

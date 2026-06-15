@@ -66,16 +66,15 @@ function buildPeriod(chartId, year, aggMap) {
       artistNames:    a.artistNames,        // nombres de TODOS los artistas (display)
       title:          a.title,
       titleDisplay:   a.titleDisplay,
-      ...(a.youtubeVideoId ? { youtubeVideoId: a.youtubeVideoId } : {}),
-      ...(a.coverUrl       ? { coverUrl:       a.coverUrl }       : {})
+      ...(a.youtubeVideoId ? { youtubeVideoId: a.youtubeVideoId } : {})
     }))
   return { chartId, year, songs }
 }
 
 // ── Consolidación de una fuente SEMANAL (España) → Top anual ─────────────────
 // rows: filas de v_chart (una por entrada semanal). Agrupa por año natural y
-// acumula yearScore = Σ positionScore(posición). Los metadatos de display y los
-// enlaces (cover/youtube) se toman de la semana de MEJOR posición de la canción.
+// acumula yearScore = Σ positionScore(posición). Los metadatos de display y
+// YouTube se toman de la semana de MEJOR posición de la canción.
 export function annualizeWeekly(rows, cfg, fromYear, toYear) {
   const byYear = new Map()   // year → Map<key, agg>
 
@@ -96,23 +95,19 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
     const aggMap = byYear.get(year)
 
     const ytId  = cfg.ytUrlField ? extractVideoId(row[cfg.ytUrlField]) : null
-    const cover = cfg.coverField ? (row[cfg.coverField] || null) : null
-
     const existing = aggMap.get(key)
     if (existing) {
       existing.score       += positionScore(position)
       existing.weeksOnChart += 1
       if (position < existing.peakPosition) {
-        // La mejor semana define display/enlaces (mejor portada/vídeo disponible).
+        // La mejor semana define display/enlaces (mejor vídeo disponible).
         existing.peakPosition  = position
         existing.artistDisplay = artistDisplay
         existing.artistNames   = parts
         existing.titleDisplay  = titleDisplay
         if (ytId)  existing.youtubeVideoId = ytId
-        if (cover) existing.coverUrl       = cover
       } else {
         existing.youtubeVideoId = existing.youtubeVideoId || ytId || undefined
-        existing.coverUrl       = existing.coverUrl       || cover || undefined
       }
     } else {
       aggMap.set(key, {
@@ -120,8 +115,7 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
         score: positionScore(position),
         peakPosition: position,
         weeksOnChart: 1,
-        youtubeVideoId: ytId || undefined,
-        coverUrl:       cover || undefined
+        youtubeVideoId: ytId || undefined
       })
     }
   }
@@ -163,8 +157,7 @@ export function annualizeAnnual(rows, cfg, fromYear, toYear) {
         score: positionScore(rank),
         peakPosition: rank,
         weeksOnChart: 1,
-        youtubeVideoId: cfg.ytUrlField ? extractVideoId(row[cfg.ytUrlField]) || undefined : undefined,
-        coverUrl:       cfg.coverField ? (row[cfg.coverField] || undefined) : undefined
+        youtubeVideoId: cfg.ytUrlField ? extractVideoId(row[cfg.ytUrlField]) || undefined : undefined
       })
     }
   }

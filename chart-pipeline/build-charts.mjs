@@ -34,6 +34,25 @@ const configArgs = args.filter(a => !a.startsWith('--') && !/^\d+$/.test(a))
 const configs = configArgs.length ? configArgs : ['chart-configs/es.json', 'chart-configs/us.json', 'chart-configs/it.json', 'chart-configs/fr.json']
 
 const stripLinks = html => String(html || '').replace(/<a\b[^>]*>.*?<\/a>/gi, '').replace(/\s+/g, ' ').trim()
+const keepTrustedArtwork = url => lfm.isTrustedArtworkUrl(url) ? url : undefined
+
+function enforceTrustedArtwork(tracks, artists) {
+  let droppedCovers = 0
+  let droppedArtistImages = 0
+  for (const t of tracks) {
+    if (t.coverUrl && !lfm.isTrustedArtworkUrl(t.coverUrl)) {
+      delete t.coverUrl
+      droppedCovers++
+    }
+  }
+  for (const a of artists) {
+    if (a.imageUrl && !lfm.isTrustedArtworkUrl(a.imageUrl)) {
+      delete a.imageUrl
+      droppedArtistImages++
+    }
+  }
+  return { droppedCovers, droppedArtistImages }
+}
 
 // ── 1. Consolidar cada chart + sembrar álbum/año desde la DB ─────────────────
 const charts = []
@@ -85,7 +104,10 @@ if (!noLastfm && !refresh) {
     const FIELDS = ['album', 'coverUrl', 'durationMs', 'tags', 'listeners', 'lastfmUrl', 'mbid']
     for (const t of tracks) {
       const p = byKey.get(t.key); if (!p) continue
-      for (const f of FIELDS) if (p[f] !== undefined && t[f] === undefined) t[f] = p[f]
+      for (const f of FIELDS) {
+        if (p[f] === undefined || t[f] !== undefined) continue
+        t[f] = f === 'coverUrl' ? keepTrustedArtwork(p[f]) : p[f]
+      }
       reuseTrack.add(t.key)
     }
   }
@@ -94,7 +116,10 @@ if (!noLastfm && !refresh) {
     const FIELDS = ['bio', 'imageUrl', 'listeners', 'tags', 'similar', 'mbid', 'topTracks']
     for (const a of artists) {
       const p = byKey.get(a.key); if (!p) continue
-      for (const f of FIELDS) if (p[f] !== undefined && a[f] === undefined) a[f] = p[f]
+      for (const f of FIELDS) {
+        if (p[f] === undefined || a[f] !== undefined) continue
+        a[f] = f === 'imageUrl' ? keepTrustedArtwork(p[f]) : p[f]
+      }
       reuseArtist.add(a.key)
     }
   }
@@ -116,7 +141,7 @@ if (!noLastfm) {
       const tr = data?.track
       if (tr) {
         if (!t.album && tr.album?.title) t.album = tr.album.title
-        // Carátula: Last.fm manda (la siembra de la DB queda solo de fallback).
+        // Carátula: Last.fm primero; Deezer solo como fallback.
         const c = lfm.pickImage(tr.album?.image); if (c) t.coverUrl = c
         const dur = tr.duration ? parseInt(tr.duration, 10) : 0
         if (dur) t.durationMs = dur
@@ -128,13 +153,11 @@ if (!noLastfm) {
         if (tr.mbid) t.mbid = tr.mbid
       }
     } catch (e) { console.warn(`  ! track ${t.key}: ${e.message}`) }
-    // Carátula de respaldo (Deezer) si Last.fm no trajo portada o la sembrada
-    // está bloqueada por ORB (las de prisaradio no pintan en el navegador).
-    if (!t.coverUrl || /prisaradio/i.test(t.coverUrl)) {
+    if (!t.coverUrl) {
       const dz = await deezer.trackCover(primaryName(t.artist), t.title)
       if (dz) t.coverUrl = dz
-      else if (/prisaradio/i.test(t.coverUrl || '')) t.coverUrl = undefined  // mejor sin cover que un ORB muerto
     }
+    if (t.coverUrl && !lfm.isTrustedArtworkUrl(t.coverUrl)) delete t.coverUrl
     // Duración de respaldo (Deezer) cuando Last.fm no la trajo.
     if (!t.durationMs) {
       const ms = await deezer.trackDuration(primaryName(t.artist), t.title)
@@ -172,16 +195,20 @@ if (!noLastfm) {
         ...(x.listeners ? { listeners: parseInt(x.listeners, 10) || undefined } : {})
       })).filter(x => x.title)
       if (tt.length) a.topTracks = tt.slice(0, 15)
-      // Foto de artista: Last.fm no la sirve → Deezer.
-      if (!a.imageUrl) { const img = await deezer.artistImage(a.name); if (img) a.imageUrl = img }
     } catch (e) { console.warn(`  ! artista ${a.key}: ${e.message}`) }
+    if (!a.imageUrl) {
+      const img = await deezer.artistImage(a.name)
+      if (img) a.imageUrl = img
+    }
+    if (a.imageUrl && !lfm.isTrustedArtworkUrl(a.imageUrl)) delete a.imageUrl
     if (++n % 100 === 0) console.log(`  artistas ${n}/${artists.length} (lfm=${lfm.stats.apiCalls} dz=${deezer.stats.apiCalls})`)
   }
   lfm.closeCache()
   deezer.closeCache()
   const withPhoto = artists.filter(a => a.imageUrl).length
   console.log(`\n✓ Last.fm: ${lfm.stats.apiCalls} llamadas, ${lfm.stats.cacheHits} de caché`)
-  console.log(`✓ Deezer: ${deezer.stats.apiCalls} llamadas (${deezer.stats.misses} sin foto) → ${withPhoto}/${artists.length} artistas con foto`)
+  console.log(`✓ Deezer: ${deezer.stats.apiCalls} llamadas, ${deezer.stats.cacheHits} de caché`)
+  console.log(`✓ Artwork Last.fm/Deezer: ${tracks.filter(t => t.coverUrl).length}/${tracks.length} carátulas, ${withPhoto}/${artists.length} artistas`)
 }
 
 // ── 3.5. Overrides manuales (chart-pipeline/overrides.json) ──────────────────
@@ -193,6 +220,11 @@ if (existsSync(ovPath)) {
     const n = applyOverrides(tracks, artists, JSON.parse(readFileSync(ovPath, 'utf8')), trackAliases, artistAliases)
     console.log(`· overrides aplicados: ${n}`)
   } catch (e) { console.warn(`! overrides.json inválido, se ignora: ${e.message}`) }
+}
+
+const sanitized = enforceTrustedArtwork(tracks, artists)
+if (sanitized.droppedCovers || sanitized.droppedArtistImages) {
+  console.log(`· artwork no Last.fm/Deezer descartado: ${sanitized.droppedCovers} carátulas, ${sanitized.droppedArtistImages} artistas`)
 }
 
 // ── 4. Escritura ─────────────────────────────────────────────────────────────

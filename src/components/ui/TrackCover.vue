@@ -12,12 +12,9 @@ const props = withDefaults(defineProps<{
 const failed = ref(false)
 watch(() => props.src, () => { failed.value = false })
 
-// Hosts cuyas imágenes el navegador bloquea por ORB (Opaque Response Blocking):
-// responden sin content-type/CORS válidos, así que el <img> nunca pinta y deja
-// un hueco hasta que (a veces tarde) salta el onerror. Los descartamos de
-// entrada para ir directos al placeholder, sin parpadeo de imagen rota. El
-// catálogo trae ~450 carátulas de prisaradio así; el arreglo de fondo es
-// resolverlas al regenerar el catálogo (chart-pipeline).
+// Defensa para URLs antiguas importadas por el usuario o guardadas en cachés
+// locales: si el navegador las bloquea por ORB, vamos directos al placeholder.
+// El catálogo versionado se normaliza para no traer estos hosts.
 const BLOCKED_COVER_HOSTS = ['recursosweb.prisaradio.com']
 const usableSrc = computed(() =>
   props.src && !BLOCKED_COVER_HOSTS.some(h => props.src!.includes(h)) ? props.src : undefined

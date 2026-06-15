@@ -13,7 +13,7 @@ bundle estático que consume la app. (Los scrapers en Python viven en
 | [`lib/annualize.mjs`](lib/annualize.mjs) | Consolidación pura (semanal/anual → Top del año). **Único sitio** para afinar la fórmula de puntuación. |
 | [`lib/catalog.mjs`](lib/catalog.mjs) | Dedupe de tracks/artistas, asignación de ids, siembra desde la DB y compactación de los charts. |
 | [`lib/lastfm.mjs`](lib/lastfm.mjs) | Cliente Last.fm para el build (throttle ~5 req/s + caché de reanudación en `.lastfm-cache.db`). |
-| [`lib/deezer.mjs`](lib/deezer.mjs) | Imágenes de artista desde Deezer (Last.fm ya no las sirve). Caché en `.deezer-cache.db`. |
+| [`lib/deezer.mjs`](lib/deezer.mjs) | Artwork y duración como respaldo cuando Last.fm no los trae. Caché en `.deezer-cache.db`. |
 | [`build-charts.mjs`](build-charts.mjs) | Orquestador: charts compactos en `../public/charts/` + catálogo en `../public/catalog/`. |
 | [`chart-configs/*.json`](chart-configs/) | Definición de cada fuente (consulta SQL, `consolidate`, metadatos del registry). |
 | [`overrides.json`](overrides.json) | Correcciones manuales que ganan sobre lo generado (ver más abajo). |
@@ -26,12 +26,14 @@ bundle estático que consume la app. (Los scrapers en Python viven en
 - `../public/charts/<chartId>.json` — **compacto**: cada canción es `{t,r,s,p,w}`
   (t=trackId, r=rank, s=score, p=pico, w=semanas) y referencia el catálogo.
 - `../public/catalog/tracks.json` — 1 entrada por track distinto (deduplicado entre
-  años y charts), con YouTube/carátula de la DB + álbum/tags/duración/oyentes de Last.fm.
+  años y charts), con YouTube + álbum/tags/duración/oyentes de Last.fm. `coverUrl`
+  solo se guarda si la URL viene de Last.fm o Deezer.
 - `../public/catalog/artists.json` — 1 entrada por artista: bio, oyentes, tags y
-  **top 50** de Last.fm, e **imagen de Deezer** (Last.fm no sirve fotos de artista).
+  **top 50** de Last.fm. `imageUrl` solo se guarda si la URL viene de Last.fm o Deezer.
   Lo que no se encuentra se deja vacío.
 
-Carátulas: se prefiere la de **Last.fm** (álbum); la de `los40.db` queda de fallback.
+Carátulas y fotos de artista: **Last.fm primero, Deezer como fallback**. No se
+guardan URLs de Prisa, FIMI/SNEP, Cover Art Archive ni fuentes sembradas por DB.
 
 ## Requisitos
 
@@ -63,7 +65,7 @@ node build-charts.mjs --no-lastfm     # = npm run build:fast
 El build **sobrescribe** el catálogo, así que **no edites `public/catalog/*.json` a
 mano** (se perderían al regenerar). En su lugar, pon tus correcciones en
 [`overrides.json`](overrides.json): se aplican **al final** del build y **ganan**
-sobre lo generado (Last.fm/Deezer/DB). Está versionado.
+sobre lo generado (Last.fm/DB). Está versionado.
 
 ```jsonc
 {
@@ -74,6 +76,9 @@ sobre lo generado (Last.fm/Deezer/DB). Está versionado.
 // key de artista = "<nombre normalizado>"
 // Solo los campos presentes se sobrescriben; el resto se mantiene generado.
 ```
+
+Los overrides de `coverUrl` e `imageUrl` se sanitizan al final: si no apuntan a
+Last.fm o Deezer, se descartan.
 
 El algoritmo (fórmula `score = Σ 1/√posición`, equilibrio pico/permanencia y cómo
 afinarlo) está documentado en el [README raíz](../README.md#algoritmo-de-consolidación-semanal--top-del-año).

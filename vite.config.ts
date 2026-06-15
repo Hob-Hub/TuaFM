@@ -67,7 +67,7 @@ export default defineConfig({
             }
           },
           {
-            // Carátulas y fotos de artista (Last.fm/Deezer/Cover Art Archive…).
+            // Carátulas y fotos de artista: Last.fm primero, Deezer como fallback.
             // CacheFirst a propósito: StaleWhileRevalidate revalidaba en 2º plano
             // CADA imagen ya cacheada, y esas peticiones compiten por el ancho de
             // banda con los segmentos de YouTube justo al pasar de canción → cortes

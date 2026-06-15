@@ -1,8 +1,5 @@
-// Datos desde la API pública de Deezer (sin clave), EN BUILD: foto de artista
-// (Last.fm sirve un placeholder), y carátula + duración de pista como respaldo
-// cuando Last.fm no las trae o la carátula sembrada está bloqueada por ORB
-// (prisaradio). En Node no hay CORS y las URLs de Deezer son CORS-friendly → se
-// pintan como <img> en el navegador sin problema.
+// Datos desde la API pública de Deezer (sin clave), EN BUILD: artwork como
+// fallback tras Last.fm y duración de pista como respaldo cuando Last.fm no la trae.
 //
 // Throttle suave + caché de reanudación en .deezer-cache.db (gitignored).
 
@@ -54,15 +51,13 @@ export function artistImage(name) {
   return cachedGet(
     `artist:${norm(name)}`,
     `https://api.deezer.com/search/artist?limit=1&q=${encodeURIComponent(name)}`,
-    d => { const a = d?.data?.[0]; return a?.picture_xl || a?.picture_big || a?.picture_medium || null }
+    d => {
+      const a = d?.data?.[0]
+      return a?.picture_xl || a?.picture_big || a?.picture_medium || null
+    }
   )
 }
 
-/**
- * Carátula + duración de una pista en UNA sola búsqueda cacheada (la respuesta de
- * Deezer trae ambas). `trackCover`/`trackDuration` la comparten: una pista a la
- * que le falten las dos cosas hace 1 llamada, no 2.
- */
 function dzTrackInfo(artist, title) {
   const q = `artist:"${artist}" track:"${title}"`
   return cachedGet(
@@ -73,14 +68,14 @@ function dzTrackInfo(artist, title) {
       if (!tr) return null
       const al = tr.album
       return {
-        cover:      al?.cover_xl || al?.cover_big || al?.cover_medium || null,
+        cover: al?.cover_xl || al?.cover_big || al?.cover_medium || null,
         durationMs: tr.duration ? Number(tr.duration) * 1000 : null
       }
     }
   )
 }
 
-export async function trackCover(artist, title)    { return (await dzTrackInfo(artist, title))?.cover ?? null }
+export async function trackCover(artist, title) { return (await dzTrackInfo(artist, title))?.cover ?? null }
 export async function trackDuration(artist, title) { return (await dzTrackInfo(artist, title))?.durationMs ?? null }
 
 export function closeCache() { cacheDb.close() }

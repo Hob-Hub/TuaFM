@@ -1,5 +1,6 @@
 import { ref } from 'vue'
-import { getArtistInfo, pickImage, getTrackCover } from '@/services/lastfm.service'
+import { getArtistInfo, isTrustedArtworkUrl, pickImage, getTrackCover } from '@/services/lastfm.service'
+import { getDeezerArtistImage } from '@/services/deezer.service'
 import { getArtistTopTracks, getSimilarArtists } from '@/services/lastfm.similarity.service'
 import { getArtistByKey, getTrackByKey } from '@/services/catalog/static.source'
 import { normalizeStr, makeCacheKey } from '@/utils/normalize'
@@ -50,7 +51,7 @@ export function useArtist() {
           name:              cat.name,
           bio:               cat.bio ?? '',
           listeners:         cat.listeners ?? 0,
-          imageUrl:          cat.imageUrl,
+          imageUrl:          isTrustedArtworkUrl(cat.imageUrl) ? cat.imageUrl : undefined,
           tags:              cat.tags ?? [],
           topTracks:         (cat.topTracks ?? []).slice(0, INITIAL_TOP)
                                .map(t => ({ title: t.title, listeners: t.listeners ?? 0 })),
@@ -93,7 +94,7 @@ export function useArtist() {
         name:              a.name,
         bio:               stripLinks(a.bio?.summary ?? ''),
         listeners:         toInt(a.stats?.listeners) ?? 0,
-        imageUrl:          pickImage(a.image),
+        imageUrl:          pickImage(a.image) ?? await getDeezerArtistImage(a.name).catch(() => undefined),
         tags:              (a.tags?.tag ?? []).map(t => t.name).slice(0, 6),
         topTracks:         top,
         topTracksComplete: topRes.status === 'fulfilled',
@@ -158,7 +159,8 @@ export function useArtist() {
         const track = tracks[i++]
         if (track.coverUrl) continue
         const fromCat = await getTrackByKey(makeCacheKey(artistName, track.title))
-        const cover = fromCat?.coverUrl ?? await getTrackCover(artistName, track.title).catch(() => undefined)
+        const fromCatalog = isTrustedArtworkUrl(fromCat?.coverUrl) ? fromCat?.coverUrl : undefined
+        const cover = fromCatalog ?? await getTrackCover(artistName, track.title).catch(() => undefined)
         if (cover) track.coverUrl = cover
       }
     }
@@ -176,9 +178,12 @@ async function readArtistCache(key: string): Promise<ArtistInfo | null> {
       name:              row.name,
       bio:               row.bio,
       listeners:         row.listeners,
-      imageUrl:          row.imageUrl,
+      imageUrl:          isTrustedArtworkUrl(row.imageUrl) ? row.imageUrl : undefined,
       tags:              row.tags,
-      topTracks:         row.topTracks.map(t => ({ ...t })),
+      topTracks:         row.topTracks.map(t => ({
+        ...t,
+        coverUrl: isTrustedArtworkUrl(t.coverUrl) ? t.coverUrl : undefined
+      })),
       topTracksComplete: row.topTracksComplete,
       similar:           []   // no se persiste; se rellena lazy con fillSimilar
     }
@@ -194,9 +199,13 @@ async function persistArtistCache(key: string, a: ArtistInfo): Promise<void> {
       name:              a.name,
       bio:               a.bio,
       listeners:         a.listeners,
-      imageUrl:          a.imageUrl,
+      imageUrl:          isTrustedArtworkUrl(a.imageUrl) ? a.imageUrl : undefined,
       tags:              a.tags,
-      topTracks:         a.topTracks.map(t => ({ title: t.title, listeners: t.listeners, coverUrl: t.coverUrl })),
+      topTracks:         a.topTracks.map(t => ({
+        title: t.title,
+        listeners: t.listeners,
+        coverUrl: isTrustedArtworkUrl(t.coverUrl) ? t.coverUrl : undefined
+      })),
       topTracksComplete: a.topTracksComplete,
       localCachedAt:     Date.now()
     } satisfies LocalArtist)
