@@ -60,7 +60,8 @@ let onClipEndCb: (() => void) | null = null
 //   armed  → muteado, esperando a colocarse en el centro
 //   seeked → ya saltó al centro
 //   full   → reproducir ESTA pista entera (atrás en modo clips la "rescata")
-let clip = { id: null as string | null, armed: false, seeked: false, start: 0, full: false }
+//   done   → el trozo de ESTA pista ya terminó y avanzó (evita re-armarlo en bucle)
+let clip = { id: null as string | null, armed: false, seeked: false, start: 0, full: false, done: false }
 
 // Tiempo REAL escuchado de la pista en curso (acumulado en el ticker mientras
 // suena, así ignora pausas y los saltos del modo clips). Se lee al salir de la
@@ -173,7 +174,7 @@ export function useYouTubePlayer() {
   /** Arranque de una pista en modo clips: muteamos y, en cuanto la duración esté
    *  disponible, saltamos al centro (todo en silencio). Se llama desde loadAndPlay. */
   function beginClip(p: YTPlayer, id: string | null): void {
-    clip = { id, armed: false, seeked: false, start: 0, full: false }
+    clip = { id, armed: false, seeked: false, start: 0, full: false, done: false }
     if (!clipSecs()) return
     clip.armed = true
     positionClip(p)            // si ya hay duración (standby cueado) salta ya
@@ -205,6 +206,7 @@ export function useYouTubePlayer() {
     if (!active || !clipSecs() || clip.full) return
     if (clip.armed || clip.seeked) return        // ya está en modo clip
     clip.armed = true
+    clip.done = false                            // permite que este nuevo trozo termine
     positionClip(active)
   }
 
@@ -301,10 +303,26 @@ export function useYouTubePlayer() {
         } else if (clip.armed) {
           positionClip(active)                        // asegura el salto al centro
           revealClip(active)                          // y el desmuteo una vez colocado
+        } else if (n && !clip.full && !clip.done && !clip.seeked) {
+          // Backstop: el modo clips está activo pero la pista en curso NO quedó
+          // recortada (un cambio de pista tras una que no sonó dejó el recorte sin
+          // armar). La re-armamos para que salte a su centro y avance al final del
+          // trozo, en vez de "olvidarse" y sonar entera. `done` evita re-armar el
+          // trozo que ya terminó (bucle).
+          clip.armed = true
+          positionClip(active)
         }
-        if (n && clip.seeked && !clip.full && playerStore.currentTime >= clip.start + n) {
-          clip.seeked = false                         // evita doble avance
-          onClipEndCb?.()                             // fin del trozo → siguiente
+        // Fin del trozo: recalculamos el centro con la duración REAL de cada tick.
+        // Si el salto inicial usó una duración transitoria (p. ej. del swap gapless
+        // justo tras un fallo), aquí se corrige y la pista avanza igualmente, sin
+        // quedarse sonando entera por un `start` calculado de más.
+        if (n && clip.seeked && !clip.full) {
+          const liveStart = clipCentreStart(active.getDuration() || 0, n)
+          if (playerStore.currentTime >= liveStart + n) {
+            clip.seeked = false                       // evita doble avance
+            clip.done = true                          // este trozo ya terminó
+            onClipEndCb?.()                           // fin del trozo → siguiente
+          }
         }
 
         if (d > 0) {
