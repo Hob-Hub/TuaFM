@@ -8,8 +8,8 @@ import { usePlaylistQueueStore } from '@/stores/playlistQueue.store'
 import { useUiStore } from '@/stores/ui.store'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
 import { useTrackEnrich } from '@/composables/useTrackEnrich'
-import { usePlayHistory } from '@/composables/usePlayHistory'
-import { useFailedTracks } from '@/composables/useFailedTracks'
+import { recordPlay, updateEngagement } from '@/composables/usePlayHistory'
+import { recordFailure } from '@/composables/useFailedTracks'
 import { usePlaylists } from '@/composables/usePlaylists'
 import { useRadioQueue } from '@/composables/useRadioQueue'
 import { usePlaybackRecovery, buildCandidates } from '@/composables/usePlaybackRecovery'
@@ -23,11 +23,13 @@ let enrichInFlight = false
 // useYouTubePlayer; aquí solo reaccionamos a activarlo a media canción.
 let clipWatcherSet = false
 
-// Sesión de escucha en curso: id de la entrada de historial a completar al SALIR
-// de la pista (con las señales de engagement), y si el usuario la "rescató"
-// (atrás en modo clips para oírla entera). Singleton como el resto del estado.
-let playSessionId: number | null = null
-let playSessionRescued = false
+// Sesión de escucha en curso: la entrada de historial a completar al SALIR de la
+// pista (con las señales de engagement). `idPromise` es el alta async de la
+// entrada: la encadenamos en vez de leer un id que aún podría no haber resuelto
+// (saltos rápidos / clips cortos hacían que `recordPlay` no hubiera terminado y
+// se perdiera —o se cruzara— la señal). `rescued` = atrás en clips para oírla
+// entera. Singleton como el resto del estado.
+let playSession: { idPromise: Promise<number | undefined>; rescued: boolean } | null = null
 
 /**
  * Orquestador central de reproducción. Unifica los tres modos (playlist, radio,
@@ -42,8 +44,6 @@ export function usePlayback() {
   const ui     = useUiStore()
   const yt     = useYouTubePlayer()
   const { enrich } = useTrackEnrich()
-  const { recordPlay, updateEngagement } = usePlayHistory()
-  const { recordFailure } = useFailedTracks()
   const { updateTrack: persistPlaylistTrack, getTracks } = usePlaylists()
   const { extend: extendRadio } = useRadioQueue()
 
@@ -226,49 +226,73 @@ export function usePlayback() {
    * de la pista saliente (loadAndPlay los reinicia después).
    */
   function finalizePlaySession(): void {
-    const id = playSessionId
-    if (id == null) { playSessionRescued = false; return }
-    playSessionId = null
-    const rescued = playSessionRescued
-    playSessionRescued = false
-    void updateEngagement(id, {
+    const session = playSession
+    playSession = null
+    if (!session) return
+    // Capturamos las señales AHORA (síncrono): loadAndPlay reiniciará playedMs y
+    // duration enseguida. El id del historial puede llegar después, así que lo
+    // encadenamos sobre su promesa en vez de leerlo de una variable.
+    const engagement = {
       listenedMs:  yt.getPlayedMs(),
       durationMs:  player.duration > 0 ? Math.round(player.duration * 1000) : undefined,
       clipSeconds: player.clipSeconds || undefined,   // 0 = se escuchó entera
-      rescued:     rescued || undefined
-    })
+      rescued:     session.rescued || undefined
+    }
+    void session.idPromise
+      .then(id => { if (id != null) return updateEngagement(id, engagement) })
+      .catch(() => { /* el alta del historial falló: no hay nada que completar */ })
   }
 
   /** Carga y reproduce la pista activa, enriqueciéndola lazy si hace falta. */
   async function playCurrent(): Promise<void> {
     bindHandlers()
     finalizePlaySession()         // cierra la escucha de la pista anterior
-    let track = currentTrack.value
+    const track = currentTrack.value
     if (!track) return
 
-    if (!track.youtubeVideoId || !track.enriched) {
-      const data = await enrich(track)
-      applyEnrichment(track, data)
-      track = currentTrack.value
+    // Si ya tenemos un vídeo, ARRANCAMOS YA, sin esperar al enriquecimiento. Así
+    // la llamada a reproducir ocurre lo más cerca posible del gesto del usuario:
+    // tras un `await` (red del generate/enrich) el navegador considera consumido
+    // el gesto y bloquea el autoplay del iframe (por eso "regenerar" o "favoritos"
+    // dejaban la pista cargada pero en pausa). El enriquecimiento (metadatos,
+    // candidatos extra) se completa en segundo plano sin frenar el arranque.
+    if (track.youtubeVideoId) {
+      startPlayback(track)
+      if (!track.enriched) {
+        void enrich(track).then(data => applyEnrichment(track, data)).catch(() => { /* best-effort */ })
+      }
+      return
     }
-    if (!track) return
 
+    // Sin vídeo aún: hay que resolverlo antes de poder reproducir nada.
+    const data = await enrich(track)
+    applyEnrichment(track, data)
+    const resolved = currentTrack.value
+    if (resolved) startPlayback(resolved)
+  }
+
+  /**
+   * Arranca la reproducción de una pista que ya tiene (o no) candidatos de vídeo.
+   * Centraliza el arranque para que tanto la vía rápida (con videoId) como la que
+   * espera al enriquecimiento sigan exactamente el mismo camino.
+   */
+  function startPlayback(track: Track): void {
     const candidates = buildCandidates(track)
-
-    if (candidates.length > 0) {
-      recovery.startTrack(candidates, track.id)
-      player.currentTrackId = track.id
-      updateMediaSession(track)
-      void recordPlay(track, player.queueMode).then(id => { playSessionId = id ?? null })
-      maybePrefetchRadio()
-      void prefetchNext()
-    } else {
+    if (candidates.length === 0) {
       player.state = 'error'
       ui.showToast(i18n.global.t('playback.noVideo', { track: `${track.artistDisplay ?? track.artist} - ${track.titleDisplay ?? track.title}` }), 'error')
       void recordFailure(track, 'no-video', [], player.queueMode)   // sin vídeo: a revisar
-      // Intentar saltar a la siguiente automáticamente
-      if (hasNext.value) await next()
+      if (hasNext.value) void next()   // intenta saltar a la siguiente automáticamente
+      return
     }
+    recovery.startTrack(candidates, track.id)
+    player.currentTrackId = track.id
+    updateMediaSession(track)
+    // Neutralizamos el rechazo en el origen: la última pista no se finaliza nunca
+    // (no hay siguiente), así que su promesa no debe quedar como rejection suelta.
+    playSession = { idPromise: recordPlay(track, player.queueMode).catch(() => undefined), rescued: false }
+    maybePrefetchRadio()
+    void prefetchNext()
   }
 
   // ── Arranque de cada modo ──────────────────────────────────────────────────
@@ -372,7 +396,7 @@ export function usePlayback() {
     // En modo clips, "atrás" rescata la pista actual para oírla ENTERA (desde el
     // principio); las siguientes vuelven a sonar en clips. Marcamos la sesión como
     // "rescatada": señal fuerte de gusto para las recomendaciones a futuro.
-    if (player.clipMode) { playSessionRescued = true; yt.playCurrentFull(); return }
+    if (player.clipMode) { if (playSession) playSession.rescued = true; yt.playCurrentFull(); return }
     // Si llevamos >3s, reiniciar la pista en lugar de ir a la anterior
     if (player.currentTime > 3) { yt.seekTo(0); return }
     const q = activeQueue.value

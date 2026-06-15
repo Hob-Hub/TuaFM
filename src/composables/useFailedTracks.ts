@@ -12,6 +12,48 @@ import type { FailedTrack } from '@/types/playlist.types'
  * luego (mejor scoring de candidatos, IDs manuales…). Dedup por `cacheKey`: si la
  * misma pista vuelve a fallar, solo incrementa el contador en vez de duplicar.
  */
+
+// ── Funciones puras (a nivel de módulo) ───────────────────────────────────────
+// El orquestador y la recuperación de fallos solo necesitan REGISTRAR; importan
+// `recordFailure` directamente para no abrir un liveQuery siempre vivo (corren
+// dentro de usePlayback/usePlaybackRecovery, que viven toda la sesión). El
+// observable lo crea solo la pantalla que lista los fallos (ver abajo).
+
+export async function recordFailure(
+  track: Track,
+  reason: FailedTrack['reason'],
+  triedVideoIds: string[],
+  mode: QueueMode
+): Promise<void> {
+  if (!track.artist || !track.title) return
+  if (mode === 'idle') return
+  const cacheKey = makeCacheKey(track.artist, track.title)
+  const now = Date.now()
+  const prev = await db.failedTracks.get(cacheKey)
+  await db.failedTracks.put({
+    cacheKey,
+    artist:        track.artist,
+    title:         track.title,
+    reason,
+    triedVideoIds,
+    queueMode:     mode,
+    firstFailedAt: prev?.firstFailedAt ?? now,
+    lastFailedAt:  now,
+    count:         (prev?.count ?? 0) + 1
+  })
+}
+
+export async function clearFailures(): Promise<void> {
+  await db.failedTracks.clear()
+}
+
+/** Vuelca el registro como JSON (para pegarlo/compartirlo y arreglarlo después). */
+export async function exportFailures(): Promise<string> {
+  const all = await db.failedTracks.orderBy('lastFailedAt').reverse().toArray()
+  return JSON.stringify(all, null, 2)
+}
+
+/** Composable para la pantalla de "Pistas con problemas": aquí sí se abre el liveQuery. */
 export function useFailedTracks() {
   const failures = useObservable<FailedTrack[], FailedTrack[]>(
     from(liveQuery(() =>
@@ -19,40 +61,6 @@ export function useFailedTracks() {
     )),
     { initialValue: [] }
   )
-
-  async function recordFailure(
-    track: Track,
-    reason: FailedTrack['reason'],
-    triedVideoIds: string[],
-    mode: QueueMode
-  ): Promise<void> {
-    if (!track.artist || !track.title) return
-    if (mode === 'idle') return
-    const cacheKey = makeCacheKey(track.artist, track.title)
-    const now = Date.now()
-    const prev = await db.failedTracks.get(cacheKey)
-    await db.failedTracks.put({
-      cacheKey,
-      artist:        track.artist,
-      title:         track.title,
-      reason,
-      triedVideoIds,
-      queueMode:     mode,
-      firstFailedAt: prev?.firstFailedAt ?? now,
-      lastFailedAt:  now,
-      count:         (prev?.count ?? 0) + 1
-    })
-  }
-
-  async function clearFailures(): Promise<void> {
-    await db.failedTracks.clear()
-  }
-
-  /** Vuelca el registro como JSON (para pegarlo/compartirlo y arreglarlo después). */
-  async function exportFailures(): Promise<string> {
-    const all = await db.failedTracks.orderBy('lastFailedAt').reverse().toArray()
-    return JSON.stringify(all, null, 2)
-  }
 
   return { failures, recordFailure, clearFailures, exportFailures }
 }

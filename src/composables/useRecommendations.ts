@@ -5,13 +5,12 @@ import { buildRecommendations } from '@/services/recommendations.service'
 import { useRecommendationsStore } from '@/stores/recommendations.store'
 import { usePlayerStore } from '@/stores/player.store'
 import { useFavorites } from '@/composables/useFavorites'
-import { usePlayHistory } from '@/composables/usePlayHistory'
+import { getEngagementSeeds } from '@/composables/usePlayHistory'
 
 export function useRecommendations() {
   const recStore    = useRecommendationsStore()
   const playerStore = usePlayerStore()
   const { favorites } = useFavorites()
-  const { getEngagementSeeds } = usePlayHistory()
   // generating solo aquí, no en el store
   const generating  = ref(false)
   const error       = ref<string | null>(null)

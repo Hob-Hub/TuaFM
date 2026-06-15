@@ -4,7 +4,7 @@ import type { Track } from '@/types/track.types'
 import { usePlayerStore } from '@/stores/player.store'
 import { useUiStore } from '@/stores/ui.store'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
-import { useFailedTracks } from '@/composables/useFailedTracks'
+import { recordFailure } from '@/composables/useFailedTracks'
 
 // Recuperación ante fallos de arranque de una pista, separada del orquestador.
 // Dos mecanismos complementarios:
@@ -47,7 +47,6 @@ export function usePlaybackRecovery(deps: RecoveryDeps) {
   const player = usePlayerStore()
   const ui     = useUiStore()
   const yt     = useYouTubePlayer()
-  const { recordFailure } = useFailedTracks()
 
   // Desarma el watchdog en cuanto el reproductor sale de 'loading' (suena, se
   // pausa, termina…). Si se queda colgado en 'loading', salta el timer de armado.
