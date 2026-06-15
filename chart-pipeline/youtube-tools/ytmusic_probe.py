@@ -15,6 +15,7 @@ import shutil
 import sys
 import time
 from datetime import datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
@@ -25,8 +26,10 @@ from enricher import (
     DEFAULT_CHARTS_DIR,
     DEFAULT_OVERRIDES,
     VIDEO_ID_RE,
+    compact,
     has_good_video_id,
     load_catalog,
+    normalize,
     load_usage,
     merge_youtube_overrides,
     primary_artist_for_track,
@@ -96,16 +99,140 @@ def as_raw(item: dict[str, Any]) -> dict[str, str]:
     }
 
 
-def search_videos(ytmusic: Any, query: str, limit: int, retries: int) -> tuple[list[dict[str, Any]], str | None]:
+def search_items(ytmusic: Any, query: str, search_filter: str, limit: int, retries: int) -> tuple[list[dict[str, Any]], str | None]:
     last_error: str | None = None
     for attempt in range(retries + 1):
         try:
-            return ytmusic.search(query, filter="videos", limit=limit), None
+            return ytmusic.search(query, filter=search_filter, limit=limit), None
         except Exception as exc:  # ytmusicapi can raise JSONDecodeError on transient bad responses.
             last_error = f"{type(exc).__name__}: {exc}"
             if attempt < retries:
                 time.sleep(1 + attempt)
     return [], last_error
+
+
+def split_artist_parts(value: str) -> list[str]:
+    parts = re.split(r",|;|\s+(?:feat\.?|ft\.?|with|and|&|x)\s+", str(value or ""), flags=re.I)
+    seen: set[str] = set()
+    out: list[str] = []
+    for part in parts:
+        norm = normalize(part)
+        if norm and norm not in seen:
+            out.append(norm)
+            seen.add(norm)
+    return out
+
+
+TITLE_NOISE_TOKENS = {
+    "album",
+    "bof",
+    "deluxe",
+    "edition",
+    "ep",
+    "extra",
+    "extrait",
+    "feat",
+    "featuring",
+    "mix",
+    "pub",
+    "remix",
+    "remixed",
+    "remixes",
+    "single",
+    "the",
+    "version",
+    "with",
+}
+
+
+def title_match_tokens(value: str) -> list[str]:
+    return [
+        token
+        for token in normalize(value).split()
+        if len(token) > 1 and token not in TITLE_NOISE_TOKENS
+    ]
+
+
+def title_options(value: str) -> list[str]:
+    core = re.sub(r"[\[(].*?[\])]", " ", str(value or ""))
+    core = re.sub(r"\b(?:ep|single|remixes?|album version|bof|pub)\b", " ", core, flags=re.I)
+    options = [core]
+    options.extend(re.split(r"\s*/\s*|\s+-\s+", core))
+    seen: set[str] = set()
+    out: list[str] = []
+    for option in options:
+        norm = normalize(option)
+        if norm and norm not in seen:
+            out.append(norm)
+            seen.add(norm)
+    return out
+
+
+def compatible_title_match(raw_title: str, requested_title: str) -> bool:
+    raw_options = title_options(raw_title)
+    requested_options = title_options(requested_title)
+    for raw_option in raw_options:
+        raw_tokens = set(title_match_tokens(raw_option))
+        raw_compact = compact(raw_option)
+        for requested_option in requested_options:
+            if raw_option == requested_option:
+                return True
+            requested_tokens = set(title_match_tokens(requested_option))
+            requested_compact = compact(requested_option)
+            if not raw_tokens or not requested_tokens:
+                continue
+            if requested_tokens.issubset(raw_tokens) and len(requested_tokens) >= 2:
+                return True
+            if raw_tokens.issubset(requested_tokens):
+                if len(raw_tokens) >= 2:
+                    return True
+                if len(next(iter(raw_tokens))) >= 4:
+                    return True
+            if raw_compact and requested_compact:
+                ratio = SequenceMatcher(None, raw_compact, requested_compact).ratio()
+                if ratio >= 0.88 and (raw_tokens & requested_tokens):
+                    return True
+    return False
+
+
+def strict_song_match(raw: dict[str, str], track: dict[str, Any]) -> bool:
+    """Accept low-score YT Music song hits only when title and artist are tight."""
+    raw_title = raw.get("title", "")
+    requested_title = str(track.get("title", ""))
+    if not compatible_title_match(raw_title, requested_title):
+        return False
+
+    raw_text = f"{raw_title} {raw.get('channel', '')}"
+    raw_norm = normalize(raw_text)
+    raw_compact = compact(raw_text)
+    requested_norm = normalize(f"{track.get('artist', '')} {requested_title}")
+
+    bad_patterns = [
+        r"\boriginally performed\b",
+        r"\bin the style of\b",
+        r"\b(tribute|homage|reaction|tutorial|8d|nightcore|sped up|slowed)\b",
+        r"\b(instrumental|karaoketop|gynmusic|kar vogue|kar4sing)\b",
+        r"\b(cover|karaoke)\b",
+        r"\b(remix|edit|mix)\b",
+        r"\b(live|session|sessions|acoustic|acustico|acustico)\b",
+    ]
+    for pattern in bad_patterns:
+        if re.search(pattern, raw_norm) and not re.search(pattern, requested_norm):
+            return False
+
+    primary = normalize(primary_artist_for_track(track))
+    artist_parts = split_artist_parts(track.get("artist", ""))
+    if primary and primary not in artist_parts:
+        artist_parts.insert(0, primary)
+
+    for part in artist_parts:
+        part_compact = compact(part)
+        if len(part_compact) > 2 and part_compact in raw_compact:
+            return True
+        tokens = [t for t in part.split() if len(t) > 3]
+        if tokens and any(token in raw_norm for token in tokens):
+            return True
+    return False
 
 
 def too_long(candidate: dict[str, Any], track: dict[str, Any]) -> bool:
@@ -126,6 +253,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--limit", type=int, default=5000)
     parser.add_argument("--max-results", type=int, default=10)
     parser.add_argument("--variant-limit", type=int, default=3)
+    parser.add_argument("--search-filters", default="videos", help="Comma-separated ytmusic filters, e.g. videos,songs")
     parser.add_argument("--min-score", type=float, default=16.0)
     parser.add_argument("--sleep", type=float, default=0.25)
     parser.add_argument("--retries", type=int, default=2)
@@ -133,7 +261,27 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--overrides", type=Path, default=DEFAULT_OVERRIDES)
     parser.add_argument("--apply", action="store_true", help="Escribe los IDs hallados en overrides.json (destino duradero)")
     parser.add_argument("--write-catalog", action="store_true", help="Legacy: muta tracks.json (el build lo sobrescribe)")
+    parser.add_argument("--skip-misses-file", type=Path, default=None, help="JSON list of keys that already missed in this probe pass")
     return parser.parse_args(argv)
+
+
+def read_skip_keys(path: Path | None) -> set[str]:
+    if not path or not path.exists():
+        return set()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError:
+        return {line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
+    if isinstance(payload, list):
+        return {str(item) for item in payload if item}
+    return set()
+
+
+def write_skip_keys(path: Path | None, keys: set[str]) -> None:
+    if not path:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(sorted(keys), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def main(argv: list[str]) -> int:
@@ -158,10 +306,16 @@ def main(argv: list[str]) -> int:
 
     data, tracks = load_catalog(args.catalog)
     usage = load_usage(args.charts_dir)
+    skip_keys = read_skip_keys(args.skip_misses_file)
+    search_filters = [
+        item.strip()
+        for item in str(args.search_filters or "videos").split(",")
+        if item.strip()
+    ] or ["videos"]
     missing = [
         (track, usage.get(track.get("id"), {"chartIds": [], "years": [], "bestRank": 9999, "uses": 0}))
         for track in tracks
-        if not has_good_video_id(track)
+        if not has_good_video_id(track) and str(track.get("key") or "") not in skip_keys
     ]
     missing.sort(key=priority_key)
     selected = missing[: max(0, args.limit)]
@@ -175,27 +329,30 @@ def main(argv: list[str]) -> int:
     for idx, (track, use) in enumerate(selected, start=1):
         candidates_by_id: dict[str, dict[str, Any]] = {}
         provider_errors: list[str] = []
-        for query in query_variants(track)[: max(1, args.variant_limit)]:
-            items, error = search_videos(ytmusic, query, args.max_results, args.retries)
-            if error:
-                provider_errors.append(f"{query}: {error}")
-            for rank, item in enumerate(items):
-                raw = as_raw(item)
-                if not VIDEO_ID_RE.match(raw["video_id"]) or too_long(item, track):
-                    continue
-                scored = score_candidate(raw, track, rank, "ytmusic")
-                if not scored:
-                    continue
-                current = candidates_by_id.get(scored.video_id)
-                if current is None or scored.score > current["candidate"].score:
-                    candidates_by_id[scored.video_id] = {
-                        "candidate": scored,
-                        "duration": item.get("duration"),
-                        "views": item.get("views"),
-                        "query": query,
-                    }
-            if args.sleep:
-                time.sleep(args.sleep)
+        for search_filter in search_filters:
+            for query in query_variants(track)[: max(1, args.variant_limit)]:
+                items, error = search_items(ytmusic, query, search_filter, args.max_results, args.retries)
+                if error:
+                    provider_errors.append(f"{search_filter}:{query}: {error}")
+                for rank, item in enumerate(items):
+                    raw = as_raw(item)
+                    if not VIDEO_ID_RE.match(raw["video_id"]) or too_long(item, track):
+                        continue
+                    scored = score_candidate(raw, track, rank, f"ytmusic:{search_filter}")
+                    if not scored:
+                        continue
+                    if search_filter == "songs" and strict_song_match(raw, track):
+                        scored.score = max(scored.score, args.min_score + 0.5)
+                    current = candidates_by_id.get(scored.video_id)
+                    if current is None or scored.score > current["candidate"].score:
+                        candidates_by_id[scored.video_id] = {
+                            "candidate": scored,
+                            "duration": item.get("duration"),
+                            "views": item.get("views"),
+                            "query": f"{search_filter}:{query}",
+                        }
+                if args.sleep:
+                    time.sleep(args.sleep)
 
         candidates = sorted(
             candidates_by_id.values(),
@@ -237,16 +394,20 @@ def main(argv: list[str]) -> int:
         OUT.mkdir(parents=True, exist_ok=True)
         backup_path = OUT / f"tracks.before_ytmusic_probe.{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         shutil.copy2(args.catalog, backup_path)
-        args.catalog.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    elif args.apply and updates:
+        args.catalog.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    if args.apply and updates:
         overrides_path = args.overrides.resolve()
         merge_youtube_overrides(overrides_path, updates)
+    if args.apply and misses and args.skip_misses_file:
+        skip_keys.update(str(row.get("key")) for row in misses if row.get("key"))
+        write_skip_keys(args.skip_misses_file.resolve(), skip_keys)
 
     after_with_video = sum(1 for t in tracks if has_good_video_id(t))
     report = {
         "checkedAt": utc_now(),
         "catalog": str(args.catalog),
         "source": "ytmusic",
+        "searchFilters": search_filters,
         "apply": args.apply,
         "totalTracks": len(tracks),
         "withYoutubeBefore": before_with_video,

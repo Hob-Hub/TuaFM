@@ -35,6 +35,7 @@ __pycache__/
 chart-pipeline/audit/out/
 chart-pipeline/youtube-tools/out/
 charts-db/**/*.log
+scripts/
 
 # Logs
 *.log

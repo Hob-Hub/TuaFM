@@ -301,3 +301,30 @@ Registrado para no reabrir debates ya cerrados. TuaFM ya hace bien lo que
 | §3 (completar catálogo) | Revisión del estado actual |
 | §4 (ficha artista/álbum, Home, title) | `docs/DOCUMENTACION.md` (features de Bruga) + oportunidades propias |
 | §5 | Comparativa código actual vs `docs/` |
+
+
+
+Sugerencias (con todo lo visto)
+Alto valor, bajo esfuerzo:
+
+Multi-artista seleccionable — es la más visible y el dato ya existe. ~1 sesión: añadir artists: {name}[] a Track, propagarlo en hidratación + candidateToTrack, y en TrackItem un <RouterLink> por artista.
+Recomendaciones offline-first — hoy disparan muchas llamadas a Last.fm; con similar + topTracks del catálogo, la mayoría saldría de local (caer a API solo si falta). Reduce cuota y latencia notablemente.
+Sección "Artistas similares" en ArtistView (dato ya guardado) → navegación tipo "descubrir".
+Calidad de datos / mantenimiento:
+4. /code-review del diff acumulado de este hilo (mucho código nuevo de pipeline + runtime sin revisión de pares).
+5. Tests del pipeline (catalog.mjs: dedup, alias, applyOverrides con null y aliases) — es lógica crítica y hoy sin tests; un fallo ahí corrompe el catálogo en silencio.
+6. mbid → coverart.service: buscar por mbid en Cover Art Archive evita los matches erróneos por texto (justo el tipo de bug que limpiamos a mano).
+
+Producto:
+7. Página/buscador de artista para los feats (ahora que están catalogados los 541 colaboradores).
+8. Filtros en el Top del año por tag/género (los tags ya están).
+
+¿Quieres que ataque la #1 (multi-artista seleccionable) ahora, o prefieres que empiece por las recomendaciones offline (#2)? (Aviso: ambas tocan ficheros que estás editando en paralelo —TrackItem, radio.service, useArtist—, así que coordinamos para no pisarnos.)
+
+1. Sin repeticiones (id único por canción/artista): dedup por huella agresiva (Tik tok/Tik Tok, Ke$ha/Kesha, Jay Z/Jay-Z, orden de feat.). 0 duplicados restantes (4663→4627 tracks; 9 artistas fusionados). Mantengo un índice de alias (key→id canónico) para que el matching en runtime no cambie.
+
+2. Multi-artista: ahora cada track guarda artistIds[] con todos los artistas, y catalogué los 541 colaboradores que faltaban (de 1532→2073 artistas, con foto/bio/top50). Arregla también el orden A,B/B,A. artistIds al 100%.
+
+3. Info de Last.fm + duración: la duración SÍ se guardaba (durationMs, 91%). De lo que faltaba, elegí guardar: artistas similares (similar, 97% — habilita recomendaciones offline) y mbid (track 81% / artista 86% — carátulas robustas y dedup). Descarté playcount (redundante con listeners) y bio larga (nadie la usa, engorda).
+
+4. Imágenes de artista en Buscar: arreglado — ahora se rellenan desde el catálogo (Deezer), ya que Last.fm sirve un placeholder.

@@ -757,7 +757,27 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--official-only-query", action="store_true", help="Only use official video/audio query variants for yt-dlp")
     parser.add_argument("--force", action="store_true", help="Ignore cached search results")
     parser.add_argument("--force-validation", action="store_true", help="Ignore cached noembed validation")
+    parser.add_argument("--skip-misses-file", type=Path, default=None, help="JSON list of keys that already missed in this enrichment pass")
     return parser.parse_args(argv)
+
+
+def read_skip_keys(path: Path | None) -> set[str]:
+    if not path or not path.exists():
+        return set()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError:
+        return {line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
+    if isinstance(payload, list):
+        return {str(item) for item in payload if item}
+    return set()
+
+
+def write_skip_keys(path: Path | None, keys: set[str]) -> None:
+    if not path:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(sorted(keys), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def merge_youtube_overrides(overrides_path: Path, updates: list[dict[str, Any]]) -> int:
@@ -792,6 +812,7 @@ def main(argv: list[str]) -> int:
 
     data, tracks = load_catalog(args.catalog)
     usage = load_usage(args.charts_dir)
+    skip_keys = read_skip_keys(args.skip_misses_file)
 
     missing = []
     malformed = []
@@ -800,6 +821,8 @@ def main(argv: list[str]) -> int:
         if video_id and not has_good_video_id(track):
             malformed.append(track)
         if not has_good_video_id(track):
+            if str(track.get("key") or "") in skip_keys:
+                continue
             use = usage.get(track.get("id"), {"chartIds": [], "years": [], "bestRank": 9999, "uses": 0})
             if args.chart and not set(args.chart).intersection(use.get("chartIds") or []):
                 continue
@@ -858,9 +881,12 @@ def main(argv: list[str]) -> int:
             json.dumps(data, ensure_ascii=False, separators=(",", ":")),
             encoding="utf-8",
         )
-    elif args.apply and updates:
+    if args.apply and updates:
         overrides_path = args.overrides.resolve()
         merge_youtube_overrides(overrides_path, updates)
+    if args.apply and misses and args.skip_misses_file:
+        skip_keys.update(str(row.get("key")) for row in misses if row.get("key"))
+        write_skip_keys(args.skip_misses_file.resolve(), skip_keys)
 
     after_with_video = sum(1 for t in tracks if has_good_video_id(t))
     after_missing = len(tracks) - after_with_video
