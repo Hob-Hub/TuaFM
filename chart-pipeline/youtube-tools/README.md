@@ -40,6 +40,7 @@ descubrir IDs ──> auditar reproducción ──> --apply (→ overrides.json)
 |---|---|
 | `enricher.py` | Rellena `youtubeVideoId` ausentes (API de YouTube / yt-dlp). `--apply` → overrides. |
 | `ytmusic_probe.py` | Igual, vía **ytmusicapi** (YouTube Music). `--apply` → overrides. |
+| `full_catalog_review.py` | Revisa todo el catálogo contra búsquedas frescas de YouTube Music y propone reemplazos conservadores. `--apply` → overrides. |
 | `failure_candidate_search.py` | Busca candidatos para pistas que fallaron la auditoría de reproducción. |
 | `apply_replacements.py` | Aplica reemplazos ya validados. `--apply` → overrides; `--write-catalog` legacy. |
 | `validate_oembed.py` | Valida vía oEmbed los IDs usados por `es.json`. |
