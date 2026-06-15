@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
@@ -11,6 +11,7 @@ import {
 import { usePlayback } from '@/composables/usePlayback'
 import { useUiStore } from '@/stores/ui.store'
 import TrackCover from '@/components/ui/TrackCover.vue'
+import TrackItem from '@/components/playlist/TrackItem.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
 const route    = useRoute()
@@ -24,6 +25,15 @@ const artists = ref<ArtistSearchResult[]>([])
 const songs   = ref<TrackSearchResult[]>([])
 const loading = ref(false)
 const searched = ref(false)
+
+// Resultados de canción hidratados a Track efímero para pintarlos con la fila
+// compartida (TrackItem), igual que el resto de listas. Se recalcula cuando
+// resolveSongCovers rellena coverUrl de forma perezosa (la fila se actualiza).
+const songTracks = computed(() =>
+  songs.value.map((s) =>
+    makeTrack({ artist: s.artist, title: s.title, coverUrl: s.coverUrl, enriched: true })
+  )
+)
 
 function fmtListeners(value: number): string {
   return value > 0
@@ -156,27 +166,11 @@ if (q.value) void runSearch(q.value)
         </BaseButton>
       </div>
       <ul class="flex flex-col">
-        <li
-          v-for="(s, i) in songs" :key="`${s.artist}-${s.title}-${i}`"
-          class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
-          @click="playSong(s)"
-        >
-          <TrackCover :src="s.coverUrl" :alt="s.title" :fallback-text="s.title" :size="44" />
-          <div class="min-w-0 flex-1">
-            <p class="text-sm font-medium text-white truncate">{{ s.title }}</p>
-            <RouterLink
-              :to="{ name: 'artist', params: { name: s.artist } }"
-              class="inline-block max-w-full text-xs text-muted truncate hover:text-white/80 hover:underline"
-              @click.stop
-            >{{ s.artist }}</RouterLink>
-          </div>
-          <button
-            class="p-2 rounded-lg text-muted hover:bg-white/10 hover:text-white opacity-0 group-hover:opacity-100 transition shrink-0"
-            :aria-label="$t('common.play')" @click.stop="playSong(s)"
-          >
-            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          </button>
-        </li>
+        <TrackItem
+          v-for="(track, i) in songTracks" :key="`${track.artist}-${track.title}-${i}`"
+          :track="track" mode="radio" :show-index="false"
+          @play="playSong(songs[i])"
+        />
       </ul>
     </section>
   </div>

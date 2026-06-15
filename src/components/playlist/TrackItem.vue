@@ -16,7 +16,11 @@ const props = withDefaults(defineProps<{
   isPlaying?: boolean
   index?:    number
   removable?: boolean
-}>(), { isActive: false, isPlaying: false, removable: false })
+  // showIndex=false → columna de cabecera con botón de play fijo (sin número de
+  // posición). Lo usan listas cronológicas como el historial, donde el orden no
+  // es un ranking.
+  showIndex?: boolean
+}>(), { isActive: false, isPlaying: false, removable: false, showIndex: true })
 
 const emit = defineEmits<{ play: []; remove: [] }>()
 
@@ -42,7 +46,7 @@ const yearLabel   = computed(() => props.track.chartYear ?? props.track.year)
       <span v-if="isActive && isPlaying" class="text-brand">
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
       </span>
-      <template v-else>
+      <template v-else-if="showIndex">
         <span class="group-hover:hidden">{{ (index ?? 0) + 1 }}</span>
         <button
           class="hidden group-hover:grid place-items-center text-white"
@@ -51,6 +55,13 @@ const yearLabel   = computed(() => props.track.chartYear ?? props.track.year)
           <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         </button>
       </template>
+      <button
+        v-else
+        class="grid place-items-center text-muted group-hover:text-white"
+        :aria-label="$t('track.playAria')" @click.stop="emit('play')"
+      >
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
     </div>
 
     <!-- Carátula o skeleton -->
@@ -82,15 +93,20 @@ const yearLabel   = computed(() => props.track.chartYear ?? props.track.year)
       <div v-else class="h-3 w-24 mt-1 rounded bg-surface-2 animate-pulse" />
     </div>
 
-    <!-- Año (debut en el Top): pill discreto en el hueco que dejaban los tags -->
-    <span v-if="yearLabel" class="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-surface-2 text-muted tabular-nums mr-1">
-      {{ yearLabel }}
-    </span>
+    <!-- Meta a la derecha: por defecto año (debut en el Top) + duración. Las listas
+         que necesitan otra cosa (p. ej. el historial: modo + hora) lo sustituyen
+         por el slot #meta sin reimplementar la fila entera. -->
+    <slot name="meta">
+      <!-- Año (debut en el Top): pill discreto en el hueco que dejaban los tags -->
+      <span v-if="yearLabel" class="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-surface-2 text-muted tabular-nums mr-1">
+        {{ yearLabel }}
+      </span>
 
-    <!-- Duración -->
-    <span class="text-xs text-muted tabular-nums w-10 text-right hidden sm:block">
-      {{ formatDurationMs(track.duration) }}
-    </span>
+      <!-- Duración -->
+      <span class="text-xs text-muted tabular-nums w-10 text-right hidden sm:block">
+        {{ formatDurationMs(track.duration) }}
+      </span>
+    </slot>
 
     <!-- Acciones -->
     <div class="flex items-center gap-1 shrink-0">

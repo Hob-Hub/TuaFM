@@ -4,15 +4,24 @@ import { useI18n } from 'vue-i18n'
 import { makeTrack } from '@/utils/track'
 import { usePlayHistory } from '@/composables/usePlayHistory'
 import { usePlayback } from '@/composables/usePlayback'
-import TrackCover from '@/components/ui/TrackCover.vue'
+import TrackItem from '@/components/playlist/TrackItem.vue'
+import type { Track } from '@/types/track.types'
 import type { PlayHistoryEntry } from '@/types/playlist.types'
 
 const { t, d } = useI18n()
 const { history, clearHistory } = usePlayHistory()
 const playback = usePlayback()
 
-function playEntry(e: PlayHistoryEntry): void {
-  playback.playSingle(makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl }))
+// La entrada de historial es ligera (artista/título/carátula); se hidrata a un
+// Track efímero para reproducirla con la MISMA fila compartida que el resto de la
+// app (TrackItem), en vez de reimplementar la fila aquí. enriched:true pinta la
+// carátula ya (no el skeleton de "pendiente de enriquecer").
+function toTrack(e: PlayHistoryEntry): Track {
+  return makeTrack({ artist: e.artist, title: e.title, coverUrl: e.coverUrl, enriched: true })
+}
+
+function playEntry(track: Track): void {
+  playback.startPlaylistQueue([track], 0, null)
 }
 
 function modeLabel(mode: string): string {
@@ -36,13 +45,16 @@ function fmtTime(ts: number): string {
   return d(new Date(ts), 'time')
 }
 
+// Cada entrada lleva ya su Track hidratado (id estable dentro del render) para no
+// recrearlo en cada repintado de la fila.
 const grouped = computed(() => {
-  const groups: { key: string; entries: PlayHistoryEntry[] }[] = []
+  const groups: { key: string; rows: { entry: PlayHistoryEntry; track: Track }[] }[] = []
   for (const entry of history.value) {
     const key = dayKey(entry.playedAt)
+    const row = { entry, track: toTrack(entry) }
     const last = groups[groups.length - 1]
-    if (last && last.key === key) last.entries.push(entry)
-    else groups.push({ key, entries: [entry] })
+    if (last && last.key === key) last.rows.push(row)
+    else groups.push({ key, rows: [row] })
   }
   return groups
 })
@@ -65,24 +77,19 @@ const grouped = computed(() => {
     <div v-for="group in grouped" :key="group.key" class="mb-6">
       <h2 class="text-xs font-semibold uppercase tracking-wider text-muted mb-2 capitalize">{{ group.key }}</h2>
       <ul class="flex flex-col">
-        <li v-for="entry in group.entries" :key="entry.id"
-            class="group flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-card-hover cursor-pointer"
-            @click="playEntry(entry)">
-          <div class="relative shrink-0">
-            <TrackCover :src="entry.coverUrl" :fallback-text="entry.title" :size="40" />
-            <span class="absolute inset-0 grid place-items-center bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition">
-              <svg viewBox="0 0 24 24" class="w-4 h-4 ml-0.5 text-white" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <TrackItem
+          v-for="{ entry, track } in group.rows" :key="entry.id"
+          :track="track" mode="radio" :show-index="false"
+          @play="playEntry(track)"
+        >
+          <!-- A la derecha, en vez de año + duración: modo de reproducción y hora. -->
+          <template #meta>
+            <span class="text-[10px] px-2 py-0.5 rounded-full shrink-0" :class="modeCls[entry.queueMode]">
+              {{ modeLabel(entry.queueMode) }}
             </span>
-          </div>
-          <div class="min-w-0 flex-1">
-            <p class="text-sm text-white truncate">{{ entry.title }}</p>
-            <p class="text-xs text-muted truncate">{{ entry.artist }}</p>
-          </div>
-          <span class="text-[10px] px-2 py-0.5 rounded-full shrink-0" :class="modeCls[entry.queueMode]">
-            {{ modeLabel(entry.queueMode) }}
-          </span>
-          <span class="text-xs text-muted tabular-nums shrink-0 w-12 text-right">{{ fmtTime(entry.playedAt) }}</span>
-        </li>
+            <span class="text-xs text-muted tabular-nums shrink-0 w-12 text-right">{{ fmtTime(entry.playedAt) }}</span>
+          </template>
+        </TrackItem>
       </ul>
     </div>
   </div>
