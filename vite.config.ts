@@ -68,12 +68,17 @@ export default defineConfig({
           },
           {
             // Carátulas y fotos de artista (Last.fm/Deezer/Cover Art Archive…).
-            // Mejora la experiencia repetida; opacas (status 0) incluidas.
+            // CacheFirst a propósito: StaleWhileRevalidate revalidaba en 2º plano
+            // CADA imagen ya cacheada, y esas peticiones compiten por el ancho de
+            // banda con los segmentos de YouTube justo al pasar de canción → cortes
+            // de buffer. Una carátula rota/opaca ya no queda atrapada: "Borrar caché"
+            // purga este CacheStorage (ver clearArtworkCache en cache.maintenance.ts).
+            // El tope de entradas es alto para no expulsar carátulas en colas largas.
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',
             options: {
               cacheName: 'tuafm-artwork',
-              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 días
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 días
               cacheableResponse: { statuses: [0, 200] }
             }
           }

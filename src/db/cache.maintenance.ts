@@ -29,11 +29,14 @@ export async function pruneExpiredCaches(now: number = Date.now()): Promise<numb
 }
 
 /**
- * Vacía por completo las cachés (tracks, artistas, carátulas, grafo Last.fm).
- * NO toca los stores de usuario (playlists, favorites, history). Útil para
- * forzar un refresco de metadatos/carátulas desde Ajustes.
+ * Vacía por completo las cachés (tracks, artistas, carátulas, grafo Last.fm) y,
+ * además, la caché de imágenes del Service Worker (`tuafm-artwork`). Esta última
+ * es clave: el SW guarda las carátulas en CacheStorage y, si una respuesta llegó
+ * rota/opaca, se servía indefinidamente — así que sin purgarla "Borrar caché" no
+ * recuperaba carátulas atascadas. NO toca los stores de usuario (playlists,
+ * favorites, history).
  *
- * @returns nº total de entradas borradas
+ * @returns nº total de entradas borradas (Dexie)
  */
 export async function clearAllCaches(): Promise<number> {
   const counts = await Promise.all([
@@ -42,5 +45,19 @@ export async function clearAllCaches(): Promise<number> {
   await Promise.all([
     db.tracks.clear(), db.artists.clear(), db.covers.clear(), db.lastfmCache.clear()
   ])
+  await clearArtworkCache()
   return counts.reduce((a, b) => a + b, 0)
+}
+
+/** Borra la CacheStorage de carátulas del Service Worker (best-effort: no existe
+ *  en dev ni en navegadores sin SW). El nombre coincide con el runtimeCaching de
+ *  vite.config.ts; filtramos por substring por si Workbox lo prefija. */
+async function clearArtworkCache(): Promise<void> {
+  try {
+    if (typeof caches === 'undefined') return
+    const keys = await caches.keys()
+    await Promise.all(
+      keys.filter(k => k.includes('tuafm-artwork')).map(k => caches.delete(k))
+    )
+  } catch { /* CacheStorage no disponible */ }
 }
