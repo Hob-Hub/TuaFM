@@ -111,6 +111,13 @@ No son deuda técnica: son producto. Priorizadas por valor/esfuerzo.
   reproducible reutilizando el `TrackItem` universal. Enlazar desde buscador y
   ficha de artista.
   - **Implica:** nueva ruta + vista; encaja sin fricción con la arquitectura actual.
+- **Filtro de idioma en la radio.** El catálogo ya trae `language`/
+  `languageConfidence`/`languageSource` por pista (groundwork hecho). Falta el
+  control "solo en mi idioma" / local vs internacional que los consuma.
+  - **Implica:** filtrar candidatos en
+    [`radio.service.ts`](src/services/radio.service.ts) por `language` + umbral de
+    confianza (las inferencias dudosas no deberían colar), y un toggle en
+    [`RadioControls.vue`](src/components/radio/RadioControls.vue).
 
 **Opcionales menores** (si algún día compensan): afinar "Descubre" por
 país/década; `track.artistIds[]` preciso para nombres ambiguos (hoy se resuelve
@@ -127,10 +134,14 @@ Registrado para no reabrir debates cerrados.
   prefetch, reanudación, modo clips, registro de fallos), PWA instalable, CI,
   ESLint/Prettier (config), i18n (es/en/it/fr), AbortController, descubrimiento en
   Home, `document.title` dinámico, multi-artista navegable, artistas similares,
-  artwork Last.fm/Deezer, dedup del catálogo, `artistIds[]` al 100%.
+  artwork Last.fm/Deezer, dedup del catálogo (por clave y por display) con nombres
+  visibles autoritados por Last.fm, idioma de pista inferido (groundwork),
+  `artistIds[]` al 100%.
 - **Patrones ya aplicados:** IDs estables (`nanoid`+`cacheKey`) en vez de índices;
   `URL`/`URLSearchParams`; loader oficial del iframe API; sanitización de hosts
-  de artwork; caché con TTL + `try/catch`; TypeScript strict + tests de lógica pura.
+  de artwork; nombres de display normalizados con Last.fm como autoridad (claves y
+  aliases intactos); caché con TTL + `try/catch`; TypeScript strict + tests de
+  lógica pura.
 - **NO adoptar:** TanStack Query (la caché propia Dexie→catálogo→API es más
   deliberada; duplicaría responsabilidades) ni idb-keyval (Dexie es superior para
   este modelo de datos).
