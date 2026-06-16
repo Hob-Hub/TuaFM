@@ -32,6 +32,9 @@ export interface ChartSong {
   coverUrl?:       string
   chartYear?:      number        // del catálogo: para mostrar año al cargar la cola
   duration?:       number        // ms, del catálogo: duración al cargar la cola
+  language?:       string        // ISO 639-1 inferido para la pista, no para el chart
+  languageConfidence?: number    // 0..1: confianza de la inferencia
+  languageSource?: string        // p. ej. track-tag+title+chart
 }
 
 export interface ChartPeriod {
@@ -56,6 +59,9 @@ export interface CatalogTrack {
   year?:           number        // año de edición (siembra de la DB; cobertura parcial)
   chartYear?:      number        // año de debut en el Top (derivado de los periodos)
   durationMs?:     number
+  language?:       string        // ISO 639-1 inferido para la pista, no para el pais/chart
+  languageConfidence?: number    // 0..1: confianza de la inferencia
+  languageSource?: string        // p. ej. track-tag+title+chart
   tags?:           string[]
   youtubeVideoId?: string
   coverUrl?:       string
@@ -91,6 +97,9 @@ export interface RadioCandidate {
   coverUrl?:       string
   chartYear?:      number        // año de debut en el Top (del catálogo)
   duration?:       number        // ms (del catálogo)
+  language?:       string
+  languageConfidence?: number
+  languageSource?: string
   weight:          number        // score anual × decaimiento temporal, acumulado
   score:           number        // score anual acumulado (sin decaimiento)
   appearances:     number        // en cuántos años del rango apareció

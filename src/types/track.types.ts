@@ -8,6 +8,9 @@ export interface Track {
   year?:           number        // año de edición (Last.fm/DB; cobertura parcial)
   chartYear?:      number        // año de debut en el Top (de los charts; 100% para catálogo)
   duration?:       number        // ms
+  language?:       string        // ISO 639-1 inferido para la pista
+  languageConfidence?: number    // 0..1: confianza de la inferencia
+  languageSource?: string
   coverUrl?:       string
   tags?:           string[]
   youtubeVideoId?: string        // mejor candidato (resuelto lazy o precargado desde chart)

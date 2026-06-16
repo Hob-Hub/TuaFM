@@ -93,7 +93,10 @@ function playSong(s: ChartSong): void {
   playback.playSingle(makeTrack({
     artist: s.artist, title: s.title,
     artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
-    youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl
+    youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl,
+    language: s.language,
+    languageConfidence: s.languageConfidence,
+    languageSource: s.languageSource
   }))
 }
 

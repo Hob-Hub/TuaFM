@@ -26,7 +26,8 @@ bundle estático que consume la app. (Los scrapers en Python viven en
 - `../public/charts/<chartId>.json` — **compacto**: cada canción es `{t,r,s,p,w}`
   (t=trackId, r=rank, s=score, p=pico, w=semanas) y referencia el catálogo.
 - `../public/catalog/tracks.json` — 1 entrada por track distinto (deduplicado entre
-  años y charts), con YouTube + álbum/tags/duración/oyentes de Last.fm. `coverUrl`
+  años y charts), con YouTube + álbum/tags/duración/oyentes de Last.fm e idioma
+  inferido (`language`, `languageConfidence`, `languageSource`). `coverUrl`
   solo se guarda si la URL viene de Last.fm o Deezer.
 - `../public/catalog/artists.json` — 1 entrada por artista: bio, oyentes, tags y
   **top 50** de Last.fm. `imageUrl` solo se guarda si la URL viene de Last.fm o Deezer.
@@ -41,6 +42,12 @@ Carátulas, fotos de artista y duración: **Last.fm primero, Deezer como fallbac
 Deezer no se usa como autoridad de nombres porque aqui entra por busqueda
 `limit=1` y puede devolver variantes de album/single. No se guardan URLs de Prisa,
 FIMI/SNEP, Cover Art Archive ni fuentes sembradas por DB.
+
+Idioma de track: se guarda por pista, no por pais/lista. El build lo infiere de
+forma conservadora combinando `overrides.json` (si trae `language`), tags de
+Last.fm, señales del titulo/artista y, solo como respaldo, el idioma del chart
+donde aparece. Por eso se exporta tambien `languageConfidence`: para filtros de
+radio conviene tratar como "local" solo las pistas con confianza suficiente.
 
 ## Requisitos
 

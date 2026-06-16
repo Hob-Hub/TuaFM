@@ -27,7 +27,10 @@ onMounted(async () => {
   discovery.value = tracks.map(t => makeTrack({
     artist: t.artist, title: t.title,
     coverUrl: t.coverUrl, youtubeVideoId: t.youtubeVideoId,
-    chartYear: t.chartYear, duration: t.durationMs
+    chartYear: t.chartYear, duration: t.durationMs,
+    language: t.language,
+    languageConfidence: t.languageConfidence,
+    languageSource: t.languageSource
   }))
 })
 function playDiscovery(i: number): void {

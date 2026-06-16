@@ -39,7 +39,10 @@ async function load(): Promise<void> {
       artist: s.artist, title: s.title,
       artistDisplay: s.artistDisplay, titleDisplay: s.titleDisplay,
       youtubeVideoId: s.youtubeVideoId, coverUrl: s.coverUrl,
-      chartYear: s.chartYear, duration: s.duration
+      chartYear: s.chartYear, duration: s.duration,
+      language: s.language,
+      languageConfidence: s.languageConfidence,
+      languageSource: s.languageSource
     }))
   } finally {
     loading.value = false

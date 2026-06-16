@@ -41,6 +41,9 @@ export function aggregateCandidates(
         if (!existing.coverUrl && song.coverUrl)             existing.coverUrl       = song.coverUrl
         if (!existing.chartYear && song.chartYear)           existing.chartYear      = song.chartYear
         if (!existing.duration && song.duration)             existing.duration       = song.duration
+        if (!existing.language && song.language)             existing.language       = song.language
+        if (!existing.languageConfidence && song.languageConfidence !== undefined) existing.languageConfidence = song.languageConfidence
+        if (!existing.languageSource && song.languageSource) existing.languageSource  = song.languageSource
       } else {
         map.set(key, {
           artist: song.artist, artistDisplay: song.artistDisplay,
@@ -49,6 +52,9 @@ export function aggregateCandidates(
           coverUrl: song.coverUrl,
           chartYear: song.chartYear,
           duration: song.duration,
+          language: song.language,
+          languageConfidence: song.languageConfidence,
+          languageSource: song.languageSource,
           weight: wScore, score: song.score, appearances: 1
         })
       }

@@ -27,7 +27,10 @@ function candidateToTrack(c: RadioCandidate): Track {
     artist: c.artist, artistDisplay: c.artistDisplay,
     title: c.title, titleDisplay: c.titleDisplay,
     youtubeVideoId: c.youtubeVideoId, coverUrl: c.coverUrl,
-    chartYear: c.chartYear, duration: c.duration
+    chartYear: c.chartYear, duration: c.duration,
+    language: c.language,
+    languageConfidence: c.languageConfidence,
+    languageSource: c.languageSource
   })
 }
 

@@ -22,6 +22,7 @@ import { annualizeRows, normalizeStr, splitArtist } from './lib/annualize.mjs'
 import { buildCatalog, compactPeriods, seedMapFromRows, applyOverrides } from './lib/catalog.mjs'
 import * as lfm from './lib/lastfm.mjs'
 import * as deezer from './lib/deezer.mjs'
+import { assignTrackLanguages, buildChartLanguageSignals } from './lib/language.mjs'
 
 const __dir = dirname(fileURLToPath(import.meta.url))
 const args  = process.argv.slice(2)
@@ -505,6 +506,14 @@ if (existsSync(ovPath)) {
     console.log(`· overrides aplicados: ${n}`)
   } catch (e) { console.warn(`! overrides.json inválido, se ignora: ${e.message}`) }
 }
+
+const languageSignals = buildChartLanguageSignals(charts, trackIdByKey)
+const languageStats = assignTrackLanguages(tracks, artists, languageSignals)
+const languageSummary = Object.entries(languageStats.byLanguage)
+  .sort((a, b) => b[1] - a[1])
+  .map(([lang, count]) => `${lang}:${count}`)
+  .join(', ')
+console.log(`· idiomas inferidos: ${languageSummary} (${languageStats.lowConfidence} baja confianza)`)
 
 const sanitized = enforceTrustedArtwork(tracks, artists)
 if (sanitized.droppedCovers || sanitized.droppedArtistImages) {
