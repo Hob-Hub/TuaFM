@@ -35,7 +35,7 @@ function loadTracks(): Promise<TrackIndex> {
         const byId  = new Map(d.tracks.map(t => [t.id, t]))
         const byKey = new Map(d.tracks.map(t => [t.key, t]))
         for (const [key, id] of Object.entries(d.aliases ?? {})) {
-          const t = byId.get(id); if (t) byKey.set(key, t)
+          const t = byId.get(id); if (t && !byKey.has(key)) byKey.set(key, t)
         }
         return { byId, byKey }
       })
@@ -88,7 +88,7 @@ function loadArtists(): Promise<ArtistIndex> {
         const byKey  = new Map(d.artists.map(a => [a.key, a]))
         const byName = new Map(d.artists.map(a => [a.name.toLowerCase(), a]))
         for (const [key, id] of Object.entries(d.aliases ?? {})) {
-          const a = byId.get(id); if (a) byKey.set(key, a)
+          const a = byId.get(id); if (a && !byKey.has(key)) byKey.set(key, a)
         }
         return { byKey, byName }
       })

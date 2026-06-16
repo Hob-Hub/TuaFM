@@ -48,13 +48,24 @@ export function hasApiKey() {
   return Boolean(API_KEY)
 }
 
+function cacheKey(method, params) {
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+  entries.sort(([a], [b]) => a.localeCompare(b))
+  return `${method}?${entries.map(([key, v]) => `${key}=${v}`).join('&')}`.toLowerCase()
+}
+
+function peek(method, params) {
+  const cached = selStmt.get(cacheKey(method, params))
+  return cached ? JSON.parse(cached.json) : undefined
+}
+
 // Llamada base con caché. Devuelve el objeto JSON, o null si Last.fm responde un
 // error de dominio (p. ej. artista/canción no encontrados). Lanza solo en fallos
 // de red/HTTP (no se cachean → se reintentan en el siguiente pase).
 async function call(method, params) {
   const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
   entries.sort(([a], [b]) => a.localeCompare(b))
-  const k = `${method}?${entries.map(([key, v]) => `${key}=${v}`).join('&')}`.toLowerCase()
+  const k = cacheKey(method, params)
 
   const cached = selStmt.get(k)
   if (cached) { stats.cacheHits++; return JSON.parse(cached.json) }
@@ -133,6 +144,14 @@ export function artistGetInfo(artist) {
 }
 export function artistGetTopTracks(artist, limit = 50) {
   return call('artist.getTopTracks', { artist, limit, autocorrect: 1 })
+}
+
+export function peekTrackGetInfo(artist, title) {
+  return peek('track.getInfo', { artist, track: title, autocorrect: 1 })
+}
+
+export function peekArtistGetInfo(artist) {
+  return peek('artist.getInfo', { artist, autocorrect: 1 })
 }
 
 export function closeCache() { cacheDb.close() }

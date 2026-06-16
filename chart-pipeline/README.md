@@ -32,8 +32,15 @@ bundle estático que consume la app. (Los scrapers en Python viven en
   **top 50** de Last.fm. `imageUrl` solo se guarda si la URL viene de Last.fm o Deezer.
   Lo que no se encuentra se deja vacío.
 
-Carátulas y fotos de artista: **Last.fm primero, Deezer como fallback**. No se
-guardan URLs de Prisa, FIMI/SNEP, Cover Art Archive ni fuentes sembradas por DB.
+Fuente de verdad para nombres visibles: **Last.fm**. Las claves tecnicas siguen
+saliendo de los charts normalizados para no romper favoritos, playlists ni
+aliases, pero `title`, `artist` y `name` se corrigen con Last.fm cuando
+`track.getInfo` / `artist.getInfo` devuelven una grafia autocorregida.
+
+Carátulas, fotos de artista y duración: **Last.fm primero, Deezer como fallback**.
+Deezer no se usa como autoridad de nombres porque aqui entra por busqueda
+`limit=1` y puede devolver variantes de album/single. No se guardan URLs de Prisa,
+FIMI/SNEP, Cover Art Archive ni fuentes sembradas por DB.
 
 ## Requisitos
 
