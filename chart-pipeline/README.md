@@ -28,7 +28,8 @@ bundle estático que consume la app. (Los scrapers en Python viven en
 - `../public/catalog/tracks.json` — 1 entrada por track distinto (deduplicado entre
   años y charts), con YouTube + álbum/tags/duración/oyentes de Last.fm e idioma
   inferido (`language`, `languageConfidence`, `languageSource`). `coverUrl`
-  solo se guarda si la URL viene de Last.fm o Deezer.
+  solo se guarda si la URL viene de Last.fm, Deezer o una fuente oficial de chart
+  permitida (FIMI, LOS40/Prisa o SNEP/Music Story).
 - `../public/catalog/artists.json` — 1 entrada por artista: bio, oyentes, tags y
   **top 50** de Last.fm. `imageUrl` solo se guarda si la URL viene de Last.fm o Deezer.
   Lo que no se encuentra se deja vacío.
@@ -38,10 +39,13 @@ saliendo de los charts normalizados para no romper favoritos, playlists ni
 aliases, pero `title`, `artist` y `name` se corrigen con Last.fm cuando
 `track.getInfo` / `artist.getInfo` devuelven una grafia autocorregida.
 
-Carátulas, fotos de artista y duración: **Last.fm primero, Deezer como fallback**.
+Carátulas, fotos de artista y duración: **Last.fm primero, Deezer como fallback**;
+las carátulas oficiales de FIMI, LOS40/Prisa y SNEP/Music Story se conservan como
+respaldo estático cuando apuntan a una imagen válida.
 Deezer no se usa como autoridad de nombres porque aqui entra por busqueda
-`limit=1` y puede devolver variantes de album/single. No se guardan URLs de Prisa,
-FIMI/SNEP, Cover Art Archive ni fuentes sembradas por DB.
+`limit=1` y puede devolver variantes de album/single; solo corrige nombres cuando
+el resultado pasa una comparación estricta contra artista y título. No se guardan
+URLs de Cover Art Archive ni fuentes sembradas por DB no autorizadas.
 
 Idioma de track: se guarda por pista, no por pais/lista. El build lo infiere de
 forma conservadora combinando `overrides.json` (si trae `language`), tags de
@@ -92,7 +96,7 @@ sobre lo generado (Last.fm/DB). Está versionado.
 ```
 
 Los overrides de `coverUrl` e `imageUrl` se sanitizan al final: si no apuntan a
-Last.fm o Deezer, se descartan.
+Last.fm, Deezer o una fuente oficial de chart permitida, se descartan.
 
 El algoritmo (fórmula `score = Σ 1/√posición`, equilibrio pico/permanencia y cómo
 afinarlo) está documentado en el [README raíz](../README.md#algoritmo-de-consolidación-semanal--top-del-año).

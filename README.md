@@ -14,8 +14,8 @@ modos de escucha sobre una interfaz unificada:
 - **Recomendaciones** — el oráculo de Last.fm a partir de tus favoritos.
 
 Funciona **100% en el navegador**, sin backend propio: audio vía YouTube IFrame,
-metadatos de Last.fm, artwork de Last.fm/Deezer, y datos de charts servidos como
-JSON estático local.
+metadatos de Last.fm/Deezer, artwork de esos proveedores y de fuentes oficiales
+de chart, y datos servidos como JSON estático local.
 
 ---
 
