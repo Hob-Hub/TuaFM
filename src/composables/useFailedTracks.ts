@@ -47,6 +47,11 @@ export async function clearFailures(): Promise<void> {
   await db.failedTracks.clear()
 }
 
+export async function clearFailure(track: Pick<Track, 'artist' | 'title'>): Promise<void> {
+  if (!track.artist || !track.title) return
+  await db.failedTracks.delete(makeCacheKey(track.artist, track.title))
+}
+
 /** Vuelca el registro como JSON (para pegarlo/compartirlo y arreglarlo después). */
 export async function exportFailures(): Promise<string> {
   const all = await db.failedTracks.orderBy('lastFailedAt').reverse().toArray()

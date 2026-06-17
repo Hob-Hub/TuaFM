@@ -4,7 +4,7 @@ import type { Track } from '@/types/track.types'
 import { usePlayerStore } from '@/stores/player.store'
 import { useUiStore } from '@/stores/ui.store'
 import { useYouTubePlayer } from '@/composables/useYouTubePlayer'
-import { recordFailure } from '@/composables/useFailedTracks'
+import { clearFailure, recordFailure } from '@/composables/useFailedTracks'
 
 // Recuperación ante fallos de arranque de una pista, separada del orquestador.
 // Dos mecanismos complementarios:
@@ -52,7 +52,13 @@ export function usePlaybackRecovery(deps: RecoveryDeps) {
   // pausa, termina…). Si se queda colgado en 'loading', salta el timer de armado.
   if (!watchdogWatcherSet) {
     watchdogWatcherSet = true
-    watch(() => player.state, (s) => { if (s !== 'loading') clearWatchdog() })
+    watch(() => player.state, (s) => {
+      if (s !== 'loading') clearWatchdog()
+      if (s === 'playing') {
+        const t = deps.currentTrack()
+        if (t) void clearFailure(t)
+      }
+    })
   }
 
   function clearWatchdog(): void {
