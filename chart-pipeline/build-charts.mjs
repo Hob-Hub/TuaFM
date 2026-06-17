@@ -87,6 +87,10 @@ for (const configPath of configs) {
 const { tracks, artists, trackIdByKey, trackAliases, artistAliases } = buildCatalog(charts)
 console.log(`· catálogo: ${tracks.length} tracks, ${artists.length} artistas`)
 console.log(`· alias: ${Object.keys(trackAliases).length} canciones, ${Object.keys(artistAliases).length} artistas (duplicados fusionados)`)
+const seededArtwork = enforceTrustedArtwork(tracks, artists)
+if (seededArtwork.droppedCovers || seededArtwork.droppedArtistImages) {
+  console.log(`· artwork sembrado no confiable ignorado: ${seededArtwork.droppedCovers} carátulas, ${seededArtwork.droppedArtistImages} artistas`)
+}
 
 const catalogDir = resolve(__dir, '..', 'public', 'catalog')
 const trackDirectIds = new Map(tracks.map(t => [t.key, t.id]))
@@ -211,6 +215,16 @@ function applyTrackDisplay(track, data) {
   }
 }
 
+function applyDeezerDisplay(track, data) {
+  if (!data) return
+  const title = chooseDisplay(track.title, data.title, 'track')
+  if (data.artist) applyArtistDisplay(artists[track.artistId], data.artist)
+  if (title) {
+    addTrackAlias(track, data.artist || artists[track.artistId]?.name || track.artist, title)
+    track.title = title
+  }
+}
+
 function normalizeGeneratedDisplays() {
   for (const artist of artists) applyArtistDisplay(artist, artist.name)
   for (const track of tracks) {
@@ -247,6 +261,7 @@ const displayPenalty = s => isBrokenCasing(s) ? 4 : 0
 const trackScore = track =>
   (track.lastfmUrl ? 8 : 0)
   + (track.mbid ? 5 : 0)
+  + (track.deezerId ? 4 : 0)
   + (track.coverUrl ? 3 : 0)
   + (track.youtubeVideoId ? 2 : 0)
   + (track.durationMs ? 2 : 0)
@@ -262,6 +277,7 @@ function bestByScore(items, score) {
 function titleScore(track) {
   return displayQuality(track.title, 'track')
     + (track.lastfmUrl ? 2 : 0)
+    + (track.deezerId ? 1.5 : 0)
     + (track.mbid ? 1 : 0)
     + Math.log10((track.listeners ?? 0) + 1) * 0.25
 }
@@ -297,7 +313,7 @@ function mergeTrackGroup(group) {
   base.chartYear = Math.min(...group.map(t => t.chartYear ?? Infinity).filter(Number.isFinite))
   if (!Number.isFinite(base.chartYear)) delete base.chartYear
 
-  const fields = ['album', 'year', 'youtubeVideoId', 'durationMs', 'lastfmUrl', 'mbid', 'coverUrl']
+  const fields = ['album', 'year', 'youtubeVideoId', 'durationMs', 'lastfmUrl', 'mbid', 'deezerId', 'deezerUrl', 'coverUrl']
   for (const field of fields) {
     const source = bestByScore(group.filter(t => t[field] != null), trackScore)
     if (source?.[field] != null) base[field] = source[field]
@@ -369,20 +385,33 @@ function dedupeTracksByDisplay() {
 const reuseTrack = new Set(), reuseArtist = new Set()
 if (!noLastfm && !refresh) {
   const load = f => { const p = resolve(catalogDir, f); return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null }
+  const hasTrackEnrichment = t => Boolean(
+    t.coverUrl && lfm.isTrustedArtworkUrl(t.coverUrl)
+    && (t.lastfmUrl || t.mbid || t.deezerId || t.durationMs || t.listeners || t.tags?.length)
+  )
   const prevT = load('tracks.json'), prevA = load('artists.json')
   if (prevT?.tracks) {
     const byKey = new Map(prevT.tracks.map(t => [t.key, t]))
-    const FIELDS = ['album', 'coverUrl', 'durationMs', 'tags', 'listeners', 'lastfmUrl', 'mbid']
+    const FIELDS = ['album', 'coverUrl', 'durationMs', 'tags', 'listeners', 'lastfmUrl', 'mbid', 'deezerId', 'deezerUrl']
     for (const t of tracks) {
       const p = byKey.get(t.key); if (!p) continue
       for (const f of FIELDS) {
-        if (p[f] === undefined || t[f] !== undefined) continue
-        t[f] = f === 'coverUrl' ? keepTrustedArtwork(p[f]) : p[f]
+        if (p[f] === undefined) continue
+        if (f === 'coverUrl') {
+          const prevCover = keepTrustedArtwork(p[f])
+          if (!prevCover) continue
+          const shouldPreferPrevious = !t.coverUrl
+            || (lfm.isFimiImageUrl(t.coverUrl) && !lfm.isFimiImageUrl(prevCover))
+          if (shouldPreferPrevious) t.coverUrl = prevCover
+          continue
+        }
+        if (t[f] !== undefined) continue
+        t[f] = p[f]
       }
       const cached = lfm.peekTrackGetInfo(primaryName(t.artist), t.title)
       if (cached?.track) applyTrackDisplay(t, cached)
       else if (p.title) t.title = p.title
-      reuseTrack.add(t.key)
+      if (hasTrackEnrichment(t)) reuseTrack.add(t.key)
     }
   }
   if (prevA?.artists) {
@@ -418,7 +447,7 @@ if (!noLastfm) {
       if (tr) {
         applyTrackDisplay(t, data)
         if (!t.album && tr.album?.title) t.album = tr.album.title
-        // Carátula: Last.fm primero; Deezer solo como fallback.
+        // Carátula: Last.fm primero; si ya venia de DB/FIMI se conserva; Deezer queda al final.
         const c = lfm.pickImage(tr.album?.image); if (c) t.coverUrl = c
         const dur = tr.duration ? parseInt(tr.duration, 10) : 0
         if (dur) t.durationMs = dur
@@ -430,12 +459,18 @@ if (!noLastfm) {
         if (tr.mbid) t.mbid = tr.mbid
       }
     } catch (e) { console.warn(`  ! track ${t.key}: ${e.message}`) }
-    if (!t.coverUrl) {
-      const dz = await deezer.trackCover(primaryName(t.artist), t.title)
-      if (dz) t.coverUrl = dz
+    if (!t.coverUrl || !t.durationMs || !t.lastfmUrl) {
+      const dz = await deezer.trackInfo(primaryName(t.artist), t.title)
+      if (dz) {
+        if (!t.lastfmUrl) applyDeezerDisplay(t, dz)
+        if (!t.album && dz.album) t.album = dz.album
+        if (!t.coverUrl && dz.cover) t.coverUrl = dz.cover
+        if (!t.durationMs && dz.durationMs) t.durationMs = dz.durationMs
+        if (dz.id) t.deezerId = dz.id
+        if (dz.link) t.deezerUrl = dz.link
+      }
     }
     if (t.coverUrl && !lfm.isTrustedArtworkUrl(t.coverUrl)) delete t.coverUrl
-    // Duración de respaldo (Deezer) cuando Last.fm no la trajo.
     if (!t.durationMs) {
       const ms = await deezer.trackDuration(primaryName(t.artist), t.title)
       if (ms) t.durationMs = ms
@@ -487,7 +522,7 @@ if (!noLastfm) {
   const withPhoto = artists.filter(a => a.imageUrl).length
   console.log(`\n✓ Last.fm: ${lfm.stats.apiCalls} llamadas, ${lfm.stats.cacheHits} de caché`)
   console.log(`✓ Deezer: ${deezer.stats.apiCalls} llamadas, ${deezer.stats.cacheHits} de caché`)
-  console.log(`✓ Artwork Last.fm/Deezer: ${tracks.filter(t => t.coverUrl).length}/${tracks.length} carátulas, ${withPhoto}/${artists.length} artistas`)
+  console.log(`✓ Artwork confiable: ${tracks.filter(t => t.coverUrl).length}/${tracks.length} carátulas, ${withPhoto}/${artists.length} artistas`)
 }
 
 normalizeGeneratedDisplays()
@@ -517,7 +552,7 @@ console.log(`· idiomas inferidos: ${languageSummary} (${languageStats.lowConfid
 
 const sanitized = enforceTrustedArtwork(tracks, artists)
 if (sanitized.droppedCovers || sanitized.droppedArtistImages) {
-  console.log(`· artwork no Last.fm/Deezer descartado: ${sanitized.droppedCovers} carátulas, ${sanitized.droppedArtistImages} artistas`)
+  console.log(`· artwork fuera de fuentes confiables descartado: ${sanitized.droppedCovers} carátulas, ${sanitized.droppedArtistImages} artistas`)
 }
 
 // ── 4. Escritura ─────────────────────────────────────────────────────────────

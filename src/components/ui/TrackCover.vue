@@ -12,13 +12,7 @@ const props = withDefaults(defineProps<{
 const failed = ref(false)
 watch(() => props.src, () => { failed.value = false })
 
-// Defensa para URLs antiguas importadas por el usuario o guardadas en cachés
-// locales: si el navegador las bloquea por ORB, vamos directos al placeholder.
-// El catálogo versionado se normaliza para no traer estos hosts.
-const BLOCKED_COVER_HOSTS = ['recursosweb.prisaradio.com']
-const usableSrc = computed(() =>
-  props.src && !BLOCKED_COVER_HOSTS.some(h => props.src!.includes(h)) ? props.src : undefined
-)
+const usableSrc = computed(() => props.src)
 
 // Degradado determinista a partir del texto (mismo nombre → mismo color).
 const gradient = computed(() => {

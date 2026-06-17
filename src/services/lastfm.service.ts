@@ -180,8 +180,58 @@ export function isLastfmImageUrl(url?: string): boolean {
   }
 }
 
+export function isFimiImageUrl(url?: string): boolean {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'media.fimi.it' || host === 'www.fimi.it'
+  } catch {
+    return false
+  }
+}
+
+const hasImageExtension = (url: string) => /\.(?:jpg|jpeg|png|webp)(?:[?#].*)?$/i.test(url)
+
+export function isPrisaImageUrl(url?: string): boolean {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'recursosweb.prisaradio.com' && hasImageExtension(url)
+  } catch {
+    return false
+  }
+}
+
+export function isSnepImageUrl(url?: string): boolean {
+  if (!url) return false
+  try {
+    const parsed = new URL(url)
+    const host = parsed.hostname.toLowerCase()
+    return host === 'snepmusique.com'
+      && parsed.pathname.includes('/wp-content/uploads/')
+      && hasImageExtension(url)
+  } catch {
+    return false
+  }
+}
+
+export function isMusicStoryImageUrl(url?: string): boolean {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'images.music-story.com' && hasImageExtension(url)
+  } catch {
+    return false
+  }
+}
+
 export function isTrustedArtworkUrl(url?: string): boolean {
-  return isLastfmImageUrl(url) || isDeezerImageUrl(url)
+  return isLastfmImageUrl(url)
+    || isDeezerImageUrl(url)
+    || isFimiImageUrl(url)
+    || isPrisaImageUrl(url)
+    || isSnepImageUrl(url)
+    || isMusicStoryImageUrl(url)
 }
 
 /** Selecciona la imagen de mayor tamaño no vacía (ignorando placeholders). */

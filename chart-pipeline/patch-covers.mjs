@@ -1,8 +1,8 @@
-// Parche puntual del catálogo: elimina URLs de imagen que no vengan de Last.fm o Deezer.
+// Parche puntual del catálogo: elimina URLs de imagen que no vengan de fuentes confiables.
 //
 // NO regenera los charts: solo normaliza `coverUrl` en public/catalog/tracks.json
 // e `imageUrl` en public/catalog/artists.json. Si una pista/artista no tiene
-// imagen de Last.fm/Deezer, se deja sin URL para que la UI use su fallback visual.
+// imagen confiable, se deja sin URL para que la UI use su fallback visual.
 //
 //   node chart-pipeline/patch-covers.mjs           # aplica
 //   node chart-pipeline/patch-covers.mjs --dry-run # solo informa, no escribe
@@ -19,12 +19,19 @@ const dryRun = process.argv.includes('--dry-run')
 function isTrustedArtworkUrl(url) {
   if (!url) return false
   try {
-    const host = new URL(url).hostname.toLowerCase()
+    const parsed = new URL(url)
+    const host = parsed.hostname.toLowerCase()
+    const imageLike = /\.(?:jpg|jpeg|png|webp)(?:[?#].*)?$/i.test(url)
     return host === 'lastfm.freetls.fastly.net'
       || host === 'lastfm-img2.akamaized.net'
       || host.endsWith('.last.fm')
       || host === 'cdn-images.dzcdn.net'
       || host.endsWith('.dzcdn.net')
+      || host === 'media.fimi.it'
+      || host === 'www.fimi.it'
+      || (host === 'recursosweb.prisaradio.com' && imageLike)
+      || (host === 'snepmusique.com' && parsed.pathname.includes('/wp-content/uploads/') && imageLike)
+      || (host === 'images.music-story.com' && imageLike)
   } catch {
     return false
   }
@@ -47,8 +54,8 @@ const artistsData = JSON.parse(readFileSync(ARTISTS_FILE, 'utf8'))
 const removedCovers = stripUntrustedArtwork(tracksData.tracks ?? [], 'coverUrl')
 const removedArtistImages = stripUntrustedArtwork(artistsData.artists ?? [], 'imageUrl')
 
-console.log(`Carátulas fuera de Last.fm/Deezer eliminadas: ${removedCovers}`)
-console.log(`Fotos de artista fuera de Last.fm/Deezer eliminadas: ${removedArtistImages}`)
+console.log(`Carátulas fuera de fuentes confiables eliminadas: ${removedCovers}`)
+console.log(`Fotos de artista fuera de fuentes confiables eliminadas: ${removedArtistImages}`)
 
 if (dryRun) {
   console.log('(dry-run) no se escribe nada.')

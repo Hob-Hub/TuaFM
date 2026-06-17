@@ -1,7 +1,7 @@
 import { db, makeCacheKey } from '@/db/local.db'
 import { getTrackInfo, isTrustedArtworkUrl, pickImage } from '@/services/lastfm.service'
 import { searchVideoCandidates } from '@/services/youtube.service'
-import { getDeezerTrackCover } from '@/services/deezer.service'
+import { getDeezerTrackInfo } from '@/services/deezer.service'
 import { getTrackByKey } from '@/services/catalog/static.source'
 import type { Track } from '@/types/track.types'
 import type { LastfmTrackResponse } from '@/types/api.types'
@@ -131,8 +131,17 @@ async function fetchExternal(
     if (yt.value.length > 1) result.youtubeCandidates = yt.value
   }
 
-  if (!result.coverUrl) {
-    result.coverUrl = await getDeezerTrackCover(queryArtist, title).catch(() => undefined)
+  if (!result.coverUrl || lfm.status === 'rejected') {
+    const deezer = await getDeezerTrackInfo(queryArtist, title).catch(() => undefined)
+    if (deezer) {
+      if (lfm.status === 'rejected') {
+        result.artist = deezer.artist ?? result.artist
+        result.title = deezer.title ?? result.title
+        result.album = deezer.album ?? result.album
+        result.duration = deezer.durationMs ?? result.duration
+      }
+      result.coverUrl = result.coverUrl ?? deezer.coverUrl
+    }
   }
 
   return result

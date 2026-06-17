@@ -66,9 +66,15 @@ function buildPeriod(chartId, year, aggMap) {
       artistNames:    a.artistNames,        // nombres de TODOS los artistas (display)
       title:          a.title,
       titleDisplay:   a.titleDisplay,
-      ...(a.youtubeVideoId ? { youtubeVideoId: a.youtubeVideoId } : {})
+      ...(a.youtubeVideoId ? { youtubeVideoId: a.youtubeVideoId } : {}),
+      ...(a.coverUrl ? { coverUrl: a.coverUrl } : {})
     }))
   return { chartId, year, songs }
+}
+
+const cleanUrl = value => {
+  const url = String(value || '').trim()
+  return url || undefined
 }
 
 // ── Consolidación de una fuente SEMANAL (España) → Top anual ─────────────────
@@ -95,6 +101,7 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
     const aggMap = byYear.get(year)
 
     const ytId  = cfg.ytUrlField ? extractVideoId(row[cfg.ytUrlField]) : null
+    const coverUrl = cfg.coverField ? cleanUrl(row[cfg.coverField]) : undefined
     const existing = aggMap.get(key)
     if (existing) {
       existing.score       += positionScore(position)
@@ -106,8 +113,10 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
         existing.artistNames   = parts
         existing.titleDisplay  = titleDisplay
         if (ytId)  existing.youtubeVideoId = ytId
+        if (coverUrl) existing.coverUrl = coverUrl
       } else {
         existing.youtubeVideoId = existing.youtubeVideoId || ytId || undefined
+        existing.coverUrl = existing.coverUrl || coverUrl || undefined
       }
     } else {
       aggMap.set(key, {
@@ -115,7 +124,8 @@ export function annualizeWeekly(rows, cfg, fromYear, toYear) {
         score: positionScore(position),
         peakPosition: position,
         weeksOnChart: 1,
-        youtubeVideoId: ytId || undefined
+        youtubeVideoId: ytId || undefined,
+        coverUrl
       })
     }
   }
@@ -142,6 +152,7 @@ export function annualizeAnnual(rows, cfg, fromYear, toYear) {
     const titleDisplay = String(row[cfg.titleField] || '').trim().replace(/\s+/g, ' ')
     const title        = normalizeStr(titleDisplay)
     const key          = `${artist}::${title}`
+    const coverUrl     = cfg.coverField ? cleanUrl(row[cfg.coverField]) : undefined
 
     if (!byYear.has(year)) byYear.set(year, new Map())
     const aggMap = byYear.get(year)
@@ -151,13 +162,15 @@ export function annualizeAnnual(rows, cfg, fromYear, toYear) {
     if (existing) {
       existing.score = Math.max(existing.score, positionScore(rank))
       existing.peakPosition = Math.min(existing.peakPosition, rank)
+      existing.coverUrl = existing.coverUrl || coverUrl
     } else {
       aggMap.set(key, {
         artist, artistDisplay, artistNames: parts, title, titleDisplay,
         score: positionScore(rank),
         peakPosition: rank,
         weeksOnChart: 1,
-        youtubeVideoId: cfg.ytUrlField ? extractVideoId(row[cfg.ytUrlField]) || undefined : undefined
+        youtubeVideoId: cfg.ytUrlField ? extractVideoId(row[cfg.ytUrlField]) || undefined : undefined,
+        coverUrl
       })
     }
   }

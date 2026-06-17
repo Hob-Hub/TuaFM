@@ -121,8 +121,58 @@ export function isDeezerImageUrl(url) {
   }
 }
 
+export function isFimiImageUrl(url) {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'media.fimi.it' || host === 'www.fimi.it'
+  } catch {
+    return false
+  }
+}
+
+const hasImageExtension = url => /\.(?:jpg|jpeg|png|webp)(?:[?#].*)?$/i.test(String(url))
+
+export function isPrisaImageUrl(url) {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'recursosweb.prisaradio.com' && hasImageExtension(url)
+  } catch {
+    return false
+  }
+}
+
+export function isSnepImageUrl(url) {
+  if (!url) return false
+  try {
+    const parsed = new URL(url)
+    const host = parsed.hostname.toLowerCase()
+    return host === 'snepmusique.com'
+      && parsed.pathname.includes('/wp-content/uploads/')
+      && hasImageExtension(url)
+  } catch {
+    return false
+  }
+}
+
+export function isMusicStoryImageUrl(url) {
+  if (!url) return false
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'images.music-story.com' && hasImageExtension(url)
+  } catch {
+    return false
+  }
+}
+
 export function isTrustedArtworkUrl(url) {
-  return isLastfmImageUrl(url) || isDeezerImageUrl(url)
+  return isLastfmImageUrl(url)
+    || isDeezerImageUrl(url)
+    || isFimiImageUrl(url)
+    || isPrisaImageUrl(url)
+    || isSnepImageUrl(url)
+    || isMusicStoryImageUrl(url)
 }
 
 export function pickImage(images) {

@@ -68,6 +68,8 @@ export interface CatalogTrack {
   listeners?:      number
   lastfmUrl?:      string
   mbid?:           string        // MusicBrainz recording id
+  deezerId?:       number
+  deezerUrl?:      string
 }
 
 export interface CatalogArtistTopTrack {
